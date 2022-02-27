@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <Arduino.h>
+#include <EEPROM.h>
 
 #include "enumlut.h"
 
@@ -16,7 +17,12 @@
   The identifier has to be provided when an interval is being created.
 */
 
-#define SCHEDULER_MAX_INTERVALS_PER_DAY 8
+// Maximum number of intervals a day can have
+#define SCHEDULER_MAX_INTERVALS_PER_DAY 5
+
+// Number of bytes the scheduler needs to persist it's schedule in the EEPROM
+// 7 weekdays times max_per_day times 7 bytes per interval (3 start, 3 end, 1 identifier)
+#define SCHEDULER_EEPROM_FOOTPRINT (7 * SCHEDULER_MAX_INTERVALS_PER_DAY * 7)
 
 // Day in the week
 #define _EVALS_SCHEDULER_WEEKDAY(FUN)   \
@@ -62,7 +68,7 @@ typedef struct scheduler_interval
 {
   scheduler_time_t start;              // Start of ON-time interval
   scheduler_time_t end;                // End of ON-time interval
-  uint16_t identifier;                 // Identifier provided in the scheduler's callback
+  uint8_t identifier;                 // Identifier provided in the scheduler's callback
   bool active;                         // Whether or not this interval is currently active
 } scheduler_interval_t;
 
@@ -84,13 +90,13 @@ bool scheduler_interval_equals(scheduler_interval_t a, scheduler_interval_t b);
  * @param end Time to end the interval
  * @param identifier Identifier used for the callback
  */
-scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint16_t identifier);
+scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint8_t identifier);
 
 // Constant for an empty interval slot
 const scheduler_interval_t SCHEDULER_INTERVAL_EMPTY = { SCHEDULER_TIME_MIDNIGHT, SCHEDULER_TIME_MIDNIGHT, 0x0, false };
 
 // This callback provides the user with the occurring edge as well as the identifier
-typedef void (*scheduler_callback_t)(scheduler_edge_t, uint16_t, scheduler_weekday_t, scheduler_time_t);
+typedef void (*scheduler_callback_t)(scheduler_edge_t, uint8_t, scheduler_weekday_t, scheduler_time_t);
 
 typedef struct scheduler
 {
@@ -153,5 +159,20 @@ bool scheduler_change_interval(scheduler_t *scheduler, scheduler_weekday_t day, 
  * @param scheduler Scheduler to tick
  */
 void scheduler_tick(scheduler_t *scheduler);
+
+/**
+ * @brief Save a scheduler's schedule to the eeprom
+ */
+void scheduler_eeprom_save(scheduler_t *scheduler);
+
+/**
+ * @brief Load a scheduler's schedule from the eeprom
+ */
+void scheduler_eeprom_load(scheduler_t *scheduler);
+
+/**
+ * @brief Print a scheduler's schedule to the serial monitor
+ */
+void scheduler_schedule_print(scheduler_t *scheduler);
 
 #endif

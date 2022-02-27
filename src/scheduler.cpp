@@ -57,7 +57,7 @@ bool scheduler_interval_equals(scheduler_interval_t a, scheduler_interval_t b)
   return a.identifier == b.identifier;
 }
 
-scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint16_t identifier)
+scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint8_t identifier)
 {
   return (scheduler_interval_t) {
     .start = start,
@@ -170,4 +170,94 @@ void scheduler_tick(scheduler_t *scheduler)
   // Update last tick day and time
   scheduler->last_tick_day = day;
   scheduler->last_tick_time = time;
+}
+
+static void scheduler_eeprom_write_time(int *addr_ind, scheduler_time_t time)
+{
+  EEPROM.write((*addr_ind)++, time.hours);
+  EEPROM.write((*addr_ind)++, time.minutes);
+  EEPROM.write((*addr_ind)++, time.seconds);
+}
+
+static void scheduler_eeprom_read_time(int *addr_ind, scheduler_time_t *time)
+{
+  time->hours = EEPROM.read((*addr_ind)++);
+  time->minutes = EEPROM.read((*addr_ind)++);
+  time->seconds = EEPROM.read((*addr_ind)++);
+}
+
+void scheduler_eeprom_save(scheduler_t *scheduler)
+{
+  // Keep track of the current EEPROM writing-address
+  int addr_ind = 0;
+
+  // Loop all days
+  for (int i = 0; i < 7; i++)
+  {
+    // Loop all their slots
+    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
+    {
+      scheduler_interval_t *slot = &(scheduler->daily_schedules[i][j]);
+
+      // Write start, end and the identifier of this slot
+      scheduler_eeprom_write_time(&addr_ind, slot->start);
+      scheduler_eeprom_write_time(&addr_ind, slot->end);
+      EEPROM.write(addr_ind++, slot->identifier);
+    }
+  }
+
+  EEPROM.commit();
+}
+
+void scheduler_eeprom_load(scheduler_t *scheduler)
+{
+  // Keep track of the current EEPROM writing-address
+  int addr_ind = 0;
+
+  // Loop all days
+  for (int i = 0; i < 7; i++)
+  {
+    // Loop all their slots
+    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
+    {
+      scheduler_interval_t *slot = &(scheduler->daily_schedules[i][j]);
+
+      // Read start, end and the identifier into this slot
+      scheduler_eeprom_read_time(&addr_ind, &(slot->start));
+      scheduler_eeprom_read_time(&addr_ind, &(slot->end));
+      slot->identifier = EEPROM.read(addr_ind++);
+    }
+  }
+}
+
+void scheduler_schedule_print(scheduler_t *scheduler)
+{
+  Serial.println("====================< Schedule >====================");
+  // Loop all days
+  for (int i = 0; i < 7; i++)
+  {
+    // Print name of the day
+    Serial.printf("%s:\n", scheduler_weekday_name((scheduler_weekday_t) i));
+
+    // Loop all their slots
+    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
+    {
+      scheduler_interval_t slot = scheduler->daily_schedules[i][j];
+
+      // Print this slot with all it's properties
+      Serial.printf(
+        "[%d] start=%02u:%02u:%02u, end=%02u:%02u:%02u, id=%03u, active=%s\n",
+        j,
+        slot.start.hours, slot.start.minutes, slot.start.seconds,
+        slot.end.hours, slot.end.minutes, slot.end.seconds,
+        slot.identifier,
+        slot.active ? "yes" : "no"
+      );
+    }
+
+    // Keep an empty line between days
+    if (i != 6)
+      Serial.println();
+  }
+  Serial.println("====================< Schedule >====================");
 }

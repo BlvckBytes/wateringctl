@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <NTPClient.h>
+#include <EEPROM.h>
 
 #include "scheduler.h"
 
@@ -13,7 +14,7 @@ NTPClient ntpClient(udpClient, "pool.ntp.org", UTC_OFFS_S);
 
 scheduler_t scheduler;
 
-void scheduler_callback(scheduler_edge_t edge, uint16_t identifier, scheduler_weekday_t curr_day, scheduler_time_t curr_time)
+void scheduler_callback(scheduler_edge_t edge, uint8_t identifier, scheduler_weekday_t curr_day, scheduler_time_t curr_time)
 {
   Serial.printf(
     "[%s %d:%d:%d]: %s occurred for %" PRIu16 "!\n",
@@ -35,6 +36,7 @@ void scheduler_day_and_time_provider(scheduler_weekday_t *day, scheduler_time_t 
 void setup()
 {
   Serial.begin(115200);
+  EEPROM.begin(SCHEDULER_EEPROM_FOOTPRINT);
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -59,11 +61,15 @@ void setup()
   scheduler = scheduler_make(scheduler_callback, scheduler_day_and_time_provider);
   Serial.println("Created the scheduler!");
 
-  scheduler_weekday_t today = (scheduler_weekday_t) ntpClient.getDay();
-  scheduler_interval_t i1 = scheduler_interval_make( { 20, 28, 00 }, { 20, 29, 00 }, 1);
-  bool r1 = scheduler_register_interval(&scheduler, today, i1);
+  scheduler_eeprom_load(&scheduler);
+  Serial.println("Loaded scheduler's schedule from EEPROM!");
 
-  Serial.printf("Registered scheduler interval (succ=%s)!\n", r1 ? "y" : "n");
+  // scheduler_weekday_t today = (scheduler_weekday_t) ntpClient.getDay();
+  // scheduler_interval_t i1 = scheduler_interval_make( { 20, 28, 00 }, { 20, 29, 00 }, 1);
+  // scheduler_register_interval(&scheduler, today, i1);
+  // scheduler_eeprom_save(&scheduler);
+
+  scheduler_schedule_print(&scheduler);
 }
 
 void loop()
