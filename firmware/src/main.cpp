@@ -4,6 +4,7 @@
 #include <EEPROM.h>
 
 #include "scheduler.h"
+#include "web_server.h"
 
 #define W_SSID        "HL_HNET_2"
 #define W_PASS        "mysql2001"
@@ -56,13 +57,16 @@ void setup()
 
   ntpClient.begin();
   ntpClient.update();
-  Serial.println("Started NTP client!");
+  Serial.println("Started the NTP client!");
 
   scheduler = scheduler_make(scheduler_callback, scheduler_day_and_time_provider);
   Serial.println("Created the scheduler!");
 
   scheduler_eeprom_load(&scheduler);
   Serial.println("Loaded scheduler's schedule from EEPROM!");
+
+  web_server_init();
+  Serial.println("Started the web server!");
 
   // scheduler_weekday_t today = (scheduler_weekday_t) ntpClient.getDay();
   // scheduler_interval_t i1 = scheduler_interval_make( { 20, 28, 00 }, { 20, 29, 00 }, 1);
