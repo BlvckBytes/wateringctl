@@ -3,11 +3,15 @@
 
 #include <ESPAsyncWebServer.h>
 
+#include "scheduler.h"
+#include "util/mman.h"
+#include "util/strfmt.h"
+
 #define WEB_SERVER_PORT 80
 
 /**
  * @brief Define all routes and start the webserver
  */
-void web_server_init();
+void web_server_init(scheduler_t *scheduler);
 
 #endif

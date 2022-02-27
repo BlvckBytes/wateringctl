@@ -6,6 +6,8 @@
 #include <EEPROM.h>
 
 #include "enumlut.h"
+#include "util/mman.h"
+#include "util/strfmt.h"
 
 /*
   The scheduler schedules on-times over the period of one
@@ -50,6 +52,14 @@ typedef struct scheduler_time
 } scheduler_time_t;
 
 const scheduler_time_t SCHEDULER_TIME_MIDNIGHT = { 00, 00, 00 };
+
+/**
+ * @brief Stringify a time into the common "hh:mm:ss" format
+ * 
+ * @param time Time to stringify
+ * @return char* Stringified time, mman-alloced
+ */
+char *scheduler_time_stringify(scheduler_time *time);
 
 /**
  * @brief Compare two scheduler times

@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "swaggerviewer:swagger": "file:///Users/blvckbytes/Documents/Projects/WateringCtl/documentation/service-rest.yaml"
+  }
+}

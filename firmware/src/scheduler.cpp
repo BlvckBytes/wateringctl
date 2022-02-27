@@ -14,6 +14,11 @@ scheduler_t scheduler_make(scheduler_callback_t callback, scheduler_day_and_time
   };
 }
 
+char *scheduler_time_stringify(scheduler_time *time)
+{
+  return strfmt_direct("%02d:%02d:%02d", time->hours, time->minutes, time->seconds);
+}
+
 int scheduler_time_compare(scheduler_time_t a, scheduler_time_t b)
 {
   // Hours differ, compare hours

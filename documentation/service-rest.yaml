@@ -1,0 +1,84 @@
+openapi: 3.0.0
+
+info:
+  title: WateringCtl
+  description: API contract for the communication with the wateringctl-firmware
+  version: 0.0.1
+
+paths:
+  /schedule:
+    get:
+      tags:
+      - "scheduler"
+      summary: "Get the current schedule"
+      responses:
+        "200":
+          description: "Fetch successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+
+  /schedule/{day}:
+    get:
+      tags:
+      - "scheduler"
+      summary: "Get the current schedule of a specific day"
+      parameters:
+        - name: day
+          in: path
+          schema:
+            $ref: "#/components/schemas/WeekDay"
+          required: true
+      responses:
+        "200":
+          description: "Fetch successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduledDay"
+
+components:
+  schemas:
+    Interval:
+      type: object
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+        identifier:
+          type: number
+        active:
+          type: boolean
+    ScheduledDay:
+      type: array
+      items:
+        $ref: "#/components/schemas/Interval"
+    WeekDay:
+      type: string
+      enum:
+        - WEEKDAY_SU
+        - WEEKDAY_MO
+        - WEEKDAY_TU
+        - WEEKDAY_WE
+        - WEEKDAY_TH
+        - WEEKDAY_FR
+        - WEEKDAY_SA
+    Schedule:
+      type: object
+      properties:
+        WEEKDAY_SU:
+          $ref: "#/components/schemas/ScheduledDay"
+        WEEKDAY_MO:
+          $ref: "#/components/schemas/ScheduledDay"
+        WEEKDAY_TU:
+          $ref: "#/components/schemas/ScheduledDay"
+        WEEKDAY_WE:
+          $ref: "#/components/schemas/ScheduledDay"
+        WEEKDAY_TH:
+          $ref: "#/components/schemas/ScheduledDay"
+        WEEKDAY_FR:
+          $ref: "#/components/schemas/ScheduledDay"
+        WEEKDAY_SA:
+          $ref: "#/components/schemas/ScheduledDay"

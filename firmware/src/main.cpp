@@ -65,7 +65,7 @@ void setup()
   scheduler_eeprom_load(&scheduler);
   Serial.println("Loaded scheduler's schedule from EEPROM!");
 
-  web_server_init();
+  web_server_init(&scheduler);
   Serial.println("Started the web server!");
 
   // scheduler_weekday_t today = (scheduler_weekday_t) ntpClient.getDay();

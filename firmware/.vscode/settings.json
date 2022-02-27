@@ -1,0 +1,24 @@
+{
+  "files.associations": {
+    "arduino.h": "c",
+    "dbglog.h": "c",
+    "hardwareserial.h": "c",
+    "*.tcc": "cpp",
+    "bitset": "cpp",
+    "deque": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "unordered_set": "cpp",
+    "vector": "cpp",
+    "functional": "cpp",
+    "string_view": "cpp",
+    "fstream": "cpp",
+    "istream": "cpp",
+    "ostream": "cpp",
+    "sstream": "cpp",
+    "streambuf": "cpp",
+    "system_error": "cpp",
+    "regex": "cpp",
+    "tuple": "cpp"
+  }
+}
