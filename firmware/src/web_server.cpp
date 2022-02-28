@@ -5,7 +5,7 @@ scheduler_t *sched;
 
 /*
 ============================================================================
-                               Error routine                                
+                               Error routines                               
 ============================================================================
 */
 
@@ -36,6 +36,31 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, co
 void web_server_route_not_found(AsyncWebServerRequest *request)
 {
   web_server_error_resp(request, 404, "The requested resource was not found (" QUOTSTR ")!", request->url().c_str());
+}
+
+/*
+============================================================================
+                                Body Handler                                
+============================================================================
+*/
+
+void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  // Create buffer on first segment of the message
+  if(index == 0)
+  {
+    // Since the framework calls free on _tempObject if it's non-null, just allocate a
+    // pointer to the mman resource we'll dealloc later ourselves
+    request->_tempObject = malloc(sizeof(void *));
+
+    // Allocate actual string buffer
+    *((void **)request->_tempObject) = mman_alloc(sizeof(char), 128, NULL);
+  }
+
+  // Collect segments into buffer
+  char *buf = (char *) *((void **) request->_tempObject);
+  scptr char *str = strclone_s((char *) data, len);
+  strfmt(&buf, &index, "%s", str);
 }
 
 /*
@@ -84,6 +109,19 @@ static bool scheduler_parse_day(AsyncWebServerRequest *request, const char *day_
   }
 
   return true;
+}
+
+static bool web_server_ensure_body(AsyncWebServerRequest *request, char **output)
+{
+  // Body segment collector has been called at least once
+  if (request->_tempObject)
+  {
+    *output = (char *) *((void **) request->_tempObject);
+    return true;
+  }
+
+  web_server_error_resp(request, 400, "No body content provided!");
+  return false;
 }
 
 /*
@@ -135,32 +173,61 @@ void web_server_route_scheduler_day(AsyncWebServerRequest *request)
 ============================================================================
 */
 
-void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
+static bool web_server_route_scheduler_day_index_parse(
+  AsyncWebServerRequest *request,
+  scheduler_weekday_t *day,
+  long *index
+)
 {
   // Parse weekday from path arg
-  scheduler_weekday_t day;
-  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
-    return;
+  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), day))
+    return false;
 
   // Parse numeric index
-  long index;
   const char *index_str = request->pathArg(1).c_str();
-  if (longp(&index, index_str, 10) != LONGP_SUCCESS)
+  if (longp(index, index_str, 10) != LONGP_SUCCESS)
   {
     web_server_error_resp(request, 400, "Invalid non-numeric index (%s)!", index_str);
-    return;
+    return false;
   }
 
   // Check index validity
-  if (index < 0 || index >= SCHEDULER_MAX_INTERVALS_PER_DAY)
+  if (*index < 0 || *index >= SCHEDULER_MAX_INTERVALS_PER_DAY)
   {
     web_server_error_resp(request, 400, "Invalid out-of-range index (%s)!", index_str);
-    return;
+    return false;
   }
+
+  return true;
+}
+
+void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
+{
+  scheduler_weekday_t day;
+  long index;
+
+  if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
+    return;
 
   scptr htable_t *int_jsn = generate_day_ind_interval_json(day, index);
   scptr char *int_jsn_str = jsonh_stringify(int_jsn, 2);
   request->send(200, "text/json", int_jsn_str);
+}
+
+void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
+{
+  scheduler_weekday_t day;
+  long index;
+
+  if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
+    return;
+
+  scptr char *body = NULL;
+  if (!web_server_ensure_body(request, &body))
+    return;
+
+  scptr char *resp = strfmt_direct("Your request was:\n%s", body);
+  request->send(200, "text/plain", resp);
 }
 
 void web_server_init(scheduler_t *scheduler)
@@ -171,8 +238,11 @@ void web_server_init(scheduler_t *scheduler)
   // /scheduler/{day}
   wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)$", HTTP_GET, web_server_route_scheduler_day);
 
-  // /scheduler/{day}
+  // /scheduler/{day}/index
   wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$", HTTP_GET, web_server_route_scheduler_day_index);
+
+  // /scheduler/{day}/index
+  wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$", HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
 
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);
