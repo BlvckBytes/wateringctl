@@ -35,7 +35,7 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, co
 
 void web_server_route_not_found(AsyncWebServerRequest *request)
 {
-  web_server_error_resp(request, 404, "The requested resource was not found (%s)!", request->url());
+  web_server_error_resp(request, 404, "The requested resource was not found (" QUOTSTR ")!", request->url());
 }
 
 /*

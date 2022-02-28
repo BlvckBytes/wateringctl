@@ -42,6 +42,29 @@ static char *jsonh_gen_indent(int indent)
   return (char *) mman_ref(buf);
 }
 
+static char *jsonh_escape_string(char *str)
+{
+  scptr char *res = (char *) mman_alloc(sizeof(char), 128, NULL);
+  size_t res_ind = 0;
+
+  for (char *c = str; *c; c++)
+  {
+    // Double buffer size when the end is reached
+    mman_meta_t *res_meta = mman_fetch_meta(res);
+    if (res_meta->num_blocks <= res_ind)
+      mman_realloc((void **) &res, res_meta->block_size, res_meta->num_blocks * 2);
+
+    // Escape characters by a leading backslash
+    if (*c == '"' || *c == '\\')
+      res[res_ind++] = '\\';
+
+    res[res_ind++] = *c;
+  }
+
+  res[res_ind] = 0;
+  return (char *) mman_ref(res);
+}
+
 /**
  * @brief Stringify a json-value based on it's type marker field
  * 
@@ -81,7 +104,9 @@ static void jsonh_stringify_value(jsonh_value_t *jv, int indent, int indent_leve
     return;
 
     case JDTYPE_STR:
-    strfmt(buf, buf_offs, QUOTSTR, (char *) jv->value);
+    char *value = (char *) jv->value;
+    scptr char *value_escaped = jsonh_escape_string(value);
+    strfmt(buf, buf_offs, QUOTSTR, value_escaped);
     return;
   }
 }
