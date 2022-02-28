@@ -202,20 +202,20 @@ static jsonh_opres_t jsonh_set_value(htable_t *jsonh, const char *key, void *val
 {
   scptr jsonh_value_t* value = jsonh_value_make(val, val_type);
   if (htable_insert(jsonh, key, mman_ref(value)) == HTABLE_SUCCESS)
-    return JOPRES_SUCC;
+    return JOPRES_SUCCESS;
 
   mman_dealloc(value);
-  return JOPRES_INTERNAL_ERR;
+  return JOPRES_SIZELIM_EXCEED;
 }
 
 static jsonh_opres_t jsonh_insert_value(dynarr_t *array, void *val, jsonh_datatype_t val_type)
 {
   scptr jsonh_value_t* value = jsonh_value_make(val, val_type);
   if (dynarr_push(array, mman_ref(value), NULL) == DYNARR_SUCCESS)
-    return JOPRES_SUCC;
+    return JOPRES_SUCCESS;
 
   mman_dealloc(value);
-  return JOPRES_INTERNAL_ERR;
+  return JOPRES_SIZELIM_EXCEED;
 }
 
 jsonh_opres_t jsonh_set_obj(htable_t *jsonh, const char *key, htable_t *obj)
@@ -234,7 +234,7 @@ jsonh_opres_t jsonh_set_int(htable_t *jsonh, const char *key, int num)
   *numv = num;
 
   jsonh_opres_t ret = jsonh_set_value(jsonh, key, mman_ref(numv), JDTYPE_INT);
-  if (ret != JOPRES_SUCC)
+  if (ret != JOPRES_SUCCESS)
     mman_dealloc(numv);
 
   return ret;
@@ -246,7 +246,7 @@ jsonh_opres_t jsonh_set_float(htable_t *jsonh, const char *key, float num)
   *numv = num;
 
   jsonh_opres_t ret = jsonh_set_value(jsonh, key, mman_ref(numv), JDTYPE_FLOAT);
-  if (ret != JOPRES_SUCC)
+  if (ret != JOPRES_SUCCESS)
     mman_dealloc(numv);
 
   return ret;
@@ -258,7 +258,7 @@ jsonh_opres_t jsonh_set_bool(htable_t *jsonh, const char *key, bool b)
   *boolv = b;
 
   jsonh_opres_t ret = jsonh_set_value(jsonh, key, mman_ref(boolv), JDTYPE_BOOL);
-  if (ret != JOPRES_SUCC)
+  if (ret != JOPRES_SUCCESS)
     mman_dealloc(boolv);
 
   return ret;
@@ -301,7 +301,7 @@ jsonh_opres_t jsonh_insert_arr_int(dynarr_t *array, int num)
   *numv = num;
 
   jsonh_opres_t ret = jsonh_insert_value(array, mman_ref(numv), JDTYPE_INT);
-  if (ret != JOPRES_SUCC)
+  if (ret != JOPRES_SUCCESS)
     mman_dealloc(numv);
 
   return ret;
@@ -313,7 +313,7 @@ jsonh_opres_t jsonh_insert_arr_float(dynarr_t *array, float num)
   *numv = num;
 
   jsonh_opres_t ret = jsonh_insert_value(array, mman_ref(numv), JDTYPE_FLOAT);
-  if (ret != JOPRES_SUCC)
+  if (ret != JOPRES_SUCCESS)
     mman_dealloc(numv);
 
   return ret;
@@ -325,7 +325,7 @@ jsonh_opres_t jsonh_insert_arr_bool(dynarr_t *array, bool b)
   *boolv = b;
 
   jsonh_opres_t ret = jsonh_insert_value(array, mman_ref(boolv), JDTYPE_BOOL);
-  if (ret != JOPRES_SUCC)
+  if (ret != JOPRES_SUCCESS)
     mman_dealloc(boolv);
 
   return ret;
@@ -334,4 +334,173 @@ jsonh_opres_t jsonh_insert_arr_bool(dynarr_t *array, bool b)
 jsonh_opres_t jsonh_insert_arr_null(dynarr_t *array)
 {
   return jsonh_insert_value(array, NULL, JDTYPE_NULL);
+}
+
+/*
+============================================================================
+                                 Getters                                    
+============================================================================
+*/
+
+/**
+ * @brief Get a value from a json object by type, checks that the key
+ * exists and the type matches
+ * 
+ * @param jsonh Json object to fetch from
+ * @param key Key of the target value
+ * @param dt Expected datatype
+ * @param output Output buffer
+ * 
+ * @return jsonh_opres_t Operation result
+ */
+static jsonh_opres_t jsonh_get_value(htable_t *jsonh, const char *key, jsonh_datatype_t dt, void **output)
+{
+  jsonh_value_t *value = NULL;
+  if (htable_fetch(jsonh, key, (void **) &value) != HTABLE_SUCCESS)
+    return JOPRES_INVALID_KEY;
+
+  if (value->type != dt)
+    return JOPRES_DTYPE_MISMATCH;
+
+  if (output)
+    *output = value->value;
+
+  return JOPRES_SUCCESS;
+}
+
+jsonh_opres_t jsonh_get_obj(htable_t *jsonh, const char *key, htable_t **obj)
+{
+  return jsonh_get_value(jsonh, key, JDTYPE_OBJ, (void **) obj);
+}
+
+jsonh_opres_t jsonh_get_arr(htable_t *jsonh, const char *key, dynarr_t **arr)
+{
+  return jsonh_get_value(jsonh, key, JDTYPE_ARR, (void **) arr);
+}
+
+jsonh_opres_t jsonh_get_str(htable_t *jsonh, const char *key, char **str)
+{
+  return jsonh_get_value(jsonh, key, JDTYPE_STR, (void **) str);
+}
+
+jsonh_opres_t jsonh_get_int(htable_t *jsonh, const char *key, int *num)
+{
+  int *val = NULL;
+  jsonh_opres_t ret = jsonh_get_value(jsonh, key, JDTYPE_INT, (void **) &val);
+
+  if (ret == JOPRES_SUCCESS)
+    *num = *val;
+
+  return ret;
+}
+
+jsonh_opres_t jsonh_get_float(htable_t *jsonh, const char *key, float *num)
+{
+  float *val = NULL;
+  jsonh_opres_t ret = jsonh_get_value(jsonh, key, JDTYPE_FLOAT, (void **) &val);
+
+  if (ret == JOPRES_SUCCESS)
+    *num = *val;
+
+  return ret;
+}
+
+jsonh_opres_t jsonh_get_bool(htable_t *jsonh, const char *key, bool *b)
+{
+  bool *val = NULL;
+  jsonh_opres_t ret = jsonh_get_value(jsonh, key, JDTYPE_BOOL, (void **) &val);
+
+  if (ret == JOPRES_SUCCESS)
+    *b = *val;
+
+  return ret;
+}
+
+jsonh_opres_t jsonh_get_is_null(htable_t *jsonh, const char *key, bool *is_null)
+{
+  jsonh_opres_t ret = jsonh_get_value(jsonh, key, JDTYPE_NULL, NULL);
+  if (ret == JOPRES_INVALID_KEY)
+    return ret;
+
+  *is_null = ret != JOPRES_DTYPE_MISMATCH;
+  return JOPRES_SUCCESS;
+}
+
+/*
+============================================================================
+                              Array Getters                                 
+============================================================================
+*/
+
+static jsonh_opres_t jsonh_get_arr_value(dynarr_t *array, int index, jsonh_datatype_t dt, void **output)
+{
+  if (index < 0 || index >= array->_array_size)
+    return JOPRES_INVALID_INDEX;
+
+  jsonh_value_t *value = (jsonh_value_t *) array->items[index];
+  if (value->type != dt)
+    return JOPRES_DTYPE_MISMATCH;
+
+  if (output)
+    *output = value->value;
+
+  return JOPRES_SUCCESS;
+}
+
+jsonh_opres_t jsonh_get_arr_obj(dynarr_t *array, int index, htable_t *obj)
+{
+  return jsonh_get_arr_value(array, index, JDTYPE_OBJ, (void **) &obj);
+}
+
+jsonh_opres_t jsonh_get_arr_arr(dynarr_t *array, int index, dynarr_t *arr)
+{
+  return jsonh_get_arr_value(array, index, JDTYPE_ARR, (void **) &arr);
+}
+
+jsonh_opres_t jsonh_get_arr_str(dynarr_t *array, int index, char *str)
+{
+  return jsonh_get_arr_value(array, index, JDTYPE_STR, (void **) &str);
+}
+
+jsonh_opres_t jsonh_get_arr_int(dynarr_t *array, int index, int *num)
+{
+  int *val = NULL;
+  jsonh_opres_t ret = jsonh_get_arr_value(array, index, JDTYPE_INT, (void **) &val);
+
+  if (ret == JOPRES_SUCCESS)
+    *num = *val;
+
+  return ret;
+}
+
+jsonh_opres_t jsonh_get_arr_float(dynarr_t *array, int index, float *num)
+{
+  float *val = NULL;
+  jsonh_opres_t ret = jsonh_get_arr_value(array, index, JDTYPE_FLOAT, (void **) &val);
+
+  if (ret == JOPRES_SUCCESS)
+    *num = *val;
+
+  return ret;
+}
+
+jsonh_opres_t jsonh_get_arr_bool(dynarr_t *array, int index, bool *b)
+{
+  bool *val = NULL;
+  jsonh_opres_t ret = jsonh_get_arr_value(array, index, JDTYPE_BOOL, (void **) &val);
+
+  if (ret == JOPRES_SUCCESS)
+    *b = *val;
+
+  return ret;
+}
+
+jsonh_opres_t jsonh_get_arr_is_null(dynarr_t *array, int index, bool *is_null)
+{
+  jsonh_opres_t ret = jsonh_get_arr_value(array, index, JDTYPE_NULL, NULL);
+  if (ret == JOPRES_INVALID_KEY)
+    return ret;
+
+  *is_null = ret != JOPRES_DTYPE_MISMATCH;
+  return JOPRES_SUCCESS;
 }

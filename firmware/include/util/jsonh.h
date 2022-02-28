@@ -17,10 +17,11 @@
   FUN(JDTYPE_NULL,    0x6)
 
 #define _EVALS_JSONH_OPRES(FUN)                                                               \
-  FUN(JOPRES_SUCC,            0x0) /* Successful operation */                                 \
+  FUN(JOPRES_SUCCESS,         0x0) /* Successful operation */                                 \
   FUN(JOPRES_DTYPE_MISMATCH,  0x1) /* Datatype of value didn't match datatype of getter */    \
-  FUN(JOPRES_INTERNAL_ERR,    0x2) /* An internal error occurred */                           \
-  FUN(JOPRES_INVALID_INDEX,   0x3) /* The requested array-index is out of range */
+  FUN(JOPRES_SIZELIM_EXCEED,  0x2) /* An internal error occurred */                           \
+  FUN(JOPRES_INVALID_INDEX,   0x3) /* The requested array-index is out of range */            \
+  FUN(JOPRES_INVALID_KEY,     0x4) /* The requested key does not exist */
 
 #define JSONH_ROOT_ITEM_CAP 1024
 
@@ -28,7 +29,8 @@ ENUM_TYPEDEF_FULL_IMPL(jsonh_datatype, _EVALS_JSONH_DTYPE);
 ENUM_TYPEDEF_FULL_IMPL(jsonh_opres, _EVALS_JSONH_OPRES);
 
 /**
- * @brief This wraps all values to allow for datatype detection at runtime
+ * @brief This wraps all values (htable and dynarr) to allow
+ * for datatype detection at runtime
  */
 typedef struct jsonh_value
 {
@@ -155,7 +157,7 @@ jsonh_opres_t jsonh_set_arr(htable_t *jsonh, const char *key, dynarr_t *arr);
 
 /*
 ============================================================================
-                             Array Insertion                                
+                              Array Setters                                 
 ============================================================================
 */
 
@@ -177,7 +179,7 @@ jsonh_opres_t jsonh_insert_arr_obj(dynarr_t *array, htable_t *obj);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_insert_arr_arr(dynarr_t *arrary, dynarr_t *arr);
+jsonh_opres_t jsonh_insert_arr_arr(dynarr_t *array, dynarr_t *arr);
 
 /**
  * @brief Insert a string into a JSON array
@@ -243,7 +245,7 @@ jsonh_opres_t jsonh_insert_arr_null(dynarr_t *array);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_get_obj(htable_t *jsonh, const char *key, htable_t *obj);
+jsonh_opres_t jsonh_get_obj(htable_t *jsonh, const char *key, htable_t **obj);
 
 /**
  * @brief Get the value of a given key as a JSON array
@@ -254,7 +256,7 @@ jsonh_opres_t jsonh_get_obj(htable_t *jsonh, const char *key, htable_t *obj);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_get_arr(htable_t *jsonh, const char *key, dynarr_t *arr);
+jsonh_opres_t jsonh_get_arr(htable_t *jsonh, const char *key, dynarr_t **arr);
 
 /**
  * @brief Get the value of a given key as a string
@@ -265,7 +267,7 @@ jsonh_opres_t jsonh_get_arr(htable_t *jsonh, const char *key, dynarr_t *arr);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_get_str(htable_t *jsonh, const char *key, char *str);
+jsonh_opres_t jsonh_get_str(htable_t *jsonh, const char *key, char **str);
 
 /**
  * @brief Get the value of a given key as an integer
@@ -335,7 +337,7 @@ jsonh_opres_t jsonh_get_arr_obj(dynarr_t *array, int index, htable_t *obj);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_get_arr_arr(dynarr_t *arrary, int index, dynarr_t *arr);
+jsonh_opres_t jsonh_get_arr_arr(dynarr_t *array, int index, dynarr_t *arr);
 
 /**
  * @brief Get the value of a slot as a string
@@ -357,7 +359,7 @@ jsonh_opres_t jsonh_get_arr_str(dynarr_t *array, int index, char *str);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_get_arr_int(dynarr_t *array, int index, int num);
+jsonh_opres_t jsonh_get_arr_int(dynarr_t *array, int index, int *num);
 
 /**
  * @brief Get the value of a slot as a float
@@ -368,7 +370,7 @@ jsonh_opres_t jsonh_get_arr_int(dynarr_t *array, int index, int num);
  * 
  * @return jsonh_opres_t Operation result
  */
-jsonh_opres_t jsonh_get_arr_float(dynarr_t *array, int index, float num);
+jsonh_opres_t jsonh_get_arr_float(dynarr_t *array, int index, float *num);
 
 /**
  * @brief Get the value of a slot as a boolean
