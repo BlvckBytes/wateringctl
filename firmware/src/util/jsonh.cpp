@@ -35,9 +35,10 @@ static void jsonh_stringify_arr(dynarr_t *arr, int indent, int indent_level, cha
 
 static char *jsonh_gen_indent(int indent)
 {
-  scptr char *buf = (char *) mman_alloc(sizeof(char), indent, NULL);
+  scptr char *buf = (char *) mman_alloc(sizeof(char), indent + 1, NULL);
   for (int i = 0; i < indent; i++)
     buf[i] = ' ';
+  buf[indent] = 0;
   return (char *) mman_ref(buf);
 }
 

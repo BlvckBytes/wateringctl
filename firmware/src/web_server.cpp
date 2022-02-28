@@ -10,34 +10,32 @@ void web_server_route_not_found(AsyncWebServerRequest *request)
 
 void web_server_route_scheduler(AsyncWebServerRequest *request)
 {
-  scptr char *resp = (char *) mman_alloc(sizeof(char), 2048, NULL);
-  size_t resp_offs = 0;
-
-  strfmt(&resp, &resp_offs, "{\n");
-
+  scptr htable_t *jsn = jsonh_make();
+  
   for (int i = 0; i < 7; i++)
   {
-    strfmt(&resp, &resp_offs, "  \"%s\": [\n", scheduler_weekday_name((scheduler_weekday_t) i));
+    const char *weekday_name = scheduler_weekday_name((scheduler_weekday_t) i);
+    scptr dynarr_t *weekday_schedule = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
+    jsonh_set_arr(jsn, weekday_name, (dynarr_t *) mman_ref(weekday_schedule));
+
     for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
     {
       scheduler_interval_t interval = sched->daily_schedules[i][j];
       scptr char *start_str = scheduler_time_stringify(&(interval.start));
       scptr char *end_str = scheduler_time_stringify(&(interval.end));
 
-      strfmt(&resp, &resp_offs, "    {\n");
-      strfmt(&resp, &resp_offs, "      \"start\": \"%s\",\n", start_str);
-      strfmt(&resp, &resp_offs, "      \"end\": \"%s\",\n", end_str);
-      strfmt(&resp, &resp_offs, "      \"identifier\": %" PRIu8 ",\n", interval.identifier);
-      strfmt(&resp, &resp_offs, "      \"active\": %s\n", interval.active ? "true" : "false");
-      strfmt(&resp, &resp_offs, "    }%s\n", j == SCHEDULER_MAX_INTERVALS_PER_DAY - 1 ? "" : ",");
-    }
+      scptr htable_t *int_jsn = jsonh_make();
+      jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn));
 
-    strfmt(&resp, &resp_offs, "  ]%s\n", i == 6 ? "" : ",");
+      jsonh_set_str(int_jsn, "start", (char *) mman_ref(start_str));
+      jsonh_set_str(int_jsn, "end", (char *) mman_ref(end_str));
+      jsonh_set_int(int_jsn, "identifier", interval.identifier);
+      jsonh_set_bool(int_jsn, "active", interval.active);
+    }
   }
 
-  strfmt(&resp, &resp_offs, "}");
-
-  request->send(200, "text/plain", resp);
+  scptr char *stringified = jsonh_stringify(jsn, 2);
+  request->send(200, "text/json", stringified);
 }
 
 void web_server_init(scheduler_t *scheduler)

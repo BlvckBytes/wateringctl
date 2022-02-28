@@ -6,6 +6,7 @@
 #include "scheduler.h"
 #include "util/mman.h"
 #include "util/strfmt.h"
+#include "util/jsonh.h"
 
 #define WEB_SERVER_PORT 80
 
