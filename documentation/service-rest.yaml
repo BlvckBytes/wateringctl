@@ -36,7 +36,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScheduledDay"
+                type: object
+                properties:
+                  items:
+                    $ref: "#/components/schemas/ScheduledDay"
 
 components:
   schemas:

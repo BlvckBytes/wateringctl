@@ -2,6 +2,7 @@
 #define web_server_h
 
 #include <ESPAsyncWebServer.h>
+#include <stdarg.h>
 
 #include "scheduler.h"
 #include "util/mman.h"
