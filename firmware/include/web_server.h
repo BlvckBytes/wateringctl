@@ -6,6 +6,7 @@
 
 #include "scheduler.h"
 #include "util/mman.h"
+#include "util/longp.h"
 #include "util/strfmt.h"
 #include "util/jsonh.h"
 

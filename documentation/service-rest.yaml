@@ -40,8 +40,65 @@ paths:
                 properties:
                   items:
                     $ref: "#/components/schemas/ScheduledDay"
+        "400":
+          description: "Unknown day specified"
+
+    post:
+      tags:
+      - "scheduler"
+      summary: "Append a new interval to to a specific day"
+      parameters:
+        - name: day
+          in: path
+          schema:
+            $ref: "#/components/schemas/WeekDay"
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/IntervalRequest"
+      responses:
+        "400":
+          description: "Unknown day specified"
+        "409":
+          description: "No more unoccupied slots available"
+
+  /schedule/{day}/{index}:
+    get:
+      tags:
+      - "scheduler"
+      summary: "Get the current interval of a specific slot (by index) of a specific day"
+      parameters:
+        - name: day
+          in: path
+          schema:
+            $ref: "#/components/schemas/WeekDay"
+          required: true
+        - name: index
+          in: path
+          schema:
+            type: number
+          required: true
+      responses:
+        "200":
+          description: "Fetch successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    $ref: "#/components/schemas/Interval"
+        "400":
+          description: "Unknown day or index specified"
+
 
 components:
+  requestBodies:
+    IntervalRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Interval'
   schemas:
     Interval:
       type: object
@@ -52,7 +109,11 @@ components:
           type: string
         identifier:
           type: number
+        index:
+          type: number
+          readOnly: true
         active:
+          readOnly: true
           type: boolean
     ScheduledDay:
       type: array

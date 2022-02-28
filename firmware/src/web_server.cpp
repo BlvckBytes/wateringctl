@@ -35,7 +35,7 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, co
 
 void web_server_route_not_found(AsyncWebServerRequest *request)
 {
-  web_server_error_resp(request, 404, "The requested resource was not found (" QUOTSTR ")!", request->url());
+  web_server_error_resp(request, 404, "The requested resource was not found (" QUOTSTR ")!", request->url().c_str());
 }
 
 /*
@@ -44,26 +44,46 @@ void web_server_route_not_found(AsyncWebServerRequest *request)
 ============================================================================
 */
 
+static htable_t *generate_day_ind_interval_json(scheduler_weekday_t day, int index)
+{
+  scheduler_interval_t interval = sched->daily_schedules[day][index];
+  scptr char *start_str = scheduler_time_stringify(&(interval.start));
+  scptr char *end_str = scheduler_time_stringify(&(interval.end));
+
+  scptr htable_t *int_jsn = jsonh_make();
+
+  jsonh_set_str(int_jsn, "start", (char *) mman_ref(start_str));
+  jsonh_set_str(int_jsn, "end", (char *) mman_ref(end_str));
+  jsonh_set_int(int_jsn, "identifier", interval.identifier);
+  jsonh_set_int(int_jsn, "index", index);
+  jsonh_set_bool(int_jsn, "active", interval.active);
+
+  return (htable_t *) mman_ref(int_jsn);
+}
+
 static dynarr_t *generate_day_schedule_json(scheduler_weekday_t day)
 {
   scptr dynarr_t *weekday_schedule = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
 
   for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
   {
-    scheduler_interval_t interval = sched->daily_schedules[day][j];
-    scptr char *start_str = scheduler_time_stringify(&(interval.start));
-    scptr char *end_str = scheduler_time_stringify(&(interval.end));
-
-    scptr htable_t *int_jsn = jsonh_make();
+    scptr htable_t *int_jsn = generate_day_ind_interval_json(day, j);
     jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn));
-
-    jsonh_set_str(int_jsn, "start", (char *) mman_ref(start_str));
-    jsonh_set_str(int_jsn, "end", (char *) mman_ref(end_str));
-    jsonh_set_int(int_jsn, "identifier", interval.identifier);
-    jsonh_set_bool(int_jsn, "active", interval.active);
   }
 
   return (dynarr_t *) mman_ref(weekday_schedule);
+}
+
+static bool scheduler_parse_day(AsyncWebServerRequest *request, const char *day_str, scheduler_weekday_t *day)
+{
+  // Parse weekday from path arg
+  if (scheduler_weekday_value(day_str, day) != ENUMLUT_SUCCESS)
+  {
+    web_server_error_resp(request, 400, "Invalid weekday specified (%s)!", day_str);
+    return false;
+  }
+
+  return true;
 }
 
 /*
@@ -98,12 +118,8 @@ void web_server_route_scheduler_day(AsyncWebServerRequest *request)
 {
   // Parse weekday from path arg
   scheduler_weekday_t day;
-  const char *day_param = request->pathArg(0).c_str();
-  if (scheduler_weekday_value(day_param, &day) != ENUMLUT_SUCCESS)
-  {
-    web_server_error_resp(request, 400, "Invalid weekday specified (%s)!", day_param);
+  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
     return;
-  }
 
   scptr htable_t *jsn = jsonh_make();
   scptr dynarr_t *weekday_schedule = generate_day_schedule_json(day);
@@ -113,6 +129,40 @@ void web_server_route_scheduler_day(AsyncWebServerRequest *request)
   request->send(200, "text/json", jsn_str);
 }
 
+/*
+============================================================================
+                          /scheduler/{day}/{index}                          
+============================================================================
+*/
+
+void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
+{
+  // Parse weekday from path arg
+  scheduler_weekday_t day;
+  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
+    return;
+
+  // Parse numeric index
+  long index;
+  const char *index_str = request->pathArg(1).c_str();
+  if (longp(&index, index_str, 10) != LONGP_SUCCESS)
+  {
+    web_server_error_resp(request, 400, "Invalid non-numeric index (%s)!", index_str);
+    return;
+  }
+
+  // Check index validity
+  if (index < 0 || index >= SCHEDULER_MAX_INTERVALS_PER_DAY)
+  {
+    web_server_error_resp(request, 400, "Invalid out-of-range index (%s)!", index_str);
+    return;
+  }
+
+  scptr htable_t *int_jsn = generate_day_ind_interval_json(day, index);
+  scptr char *int_jsn_str = jsonh_stringify(int_jsn, 2);
+  request->send(200, "text/json", int_jsn_str);
+}
+
 void web_server_init(scheduler_t *scheduler)
 {
   // /scheduler
@@ -120,6 +170,9 @@ void web_server_init(scheduler_t *scheduler)
 
   // /scheduler/{day}
   wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)$", HTTP_GET, web_server_route_scheduler_day);
+
+  // /scheduler/{day}
+  wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$", HTTP_GET, web_server_route_scheduler_day_index);
 
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);
