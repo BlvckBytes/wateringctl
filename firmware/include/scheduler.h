@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#include "enumlut.h"
+#include "util/enumlut.h"
 #include "util/mman.h"
 #include "util/strfmt.h"
 

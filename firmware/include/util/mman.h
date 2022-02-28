@@ -3,11 +3,11 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <Arduino.h>
 #include <stdlib.h>
 
 #include "util/compattrs.h"
 #include "util/atomanip.h"
+#include "util/dbglog.h"
 #include "util/common_types.h"
 
 /*

@@ -18,7 +18,7 @@ mman_meta_t *mman_fetch_meta(void *ptr)
   mman_meta_t *meta = (mman_meta_t *) ((char *) ptr - sizeof(mman_meta_t));
   if (ptr != meta->ptr)
   {
-    // Serial.printf("Invalid resource passed to \"mman_fetch_meta\"!\n");
+    dbgerr("Invalid resource passed to \"mman_fetch_meta\"!\n");
     return NULL;
   }
 
@@ -110,7 +110,7 @@ mman_meta_t *mman_realloc(void **ptr_ptr, size_t block_size, size_t num_blocks)
   mman_meta_t *meta = mman_fetch_meta(ptr);
   if (ptr != meta->ptr)
   {
-    // dbgerr("ERROR: Invalid resource passed to \"mman_realloc\"!\n");
+    dbgerr("ERROR: Invalid resource passed to \"mman_realloc\"!\n");
     return NULL;
   }
 
@@ -141,7 +141,7 @@ mman_result_t mman_dealloc_force(void *ptr)
   mman_meta_t *meta = mman_fetch_meta(ptr);
   if (!meta)
   {
-    // dbgerr("ERROR: mman_dealloc_force received unknown ref!\n");
+    dbgerr("ERROR: mman_dealloc_force received unknown ref!\n");
     return MMAN_INVREF;
   }
 
@@ -166,10 +166,7 @@ mman_result_t mman_dealloc(void *ptr)
   if (!ptr) return MMAN_NULLREF;
   mman_meta_t *meta = mman_fetch_meta(ptr);
   if (!meta)
-  {
-    // dbgerr("ERROR: mman_dealloc received unknown ref!\n");
     return MMAN_INVREF;
-  }
 
   // Decrease number of active references
   // Do nothing as long as active references remain
@@ -209,11 +206,12 @@ void *mman_ref(void *ptr)
 ============================================================================
 */
 
-void mman_print_info(size_t us_del)
+void mman_print_info()
 {
   // Print as errors to also have this screen in non-info-debug mode
-  // dbgerr("----------< MMAN Statistics >----------\n");
-  // dbgerr("> Allocated: %lu\n", mman_alloc_count);
-  // dbgerr("> Deallocated: %lu\n", mman_dealloc_count);
-  // dbgerr("----------< MMAN Statistics >----------\n");
+  size_t ac = mman_alloc_count, deac = mman_dealloc_count;
+  dbgerr("----------< MMAN Statistics >----------\n");
+  dbgerr("> Allocated: %lu\n", ac);
+  dbgerr("> Deallocated: %lu\n", deac);
+  dbgerr("----------< MMAN Statistics >----------\n");
 }

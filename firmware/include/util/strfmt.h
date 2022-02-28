@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "util/mman.h"
@@ -48,5 +49,15 @@ bool vstrfmt(char **buf, size_t *offs, const char *fmt, va_list ap);
  * @return char* Formatted string or NULL on errors
  */
 char *strfmt_direct(const char *fmt, ...);
+
+/**
+ * @brief Format a string and directly get the result, without having to
+ * provide a buffer as well as an offset tracker
+ * 
+ * @param fmt Format string
+ * @param ... Arguments for the format
+ * @return char* Formatted string or NULL on errors
+ */
+char *vstrfmt_direct(const char *fmt, va_list ap);
 
 #endif

@@ -46,16 +46,22 @@ bool strfmt(char **buf, size_t *offs, const char *fmt, ...)
 
 char *strfmt_direct(const char *fmt, ...)
 {
-  scptr char *buf = (char *) mman_alloc(sizeof(char), 128, NULL);
-
   va_list ap;
   va_start(ap, fmt);
 
-  size_t offs = 0;
-  bool res = vstrfmt(&buf, &offs, fmt, ap);
+  scptr char *res = vstrfmt_direct(fmt, ap);
 
   va_end(ap);
+  return (char *) mman_ref(res);
+}
 
-  if (!res) return NULL;
+char *vstrfmt_direct(const char *fmt, va_list ap)
+{
+  scptr char *buf = (char *) mman_alloc(sizeof(char), 128, NULL);
+  size_t buf_offs = 0;
+
+  if (!vstrfmt(&buf, &buf_offs, fmt, ap))
+    return NULL;
+
   return (char *) mman_ref(buf);
 }
