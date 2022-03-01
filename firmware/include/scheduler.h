@@ -6,8 +6,11 @@
 #include <EEPROM.h>
 
 #include <blvckstd/enumlut.h>
+#include <blvckstd/jsonh.h>
 #include <blvckstd/mman.h>
 #include <blvckstd/strfmt.h>
+#include <blvckstd/partial_strdup.h>
+#include <blvckstd/longp.h>
 
 /*
   The scheduler schedules on-times over the period of one
@@ -59,7 +62,22 @@ const scheduler_time_t SCHEDULER_TIME_MIDNIGHT = { 00, 00, 00 };
  * @param time Time to stringify
  * @return char* Stringified time, mman-alloced
  */
-char *scheduler_time_stringify(scheduler_time *time);
+char *scheduler_time_stringify(scheduler_time_t *time);
+
+/**
+ * @brief Parse a scheduler time from a given string using the
+ * format <hours>:<minutes>:<seconds>, where each block needs to be an
+ * integer between 0 and either 23 or 59, but blocks don't need to be
+ * padded with zeros to match two digits
+ * 
+ * @param str Input string
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing success
+ * @return false On parsing errors, see err
+ */
+bool scheduler_time_parse(const char *str, char **err, scheduler_time_t *out);
 
 /**
  * @brief Compare two scheduler times
@@ -81,6 +99,24 @@ typedef struct scheduler_interval
   uint8_t identifier;                 // Identifier provided in the scheduler's callback
   bool active;                         // Whether or not this interval is currently active
 } scheduler_interval_t;
+
+/**
+ * @brief Parsse an interval's writable values from json, using the following schema:
+ * 
+ * {
+ *   "start": "<hours>:<minutes>:<seconds>",
+ *   "end": "<hours>:<minutes>:<seconds>",
+ *   "identifier": <integer>
+ * }
+ * 
+ * @param json JSONH json node
+ * @param err Error output buffer
+ * @param out Value output buffer
+ * 
+ * @return true Parsing successful
+ * @return false Parsing error, see err
+ */
+bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *out);
 
 /**
  * @brief Compare two scheduler intervals

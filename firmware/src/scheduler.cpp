@@ -14,9 +14,75 @@ scheduler_t scheduler_make(scheduler_callback_t callback, scheduler_day_and_time
   };
 }
 
-char *scheduler_time_stringify(scheduler_time *time)
+char *scheduler_time_stringify(scheduler_time_t *time)
 {
   return strfmt_direct("%02d:%02d:%02d", time->hours, time->minutes, time->seconds);
+}
+
+/**
+ * @brief Subroutine to parse a time-part: 00-max
+ * 
+ * @param part Time-part string to parse
+ * @param part_name Name of this part, used for error messages
+ * @param err Error output buffer
+ * @param max Maximum value this part can take
+ * @param out Output value buffer
+ * 
+ * @return true Parsing successful
+ * @return false Parsing error, see err
+ */
+INLINED static bool scheduler_time_parse_part(
+  char *part,
+  const char *part_name,
+  char **err,
+  long max,
+  uint8_t *out
+)
+{
+  long result;
+  if (
+    longp(&result, part, 10) != LONGP_SUCCESS  // No number
+    || !(result >= 0 && result <= max)         // Or not between 0-max
+  )
+  {
+    *err = strfmt_direct(QUOTSTR " of " QUOTSTR " is not valid (0-%ld)", part_name, part, max);
+    return false;
+  }
+
+  *out = (uint8_t) result;
+  return true;
+}
+
+bool scheduler_time_parse(const char *str, char **err, scheduler_time_t *out)
+{
+  size_t str_offs = 0;
+  scptr char *hours_s = partial_strdup(str, &str_offs, ":", false);
+  scptr char *minutes_s = partial_strdup(str, &str_offs, ":", false);
+  scptr char *seconds_s = partial_strdup(str, &str_offs, "\0", false);
+
+  // Missing any time-part
+  if (!hours_s || !minutes_s || !seconds_s)
+  {
+    *err = strfmt_direct("Invalid format, use HH:MM:SS");
+    return false;
+  }
+
+  scheduler_time_t result = { 00, 00, 00 };
+
+  // Parse hours
+  if (!scheduler_time_parse_part(hours_s, "Hours", err, 23, &(result.hours)))
+    return false;
+
+  // Parse minutes
+  if (!scheduler_time_parse_part(minutes_s, "Minutes", err, 59, &(result.minutes)))
+    return false;
+
+  // Parse seconds
+  if (!scheduler_time_parse_part(seconds_s, "Seconds", err, 59, &(result.seconds)))
+    return false;
+
+  *out = result;
+  return true;
 }
 
 int scheduler_time_compare(scheduler_time_t a, scheduler_time_t b)
@@ -35,6 +101,68 @@ int scheduler_time_compare(scheduler_time_t a, scheduler_time_t b)
 
   // All values equal, times are equal
   return 0;
+}
+
+/**
+ * @brief Parse an interval's time-property from json by a specific key
+ * 
+ * @param json JSONH json node
+ * @param key Key to fetch from
+ * @param err Error output buffer
+ * @param out Value output buffer
+ * 
+ * @return true Parsing success
+ * @return false Parsing error, see err
+ */
+INLINED static bool scheduler_interval_parse_time(
+  htable_t *json,
+  const char *key,
+  char **err,
+  scheduler_time_t *out
+)
+{
+  // Get value
+  jsonh_opres_t jopr;
+  char *start_s = NULL;
+  if ((jopr = jsonh_get_str(json, key, &start_s)) != JOPRES_SUCCESS)
+  {
+    *err = jsonh_getter_errstr(key, jopr);
+    return false;
+  }
+
+  // Parse value
+  scheduler_time_t res;
+  if (!scheduler_time_parse(start_s, err, &res))
+    return false;
+
+  *out = res;
+  return true;
+}
+
+bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *out)
+{
+  // Parse start
+  scheduler_time_t start;
+  if (!scheduler_interval_parse_time(json, "start", err, &start))
+    return false;
+
+  // Parse end
+  scheduler_time_t end;
+  if (!scheduler_interval_parse_time(json, "end", err, &end))
+    return false;
+
+  // Get identifier
+  int identifier;
+  jsonh_opres_t jopr;
+  if ((jopr = jsonh_get_int(json, "identifier", &identifier)) != JOPRES_SUCCESS)
+  {
+    *err = jsonh_getter_errstr("identifier", jopr);
+    return false;
+  }
+
+  // Build result
+  *out = scheduler_interval_make(start, end, identifier);
+  return true;
 }
 
 /**

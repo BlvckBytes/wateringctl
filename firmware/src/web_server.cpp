@@ -225,6 +225,7 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
   if (!web_server_ensure_body(request, &body))
     return;
 
+  // Parse json
   scptr char *err = NULL;
   scptr htable_t *body_jsn = jsonh_parse(body, &err);
   if (!body_jsn)
@@ -233,8 +234,25 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
     return;
   }
 
-  scptr char *body_jsn_str = jsonh_stringify(body_jsn, 2);
-  request->send(200, "text/plain", body_jsn_str);
+  // Parse interval from json
+  scheduler_interval_t interval;
+  if (!scheduler_interval_parse(body_jsn, &err, &interval))
+  {
+    web_server_error_resp(request, 400, "Body data malformed: %s", err);
+    return;
+  }
+
+  // Print interval
+  scptr char *resp = strfmt_direct(
+    "interval { start=%02u:%02u:%02u, end=%02u:%02u:%02u, id=%03u }",
+    interval.start.hours, interval.start.minutes, interval.start.seconds,
+    interval.end.hours, interval.end.minutes, interval.end.seconds,
+    interval.identifier
+  );
+
+  // TODO: Actually use the data instead of just printing it
+
+  request->send(200, "text/plain", resp);
 }
 
 void web_server_init(scheduler_t *scheduler)
