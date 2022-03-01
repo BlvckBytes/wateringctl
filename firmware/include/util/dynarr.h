@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "util/mman.h"
+#include "util/enumlut.h"
 #include "util/strfmt.h"
 #include "util/common_types.h"
 
@@ -27,13 +28,13 @@ typedef struct
   clfn_t _cf;
 } dynarr_t;
 
-typedef enum
-{
-  DYNARR_SUCCESS,             // Successful operation
-  DYNARR_INDEX_NOT_FOUND,     // Key at requested index not existing
-  DYNARR_FULL,                // No more space for more items 
-  DYNARR_EMPTY,               // No more item to pop
-} dynarr_result_t;
+#define _EVALS_DYNARR_RES(FUN)                                                \
+  FUN(DYNARR_SUCCESS,          0x0) /* Successful operation */                \
+  FUN(DYNARR_INDEX_NOT_FOUND,  0x1) /* Key at requested index not existing */ \
+  FUN(DYNARR_FULL,             0x2) /* No more space for more items */        \
+  FUN(DYNARR_EMPTY,            0x3) /* No more item to pop */
+
+ENUM_TYPEDEF_FULL_IMPL(dynarr_result, _EVALS_DYNARR_RES);
 
 /**
  * @brief Make a new, empty array

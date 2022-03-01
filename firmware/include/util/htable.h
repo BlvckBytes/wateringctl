@@ -10,6 +10,7 @@
 #include <stdarg.h>
 
 #include "util/mman.h"
+#include "util/enumlut.h"
 #include "util/atomanip.h"
 #include "util/strclone.h"
 #include "util/strfmt.h"
@@ -36,15 +37,15 @@ typedef enum htable_append_mode
 /**
  * @brief Represents htable operation results
  */
-typedef enum htable_result
-{
-  HTABLE_SUCCESS,                 // Operation has been successful
-  HTABLE_KEY_NOT_FOUND,           // The requested key couldn't be located
-  HTABLE_KEY_ALREADY_EXISTS,      // The requested key already exists
-  HTABLE_KEY_TOO_LONG,            // The requested key has too many characters
-  HTABLE_FULL,                    // The table has reached it's defined limit
-  HTABLE_NULL_VALUE,              // Tried to insert a null value
-} htable_result_t;
+#define _EVALS_HTABLE_RESULT(FUN)                                                     \
+  FUN(HTABLE_SUCCESS,            0x0) /* Operation has been successful */             \
+  FUN(HTABLE_KEY_NOT_FOUND,      0x1) /* The requested key couldn't be located */     \
+  FUN(HTABLE_KEY_ALREADY_EXISTS, 0x2) /* The requested key already exists */          \
+  FUN(HTABLE_KEY_TOO_LONG,       0x3) /* The requested key has too many characters */ \
+  FUN(HTABLE_FULL,               0x4) /* The table has reached it's defined limit */  \
+  FUN(HTABLE_NULL_VALUE,         0x5) /* Tried to insert a null value */
+
+ENUM_TYPEDEF_FULL_IMPL(htable_result, _EVALS_HTABLE_RESULT);
 
 /**
  * @brief Represents an individual k-v pair entry in the table

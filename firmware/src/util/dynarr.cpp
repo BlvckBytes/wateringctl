@@ -1,5 +1,7 @@
 #include "util/dynarr.h"
 
+ENUM_LUT_FULL_IMPL(dynarr_result, _EVALS_DYNARR_RES);
+
 /**
  * @brief Clean up a no longer needed dynarr struct and all of it's items
  */

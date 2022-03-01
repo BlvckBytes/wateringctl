@@ -1,6 +1,12 @@
 #ifndef jsonh_h
 #define jsonh_h
 
+/*
+  Json parser, stringifier and just general handler.
+
+  Parsing tries to be conform to https://www.json.org/json-en.html
+*/
+
 #include <stdarg.h>
 
 #include "util/htable.h"
@@ -45,6 +51,8 @@ typedef struct jsonh_value
   jsonh_datatype_t type;
   void *value;
 } jsonh_value_t;
+
+jsonh_value_t *jsonh_value_make(void *val, jsonh_datatype_t val_type);
 
 /*
 ============================================================================
@@ -96,12 +104,101 @@ jsonh_cursor_t *jsonh_cursor_make(const char *text);
 jsonh_char_t jsonh_cursor_getc(jsonh_cursor_t *cursor);
 
 /**
+ * @brief Get the next character from the cursor
+ * without changing it's state
+ * 
+ * @param cursor Cursor handle
+ * @return char Next character, 0 means EOF
+ */
+jsonh_char_t jsonh_cursor_peekc(jsonh_cursor_t *cursor);
+
+/**
  * @brief Undo the last call of getc, does nothing if it's already
  * at the beginning
  * 
  * @param cursor Cursor handle
  */
 void jsonh_cursor_ungetc(jsonh_cursor_t *cursor);
+
+/**
+ * @brief Parse a JSON array: [ 0, 1, 2, ... ]
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_arr(jsonh_cursor_t *cursor, char **err, dynarr_t **out);
+
+/**
+ * @brief Parse a JSON object: { "a": "b", ... }
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_obj(jsonh_cursor_t *cursor, char **err, htable_t **out);
+
+/**
+ * @brief Parse a JSON value: string, number, object, array, literal
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_value(jsonh_cursor_t *cursor, char **err, jsonh_value_t *out);
+
+/**
+ * @brief Parse a JSON literal: true, false, null
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_literal(jsonh_cursor_t *cursor, char **err, jsonh_literal_t *out);
+
+/**
+ * @brief Parse a JSON number: 5 or 5.5
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out, bool *had_dot);
+
+/**
+ * @brief Parse a JSON string: "..."
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_str(jsonh_cursor_t *cursor, char **err, char **out);
+
+/**
+ * @brief Eat up all whitespace (non-printable and spaces) by
+ * calling getc until a printable character appears
+ * 
+ * @param cursor Cursor handle
+ */
+void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor);
 
 /**
  * @brief Parse a JSON string into a datastructure

@@ -43,6 +43,26 @@ jsonh_cursor_t *jsonh_cursor_make(const char *text)
 
 jsonh_char_t jsonh_cursor_getc(jsonh_cursor_t *cursor)
 {
+  jsonh_char_t ret = jsonh_cursor_peekc(cursor);
+
+  // Linebreak occurred, update index trackers
+  if (ret.c == '\n' && !ret.is_esc)
+  {
+    cursor->char_index = 0;
+    cursor->line_index++;
+  }
+
+  // Character index should not be leading, like text_index is
+  else if (cursor->text_index != 0)
+    cursor->char_index++;
+
+  // Advance position in text
+  cursor->text_index++;
+  return ret;
+}
+
+jsonh_char_t jsonh_cursor_peekc(jsonh_cursor_t *cursor)
+{
   // EOF
   if (cursor->text_index == cursor->text_length)
     return (jsonh_char_t) { 0, false };
@@ -56,19 +76,6 @@ jsonh_char_t jsonh_cursor_getc(jsonh_cursor_t *cursor)
     && cursor->text[cursor->text_index - 1] == '\\'     // And it's preceded by a backslash
   );
 
-  // Linebreak occurred, update index trackers
-  if (ret == '\n' && !is_esc)
-  {
-    cursor->char_index = 0;
-    cursor->line_index++;
-  }
-
-  // Character index should not be leading, like text_index is
-  else if (cursor->text_index != 0)
-    cursor->char_index++;
-
-  // Advance position in text
-  cursor->text_index++;
   return (jsonh_char_t) { ret, is_esc };
 }
 
@@ -113,16 +120,6 @@ static void jsonh_parse_err(jsonh_cursor_t *cursor, char **err, const char *fmt,
   );
 }
 
-/**
- * @brief Parse a JSON string: "..."
- * 
- * @param cursor Cursor handle
- * @param err Error output buffer
- * @param out Output value buffer
- * 
- * @return true Parsing succeeded
- * @return false Parsing failed
- */
 bool jsonh_parse_str(jsonh_cursor_t *cursor, char **err, char **out)
 {
   jsonh_char_t curr;
@@ -170,17 +167,12 @@ bool jsonh_parse_str(jsonh_cursor_t *cursor, char **err, char **out)
   return true;
 }
 
-/**
- * @brief Parse a JSON number: 5 or 5.5
- * 
- * @param cursor Cursor handle
- * @param err Error output buffer
- * @param out Output value buffer
- * 
- * @return true Parsing succeeded
- * @return false Parsing failed
- */
-bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out)
+/*
+  TODO: Not yet conform, missing the following:
+  * negative numbers
+  * e-notation (5e10, 5e-10)
+*/
+bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out, bool *had_dot)
 {
   bool has_dot = false, is_first = true;
   jsonh_char_t curr;
@@ -236,19 +228,10 @@ bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out)
 
   // Write parsed number to output
   *out = atof(buf);
+  if (had_dot) *had_dot = has_dot;
   return true;
 }
 
-/**
- * @brief Parse a JSON literal: true, false, null
- * 
- * @param cursor Cursor handle
- * @param err Error output buffer
- * @param out Output value buffer
- * 
- * @return true Parsing succeeded
- * @return false Parsing failed
- */
 bool jsonh_parse_literal(jsonh_cursor_t *cursor, char **err, jsonh_literal_t *out)
 {
   jsonh_char_t curr;
@@ -306,6 +289,219 @@ bool jsonh_parse_literal(jsonh_cursor_t *cursor, char **err, jsonh_literal_t *ou
   return false;
 }
 
+bool jsonh_parse_value(jsonh_cursor_t *cursor, char **err, jsonh_value_t *out)
+{
+  // Peek at the first non-whitespace char
+  jsonh_parse_eat_whitespace(cursor);
+  jsonh_char_t fc = jsonh_cursor_peekc(cursor);
+
+  // Number
+  if (fc.c >= '0' && fc.c <= '9')
+  {
+    double num;
+    bool had_dot;
+    if (!jsonh_parse_num(cursor, err, &num, &had_dot))
+      return false;
+
+    // Had a dot and thus is a float
+    if (had_dot)
+    {
+      out->type = JDTYPE_FLOAT;
+      out->value = mman_alloc(sizeof(float), 1, NULL);
+      *((float *) out->value) = num;
+      return true;
+    }
+
+    // No dot, just a regular integer
+    out->type = JDTYPE_INT;
+    out->value = mman_alloc(sizeof(int), 1, NULL);
+    *((int *) out->value) = num;
+    return true;
+  }
+
+  // String
+  if (fc.c == '"')
+  {
+    scptr char *str = NULL;
+    if (!jsonh_parse_str(cursor, err, &str))
+      return false;
+
+    out->value = mman_ref(str);
+    out->type = JDTYPE_STR;
+    return true;
+  }
+
+  // Object
+  if (fc.c == '{')
+  {
+    scptr htable_t *obj = NULL;
+    if (!jsonh_parse_obj(cursor, err, &obj))
+      return false;
+
+    out->type = JDTYPE_OBJ;
+    out->value = mman_ref(obj);
+    return true;
+  }
+
+  // Array
+  if (fc.c == '[')
+  {
+    scptr dynarr_t *arr = NULL;
+    if (!jsonh_parse_arr(cursor, err, &arr))
+      return false;
+
+    out->type = JDTYPE_ARR;
+    out->value = mman_ref(arr);
+    return true;
+  }
+
+  // Only thing remaining: Literal
+  jsonh_literal_t literal;
+  if (!jsonh_parse_literal(cursor, err, &literal))
+    return false;
+
+  switch(literal)
+  {
+    // Boolean value
+    case JLIT_FALSE:
+    case JLIT_TRUE:
+    out->type = JDTYPE_BOOL;
+    out->value = mman_alloc(sizeof(bool), 1, NULL);
+    *((bool *) out->value) = literal == JLIT_TRUE;
+    return true;
+
+    // Null value
+    case JLIT_NULL:
+    out->type = JDTYPE_NULL;
+    out->value = NULL;
+    return true;
+
+    default:
+    jsonh_parse_err(cursor, err, "Literal %s not yet implemented", jsonh_literal_name(literal));
+    return false;
+  }
+}
+
+bool jsonh_parse_arr(jsonh_cursor_t *cursor, char **err, dynarr_t **out)
+{
+  // Array start char
+  jsonh_char_t curr;
+  if ((curr = jsonh_cursor_getc(cursor)).c != '[')
+  {
+    jsonh_parse_err(cursor, err, "Expected array-begin but found >%c<", curr.c);
+    return false;
+  }
+
+  // Parse values until the end of array is reached
+  scptr dynarr_t *arr = dynarr_make(16, 1024, mman_dealloc_nr);
+  while ((curr = jsonh_cursor_peekc(cursor)).c != ']')
+  {
+    jsonh_parse_eat_whitespace(cursor);
+
+    // Parse a JSON value
+    scptr jsonh_value_t *value = jsonh_value_make(NULL, JDTYPE_NULL);
+    if (!jsonh_parse_value(cursor, err, value))
+      return false;
+    
+    dynarr_result_t res;
+    if ((res = dynarr_push(arr, mman_ref(value), NULL)) != DYNARR_SUCCESS)
+    {
+      jsonh_parse_err(cursor, err, "Could not push array value internally (%s)", dynarr_result_name(res));
+      mman_dealloc(value);
+      return false;
+    }
+
+    // Get the next non-whitespace char and check if it's a value separator
+    // If not, stop reading
+    jsonh_parse_eat_whitespace(cursor);
+    if ((curr = jsonh_cursor_getc(cursor)).c != ',')
+    {
+      // Put back the non-separator for the next step to pick up
+      jsonh_cursor_ungetc(cursor);
+      break;
+    }
+  }
+
+  // Array end char
+  if ((curr = jsonh_cursor_getc(cursor)).c != ']')
+  {
+    jsonh_parse_err(cursor, err, "Expected array-end but found >%c<", curr.c);
+    return false;
+  }
+
+  *out = (dynarr_t *) mman_ref(arr);
+  return true;
+}
+
+bool jsonh_parse_obj(jsonh_cursor_t *cursor, char **err, htable_t **out)
+{
+  // Object start char
+  jsonh_char_t curr;
+  if ((curr = jsonh_cursor_getc(cursor)).c != '{')
+  {
+    jsonh_parse_err(cursor, err, "Expected object-begin but found >%c<", curr.c);
+    return false;
+  }
+
+  // Parse values until the end of array is reached
+  scptr htable_t *obj = htable_make(1024, mman_dealloc_nr);
+  while ((curr = jsonh_cursor_peekc(cursor)).c != '}')
+  {
+    jsonh_parse_eat_whitespace(cursor);
+
+    // Parse string key
+    scptr char *key = NULL;
+    if (!jsonh_parse_str(cursor, err, &key))
+      return false;
+
+    jsonh_parse_eat_whitespace(cursor);
+
+    // Read k-v separator
+    if ((curr = jsonh_cursor_getc(cursor)).c != ':')
+    {
+      jsonh_parse_err(cursor, err, "Expected >:< but found >%c<", curr.c);
+      return false;
+    }
+
+    jsonh_parse_eat_whitespace(cursor);
+
+    // Parse a JSON value
+    scptr jsonh_value_t *value = jsonh_value_make(NULL, JDTYPE_NULL);
+    if (!jsonh_parse_value(cursor, err, value))
+      return false;
+
+    jsonh_parse_eat_whitespace(cursor);
+
+    htable_result_t res;
+    if ((res = htable_insert(obj, key, mman_ref(value))) != HTABLE_SUCCESS)
+    {
+      jsonh_parse_err(cursor, err, "Could not push hashtable value internally (%s)", htable_result_name(res));
+      mman_dealloc(value);
+      return false;
+    }
+
+    // Get the next non-whitespace char and check if it's a value separator
+    // If not, stop reading
+    jsonh_parse_eat_whitespace(cursor);
+    if ((curr = jsonh_cursor_getc(cursor)).c != ',')
+    {
+      // Put back the non-separator for the next step to pick up
+      jsonh_cursor_ungetc(cursor);
+      break;
+    }
+  }
+
+  // Object end char
+  if ((curr = jsonh_cursor_getc(cursor)).c != '}')
+  {
+    jsonh_parse_err(cursor, err, "Expected object-end but found >%c<", curr.c);
+    return false;
+  }
+
+  *out = (htable_t *) mman_ref(obj);
+  return true;
+}
+
 void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor)
 {
   // Get chars until EOF or printable has been reached
@@ -319,32 +515,15 @@ void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor)
 
 htable_t *jsonh_parse(const char *json, char **err)
 {
-  scptr htable_t *res = jsonh_make();
-  scptr jsonh_cursor_t *cur = jsonh_cursor_make(json);
+  scptr jsonh_cursor_t *cursor = jsonh_cursor_make(json);
 
-  jsonh_parse_eat_whitespace(cur);
-
-  scptr char *str = NULL;
-  if (!jsonh_parse_str(cur, err, &str))
+  // JSON needs to have an object at root level
+  scptr htable_t *res = NULL;
+  if (!jsonh_parse_obj(cursor, err, &res))
     return NULL;
 
-  dbginf("Found string: " QUOTSTR "\n", str);
-
-  jsonh_parse_eat_whitespace(cur);
-
-  double num;
-  if (!jsonh_parse_num(cur, err, &num))
-    return NULL;
-
-  dbginf("Found number: %.5f\n", num);
-
-  jsonh_parse_eat_whitespace(cur);
-
-  jsonh_literal_t lit;
-  if (!jsonh_parse_literal(cur, err, &lit))
-    return NULL;
-
-  dbginf("Found literal: %s\n", jsonh_literal_name(lit));
+  scptr char *stringified = jsonh_stringify(res, 2);
+  dbginf("%s", stringified);
 
   return (htable_t *) mman_ref(res);
 }
@@ -541,7 +720,7 @@ static void jsonh_value_cleanup(mman_meta_t *meta)
   mman_dealloc(value->value);
 }
 
-static jsonh_value_t *jsonh_value_make(void *val, jsonh_datatype_t val_type)
+jsonh_value_t *jsonh_value_make(void *val, jsonh_datatype_t val_type)
 {
   scptr jsonh_value_t *value = (jsonh_value_t *) mman_alloc(sizeof(jsonh_value_t), 1, jsonh_value_cleanup);
   value->type = val_type;

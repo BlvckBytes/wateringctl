@@ -1,5 +1,7 @@
 #include "util/htable.h"
 
+ENUM_LUT_FULL_IMPL(htable_result, _EVALS_HTABLE_RESULT);
+
 /**
  * @brief Clean up an individual slot
  */
