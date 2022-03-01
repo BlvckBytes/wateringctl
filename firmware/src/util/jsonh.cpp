@@ -117,16 +117,18 @@ static void jsonh_parse_err(jsonh_cursor_t *cursor, char **err, const char *fmt,
  * 
  * @param cursor Cursor handle
  * @param err Error output buffer
+ * @param out Output value buffer
  * 
- * @return char* String without qoutes if parsed, NULL on err
+ * @return true Parsing succeeded
+ * @return false Parsing failed
  */
-char *jsonh_parse_str(jsonh_cursor_t *cursor, char **err)
+bool jsonh_parse_str(jsonh_cursor_t *cursor, char **err, char **out)
 {
   jsonh_char_t curr;
   if ((curr = jsonh_cursor_getc(cursor)).c != '"')
   {
     jsonh_parse_err(cursor, err, "Expected >\"< but encountered >%c<", curr.c);
-    return NULL;
+    return false;
   }
 
   // Save a copy of the string-starting cursor
@@ -149,21 +151,91 @@ char *jsonh_parse_str(jsonh_cursor_t *cursor, char **err)
     if (curr.c >= 1 && curr.c <= 31 && !curr.is_esc)
     {
       jsonh_parse_err(cursor, err, "Unescaped control sequence inside of string");
-      return NULL;
+      return false;
     }
 
     // EOF before string has been closed
     if (!curr.c)
     {
       jsonh_parse_err(&strstart_c, err, "Unterminated string encountered");
-      return NULL;
+      return false;
     }
 
     // Append to buffer
     strfmt(&str, &str_offs, "%c", curr.c);
   }
 
-  return (char *) mman_ref(str);
+  *out = (char *) mman_ref(str);
+  return true;
+}
+
+/**
+ * @brief Parse a JSON number: 5 or 5.5
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out)
+{
+  bool has_dot = false, is_first = true;
+  jsonh_char_t curr;
+
+  // Collect digits and a possible dot
+  scptr char *buf = (char *) mman_alloc(sizeof(char), 128, NULL);
+  size_t buf_offs = 0;
+  while ((curr = jsonh_cursor_getc(cursor)).c)
+  {
+    // Append to buffer
+    strfmt(&buf, &buf_offs, "%c", curr.c);
+
+    // Not a digit
+    if (!(curr.c >= '0' && curr.c <= '9'))
+    {
+      // Numbers always start with digits
+      if (is_first)
+      {
+        jsonh_parse_err(cursor, err, "Expected a digit, but found >%c<", curr.c);
+        return false;
+      }
+
+      // Found a dot which indicates floating point numbers
+      if (curr.c == '.')
+      {
+        // Already has a dot
+        if (has_dot)
+        {
+          jsonh_parse_err(cursor, err, "Numbers can only have one comma");
+          return false;
+        }
+
+        // Now has a dot
+        has_dot = true;
+        is_first = false;
+        continue;
+      }
+
+      // Done reading the number, unget the last char to be picked up by the next routine
+      jsonh_cursor_ungetc(cursor);
+      break;
+    }
+
+    is_first = false;
+  }
+
+  // Routine started out at EOF
+  if (is_first && curr.c == 0)
+  {
+    jsonh_parse_err(cursor, err, "Expected digit, but found EOF");
+    return false;
+  }
+
+  // Write parsed number to output
+  *out = atof(buf);
+  return true;
 }
 
 void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor)
@@ -172,8 +244,9 @@ void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor)
   jsonh_char_t curr;
   while ((curr = jsonh_cursor_getc(cursor)).c > 0 && (curr.c <= 32 || curr.c == 127));
 
-  // Unget either EOF or the printable to be picked up by the next routine
-  jsonh_cursor_ungetc(cursor);
+  // Unget a printable to be picked up by the next routine
+  if (curr.c != 0)
+    jsonh_cursor_ungetc(cursor);
 }
 
 htable_t *jsonh_parse(const char *json, char **err)
@@ -182,9 +255,20 @@ htable_t *jsonh_parse(const char *json, char **err)
   scptr jsonh_cursor_t *cur = jsonh_cursor_make(json);
 
   jsonh_parse_eat_whitespace(cur);
-  scptr char *str = jsonh_parse_str(cur, err);
-  if (!str) return NULL;
+
+  scptr char *str = NULL;
+  if (!jsonh_parse_str(cur, err, &str))
+    return NULL;
+
   dbginf("Found string: " QUOTSTR "\n", str);
+
+  jsonh_parse_eat_whitespace(cur);
+
+  double num = 0;
+  if (!jsonh_parse_num(cur, err, &num))
+    return NULL;
+
+  dbginf("Found number: %.5f\n", num);
 
   return (htable_t *) mman_ref(res);
 }
