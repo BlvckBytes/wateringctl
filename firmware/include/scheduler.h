@@ -5,9 +5,9 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 
-#include "util/enumlut.h"
-#include "util/mman.h"
-#include "util/strfmt.h"
+#include <blvckstd/enumlut.h>
+#include <blvckstd/mman.h>
+#include <blvckstd/strfmt.h>
 
 /*
   The scheduler schedules on-times over the period of one

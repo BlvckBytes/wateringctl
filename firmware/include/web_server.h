@@ -5,10 +5,10 @@
 #include <stdarg.h>
 
 #include "scheduler.h"
-#include "util/mman.h"
-#include "util/longp.h"
-#include "util/strfmt.h"
-#include "util/jsonh.h"
+#include <blvckstd/mman.h>
+#include <blvckstd/longp.h>
+#include <blvckstd/strfmt.h>
+#include <blvckstd/jsonh.h>
 
 #define WEB_SERVER_PORT 80
 

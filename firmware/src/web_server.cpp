@@ -51,16 +51,15 @@ void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, 
   {
     // Since the framework calls free on _tempObject if it's non-null, just allocate a
     // pointer to the mman resource we'll dealloc later ourselves
-    request->_tempObject = malloc(sizeof(void *));
+    request->_tempObject = malloc(sizeof(char **));
 
     // Allocate actual string buffer
-    *((void **)request->_tempObject) = mman_alloc(sizeof(char), 128, NULL);
+    *((char **) request->_tempObject) = (char *) mman_alloc(sizeof(char), 128, NULL);
   }
 
   // Collect segments into buffer
-  char *buf = (char *) *((void **) request->_tempObject);
   scptr char *str = strclone_s((char *) data, len);
-  strfmt(&buf, &index, "%s", str);
+  strfmt((char **) request->_tempObject, &index, "%s", str);
 }
 
 /*
@@ -234,9 +233,8 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
     return;
   }
 
-  scptr char *body_str = jsonh_stringify(body_jsn, 2);
-  scptr char *resp = strfmt_direct("Your JSON request was:\n%s", body_str);
-  request->send(200, "text/plain", resp);
+  scptr char *body_jsn_str = jsonh_stringify(body_jsn, 2);
+  request->send(200, "text/plain", body_jsn_str);
 }
 
 void web_server_init(scheduler_t *scheduler)
