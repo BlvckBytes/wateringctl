@@ -4,7 +4,7 @@
 /*
   Json parser, stringifier and just general handler.
 
-  Parsing tries to be conform to https://www.json.org/json-en.html
+  Parsing tries to orient itself by https://www.json.org/json-en.html
 */
 
 #include <stdarg.h>

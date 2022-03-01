@@ -169,7 +169,6 @@ bool jsonh_parse_str(jsonh_cursor_t *cursor, char **err, char **out)
 
 /*
   TODO: Not yet conform, missing the following:
-  * negative numbers
   * e-notation (5e10, 5e-10)
 */
 bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out, bool *had_dot)
@@ -188,10 +187,17 @@ bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out, bool *had_
     // Not a digit
     if (!(curr.c >= '0' && curr.c <= '9'))
     {
-      // Numbers always start with digits
+      // Numbers always start with digits or the optional negative sign
       if (is_first)
       {
-        jsonh_parse_err(cursor, err, "Expected a digit, but found >%c<", curr.c);
+        // Negative sign encountered, just add it to the buffer
+        if (curr.c == '-')
+        {
+          is_first = false;
+          continue;
+        }
+
+        jsonh_parse_err(cursor, err, "Expected a digit or a negative sign, but found >%c<", curr.c);
         return false;
       }
 
@@ -296,7 +302,7 @@ bool jsonh_parse_value(jsonh_cursor_t *cursor, char **err, jsonh_value_t *out)
   jsonh_char_t fc = jsonh_cursor_peekc(cursor);
 
   // Number
-  if (fc.c >= '0' && fc.c <= '9')
+  if ((fc.c >= '0' && fc.c <= '9') || fc.c == '-')
   {
     double num;
     bool had_dot;

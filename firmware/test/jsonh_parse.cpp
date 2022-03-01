@@ -12,7 +12,7 @@ int proc()
 {
   const char *jsn = \
   "{"
-  " \"my-arr\": [\"hello world!\" , [5,3,4,2],  54321.55311,  null   , false], "
+  " \"my-arr\": [\"hello world!\" , [5, -2.2, 4.23, \"hoi\", 3,-4,2],  54321.55311,  null   , false], "
   "\"hello\": \"world\""
   "}";
 
