@@ -20,29 +20,6 @@ paths:
                 $ref: "#/components/schemas/Schedule"
 
   /schedule/{day}:
-    get:
-      tags:
-      - "scheduler"
-      summary: "Get the current schedule of a specific day"
-      parameters:
-        - name: day
-          in: path
-          schema:
-            $ref: "#/components/schemas/WeekDay"
-          required: true
-      responses:
-        "200":
-          description: "Fetch successful"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    $ref: "#/components/schemas/ScheduledDay"
-        "400":
-          description: "Unknown day specified"
-
     post:
       tags:
       - "scheduler"
@@ -57,15 +34,15 @@ paths:
         $ref: "#/components/requestBodies/IntervalRequest"
       responses:
         "400":
-          description: "Unknown day specified"
+          description: "Malformed request"
         "409":
           description: "No more unoccupied slots available"
 
   /schedule/{day}/{index}:
-    get:
+    put:
       tags:
       - "scheduler"
-      summary: "Get the current interval of a specific slot (by index) of a specific day"
+      summary: "Alter a interval of a specific slot (by index) of a specific day"
       parameters:
         - name: day
           in: path
@@ -77,9 +54,11 @@ paths:
           schema:
             type: number
           required: true
+      requestBody:
+        $ref: "#/components/requestBodies/IntervalRequest"
       responses:
         "200":
-          description: "Fetch successful"
+          description: "Update successful"
           content:
             application/json:
               schema:
@@ -88,7 +67,7 @@ paths:
                   items:
                     $ref: "#/components/schemas/Interval"
         "400":
-          description: "Unknown day or index specified"
+          description: "Malformed request"
 
 
 components:
@@ -129,20 +108,34 @@ components:
         - WEEKDAY_TH
         - WEEKDAY_FR
         - WEEKDAY_SA
+    Scheduler:
+      type: object
+      properties:
+        lastTickTime:
+          readOnly: true
+          type: string
+        lastTickDay:
+          readOnly: true
+          type: string
     Schedule:
       type: object
       properties:
-        WEEKDAY_SU:
-          $ref: "#/components/schemas/ScheduledDay"
-        WEEKDAY_MO:
-          $ref: "#/components/schemas/ScheduledDay"
-        WEEKDAY_TU:
-          $ref: "#/components/schemas/ScheduledDay"
-        WEEKDAY_WE:
-          $ref: "#/components/schemas/ScheduledDay"
-        WEEKDAY_TH:
-          $ref: "#/components/schemas/ScheduledDay"
-        WEEKDAY_FR:
-          $ref: "#/components/schemas/ScheduledDay"
-        WEEKDAY_SA:
-          $ref: "#/components/schemas/ScheduledDay"
+        days:
+          type: object
+          properties:
+            WEEKDAY_SU:
+              $ref: "#/components/schemas/ScheduledDay"
+            WEEKDAY_MO:
+              $ref: "#/components/schemas/ScheduledDay"
+            WEEKDAY_TU:
+              $ref: "#/components/schemas/ScheduledDay"
+            WEEKDAY_WE:
+              $ref: "#/components/schemas/ScheduledDay"
+            WEEKDAY_TH:
+              $ref: "#/components/schemas/ScheduledDay"
+            WEEKDAY_FR:
+              $ref: "#/components/schemas/ScheduledDay"
+            WEEKDAY_SA:
+              $ref: "#/components/schemas/ScheduledDay"
+        scheduler:
+          $ref: "#/components/schemas/Scheduler"

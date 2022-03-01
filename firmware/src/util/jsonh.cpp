@@ -21,7 +21,173 @@ htable_t *jsonh_make()
 ============================================================================
 */
 
-// TODO: Implement parsing
+jsonh_cursor_t *jsonh_cursor_make(const char *text)
+{
+  scptr jsonh_cursor_t *cursor = (jsonh_cursor_t *) mman_alloc(sizeof(jsonh_cursor_t), 1, NULL);
+
+  // Set the text and calculate it's length
+  // This gets saved for efficiency reasons, as strlen is quite slow
+  cursor->text = text;
+  cursor->text_length = strlen(text);
+
+  // Start out at the first character
+  cursor->text_index = 0;
+
+  // Start out at the first line's first char
+  cursor->char_index = 0;
+  cursor->line_index = 0;
+
+  return (jsonh_cursor_t *) mman_ref(cursor);
+}
+
+jsonh_char_t jsonh_cursor_getc(jsonh_cursor_t *cursor)
+{
+  // EOF
+  if (cursor->text_index == cursor->text_length)
+    return (jsonh_char_t) { 0, false };
+
+  // Fetch the current character
+  char ret = cursor->text[cursor->text_index];
+
+  // Check if this character is escaped
+  bool is_esc = (
+    cursor->text_index > 0                              // Not the first char (as it's unescapable)
+    && cursor->text[cursor->text_index - 1] == '\\'     // And it's preceded by a backslash
+  );
+
+  // Linebreak occurred, update index trackers
+  if (ret == '\n' && !is_esc)
+  {
+    cursor->char_index = 0;
+    cursor->line_index++;
+  }
+
+  // Character index should not be leading, like text_index is
+  else if (cursor->text_index != 0)
+    cursor->char_index++;
+
+  // Advance position in text
+  cursor->text_index++;
+  return (jsonh_char_t) { ret, is_esc };
+}
+
+void jsonh_cursor_ungetc(jsonh_cursor_t *cursor)
+{
+  // Cannot go back any further
+  if (cursor->text_index == 0)
+    return;
+
+  // Rewind character index and also rewind the
+  // line-index if it goes below zero
+  if (
+    cursor->char_index != 0
+    && --(cursor->char_index) < 0
+    && cursor->line_index != 0
+  )
+  {
+    cursor->line_index--;
+    cursor->char_index = 0;
+  }
+
+  // Rewind text index marker
+  cursor->text_index--;
+}
+
+static void jsonh_parse_err(jsonh_cursor_t *cursor, char **err, const char *fmt, ...)
+{
+  // No error buffer provided
+  if (!err) return;
+
+  // Generate error message from provided format and varargs
+  va_list ap;
+  va_start(ap, fmt);
+  scptr char *errmsg = vstrfmt_direct(fmt, ap);
+  va_end(ap);
+
+  // Append prefix and write into error buffer
+  *err = strfmt_direct(
+    "(%llu:%llu) -> %s",
+    cursor->line_index, cursor->char_index,
+    errmsg
+  );
+}
+
+/**
+ * @brief Parse a JSON string: "..."
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * 
+ * @return char* String without qoutes if parsed, NULL on err
+ */
+char *jsonh_parse_str(jsonh_cursor_t *cursor, char **err)
+{
+  jsonh_char_t curr;
+  if ((curr = jsonh_cursor_getc(cursor)).c != '"')
+  {
+    jsonh_parse_err(cursor, err, "Expected >\"< but encountered >%c<", curr.c);
+    return NULL;
+  }
+
+  // Save a copy of the string-starting cursor
+  jsonh_cursor_t strstart_c = *cursor;
+
+  // Allocate buffer
+  scptr char *str = (char *) mman_alloc(sizeof(char), 128, NULL);
+  size_t str_offs = 0;
+
+  // Collect characters into a buffer
+  while (true)
+  {
+    curr = jsonh_cursor_getc(cursor);
+
+    // End of string reached
+    if (curr.c == '"' && !curr.is_esc)
+      break;
+
+    // Non-printable characters need to be escaped inside of strings
+    if (curr.c >= 1 && curr.c <= 31 && !curr.is_esc)
+    {
+      jsonh_parse_err(cursor, err, "Unescaped control sequence inside of string");
+      return NULL;
+    }
+
+    // EOF before string has been closed
+    if (!curr.c)
+    {
+      jsonh_parse_err(&strstart_c, err, "Unterminated string encountered");
+      return NULL;
+    }
+
+    // Append to buffer
+    strfmt(&str, &str_offs, "%c", curr.c);
+  }
+
+  return (char *) mman_ref(str);
+}
+
+void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor)
+{
+  // Get chars until EOF or printable has been reached
+  jsonh_char_t curr;
+  while ((curr = jsonh_cursor_getc(cursor)).c > 0 && (curr.c <= 32 || curr.c == 127));
+
+  // Unget either EOF or the printable to be picked up by the next routine
+  jsonh_cursor_ungetc(cursor);
+}
+
+htable_t *jsonh_parse(const char *json, char **err)
+{
+  scptr htable_t *res = jsonh_make();
+  scptr jsonh_cursor_t *cur = jsonh_cursor_make(json);
+
+  jsonh_parse_eat_whitespace(cur);
+  scptr char *str = jsonh_parse_str(cur, err);
+  if (!str) return NULL;
+  dbginf("Found string: " QUOTSTR "\n", str);
+
+  return (htable_t *) mman_ref(res);
+}
 
 /*
 ============================================================================

@@ -226,7 +226,16 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
   if (!web_server_ensure_body(request, &body))
     return;
 
-  scptr char *resp = strfmt_direct("Your request was:\n%s", body);
+  scptr char *err = NULL;
+  scptr htable_t *body_jsn = jsonh_parse(body, &err);
+  if (!body_jsn)
+  {
+    web_server_error_resp(request, 400, "Could not parse the JSON body: %s", err);
+    return;
+  }
+
+  scptr char *body_str = jsonh_stringify(body_jsn, 2);
+  scptr char *resp = strfmt_direct("Your JSON request was:\n%s", body_str);
   request->send(200, "text/plain", resp);
 }
 

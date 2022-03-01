@@ -1,6 +1,8 @@
 #ifndef jsonh_h
 #define jsonh_h
 
+#include <stdarg.h>
+
 #include "util/htable.h"
 #include "util/strfmt.h"
 #include "util/dynarr.h"
@@ -55,7 +57,55 @@ htable_t *jsonh_make();
 ============================================================================
 */
 
-// TODO: Implement parsing
+typedef struct jsonh_cursor
+{
+  const char *text;         // Text which is managed by the cursor
+  long text_length;        // Number of characters in the text
+  long text_index;         // Current character index within the text
+
+  long char_index;         // Index of the current character in the current line
+  long line_index;         // Index of the current line in the full text
+} jsonh_cursor_t;
+
+typedef struct jsonh_char
+{
+  char c;         // The char itself
+  bool is_esc;    // Whether or not it's escaped
+} jsonh_char_t;
+
+/**
+ * @brief Create a new cursor for a given pice of text
+ * 
+ * @param text Text to curse over
+ * @return jsonh_cursor_t* New cursor with all defaults initialized
+ */
+jsonh_cursor_t *jsonh_cursor_make(const char *text);
+
+/**
+ * @brief Get the next character from the cursor
+ * 
+ * @param cursor Cursor handle
+ * @return char Next character, 0 means EOF
+ */
+jsonh_char_t jsonh_cursor_getc(jsonh_cursor_t *cursor);
+
+/**
+ * @brief Undo the last call of getc, does nothing if it's already
+ * at the beginning
+ * 
+ * @param cursor Cursor handle
+ */
+void jsonh_cursor_ungetc(jsonh_cursor_t *cursor);
+
+/**
+ * @brief Parse a JSON string into a datastructure
+ * 
+ * @param json JSON string to parse
+ * @param err Error output
+ * 
+ * @return htable_t* Parsed JSON or NULL on errors (see err)
+ */
+htable_t *jsonh_parse(const char *json, char **err);
 
 /*
 ============================================================================
