@@ -18,6 +18,11 @@
   FUN(JDTYPE_BOOL,    0x5)        \
   FUN(JDTYPE_NULL,    0x6)
 
+#define _EVALS_JSONH_LITERAL(FUN) \
+  FUN(JLIT_TRUE,      0x0)        \
+  FUN(JLIT_FALSE,     0x1)        \
+  FUN(JLIT_NULL,      0x2)
+
 #define _EVALS_JSONH_OPRES(FUN)                                                               \
   FUN(JOPRES_SUCCESS,         0x0) /* Successful operation */                                 \
   FUN(JOPRES_DTYPE_MISMATCH,  0x1) /* Datatype of value didn't match datatype of getter */    \
@@ -28,6 +33,7 @@
 #define JSONH_ROOT_ITEM_CAP 1024
 
 ENUM_TYPEDEF_FULL_IMPL(jsonh_datatype, _EVALS_JSONH_DTYPE);
+ENUM_TYPEDEF_FULL_IMPL(jsonh_literal, _EVALS_JSONH_LITERAL);
 ENUM_TYPEDEF_FULL_IMPL(jsonh_opres, _EVALS_JSONH_OPRES);
 
 /**

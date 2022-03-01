@@ -10,7 +10,7 @@
 
 int proc()
 {
-  const char *jsn = "\"hello world!\"  54321.55311";
+  const char *jsn = "\"hello world!\"  54321.55311   null";
   // "{"
   // "  \"hello\": \"world\""
   // "}";

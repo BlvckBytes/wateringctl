@@ -1,6 +1,7 @@
 #include "util/jsonh.h"
 
 ENUM_LUT_FULL_IMPL(jsonh_datatype, _EVALS_JSONH_DTYPE);
+ENUM_LUT_FULL_IMPL(jsonh_literal, _EVALS_JSONH_LITERAL);
 ENUM_LUT_FULL_IMPL(jsonh_opres, _EVALS_JSONH_OPRES);
 
 /*
@@ -229,13 +230,80 @@ bool jsonh_parse_num(jsonh_cursor_t *cursor, char **err, double *out)
   // Routine started out at EOF
   if (is_first && curr.c == 0)
   {
-    jsonh_parse_err(cursor, err, "Expected digit, but found EOF");
+    jsonh_parse_err(cursor, err, "Expected a digit, but found EOF");
     return false;
   }
 
   // Write parsed number to output
   *out = atof(buf);
   return true;
+}
+
+/**
+ * @brief Parse a JSON literal: true, false, null
+ * 
+ * @param cursor Cursor handle
+ * @param err Error output buffer
+ * @param out Output value buffer
+ * 
+ * @return true Parsing succeeded
+ * @return false Parsing failed
+ */
+bool jsonh_parse_literal(jsonh_cursor_t *cursor, char **err, jsonh_literal_t *out)
+{
+  jsonh_char_t curr;
+  bool is_first = true;
+
+  // Collect literal into buffer
+  scptr char *buf = (char *) mman_alloc(sizeof(char), 128, NULL);
+  size_t buf_offs = 0;
+  while ((curr = jsonh_cursor_getc(cursor)).c)
+  {
+    // Is a literal delimiter
+    if (
+      curr.c == ' '
+      || curr.c == '}'
+      || curr.c == ']'
+      || curr.c == ','
+    )
+    {
+      // Put back this delimiter to be picked up by the next routine
+      jsonh_cursor_ungetc(cursor);
+      break;
+    }
+
+    // Append to buffer
+    strfmt(&buf, &buf_offs, "%c", curr.c);
+    is_first = false;
+  }
+
+  // Routine started out at EOF
+  if (is_first && curr.c == 0)
+  {
+    jsonh_parse_err(cursor, err, "Expected a literal, but found EOF");
+    return false;
+  }
+
+  if (strcmp("true", buf) == 0)
+  {
+    *out = JLIT_TRUE;
+    return true;
+  }
+
+  if (strcmp("false", buf) == 0)
+  {
+    *out = JLIT_FALSE;
+    return true;
+  }
+
+  if (strcmp("null", buf) == 0)
+  {
+    *out = JLIT_NULL;
+    return true;
+  }
+
+  jsonh_parse_err(cursor, err, "Unknown literal " QUOTSTR, buf);
+  return false;
 }
 
 void jsonh_parse_eat_whitespace(jsonh_cursor_t *cursor)
@@ -264,11 +332,19 @@ htable_t *jsonh_parse(const char *json, char **err)
 
   jsonh_parse_eat_whitespace(cur);
 
-  double num = 0;
+  double num;
   if (!jsonh_parse_num(cur, err, &num))
     return NULL;
 
   dbginf("Found number: %.5f\n", num);
+
+  jsonh_parse_eat_whitespace(cur);
+
+  jsonh_literal_t lit;
+  if (!jsonh_parse_literal(cur, err, &lit))
+    return NULL;
+
+  dbginf("Found literal: %s\n", jsonh_literal_name(lit));
 
   return (htable_t *) mman_ref(res);
 }
