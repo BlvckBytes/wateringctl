@@ -40,7 +40,7 @@ void web_server_route_not_found(AsyncWebServerRequest *request)
 
 /*
 ============================================================================
-                                Body Handler                                
+                                Body Handling                               
 ============================================================================
 */
 
@@ -62,55 +62,7 @@ void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, 
   strfmt((char **) request->_tempObject, &index, "%s", str);
 }
 
-/*
-============================================================================
-                              Common routines                               
-============================================================================
-*/
-
-static htable_t *generate_day_ind_interval_json(scheduler_weekday_t day, int index)
-{
-  scheduler_interval_t interval = sched->daily_schedules[day][index];
-  scptr char *start_str = scheduler_time_stringify(&(interval.start));
-  scptr char *end_str = scheduler_time_stringify(&(interval.end));
-
-  scptr htable_t *int_jsn = jsonh_make();
-
-  jsonh_set_str(int_jsn, "start", (char *) mman_ref(start_str));
-  jsonh_set_str(int_jsn, "end", (char *) mman_ref(end_str));
-  jsonh_set_int(int_jsn, "identifier", interval.identifier);
-  jsonh_set_int(int_jsn, "index", index);
-  jsonh_set_bool(int_jsn, "active", interval.active);
-
-  return (htable_t *) mman_ref(int_jsn);
-}
-
-static dynarr_t *generate_day_schedule_json(scheduler_weekday_t day)
-{
-  scptr dynarr_t *weekday_schedule = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
-
-  for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
-  {
-    scptr htable_t *int_jsn = generate_day_ind_interval_json(day, j);
-    jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn));
-  }
-
-  return (dynarr_t *) mman_ref(weekday_schedule);
-}
-
-static bool scheduler_parse_day(AsyncWebServerRequest *request, const char *day_str, scheduler_weekday_t *day)
-{
-  // Parse weekday from path arg
-  if (scheduler_weekday_value(day_str, day) != ENUMLUT_SUCCESS)
-  {
-    web_server_error_resp(request, 400, "Invalid weekday specified (%s)!", day_str);
-    return false;
-  }
-
-  return true;
-}
-
-static bool web_server_ensure_body(AsyncWebServerRequest *request, char **output)
+INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, char **output)
 {
   // Body segment collector has been called at least once
   if (request->_tempObject)
@@ -123,56 +75,46 @@ static bool web_server_ensure_body(AsyncWebServerRequest *request, char **output
   return false;
 }
 
-/*
-============================================================================
-                                 /scheduler                                 
-============================================================================
-*/
-
-void web_server_route_scheduler(AsyncWebServerRequest *request)
+INLINED static bool web_server_ensure_json_body(AsyncWebServerRequest *request, htable_t **output)
 {
-  scptr htable_t *jsn = jsonh_make();
-  
-  for (int i = 0; i < 7; i++)
+  // Get the string body
+  scptr char *body = NULL;
+  if (!web_server_ensure_str_body(request, &body))
+    return false;
+
+  // Parse json
+  scptr char *err = NULL;
+  scptr htable_t *body_jsn = jsonh_parse(body, &err);
+  if (!body_jsn)
   {
-    scheduler_weekday_t day = (scheduler_weekday_t) i;
-    const char *weekday_name = scheduler_weekday_name(day);
-    scptr dynarr_t *weekday_schedule = generate_day_schedule_json(day);
-    jsonh_set_arr(jsn, weekday_name, (dynarr_t *) mman_ref(weekday_schedule));
+    web_server_error_resp(request, 400, "Could not parse the JSON body: %s", err);
+    return false;
   }
 
-  scptr char *stringified = jsonh_stringify(jsn, 2);
-  request->send(200, "text/json", stringified);
+  // Write output
+  *output = (htable_t *) mman_ref(body_jsn);
+  return true;
 }
 
 /*
 ============================================================================
-                              /scheduler/{day}                              
+                              Common routines                               
 ============================================================================
 */
 
-void web_server_route_scheduler_day(AsyncWebServerRequest *request)
+INLINED static bool scheduler_parse_day(AsyncWebServerRequest *request, const char *day_str, scheduler_weekday_t *day)
 {
   // Parse weekday from path arg
-  scheduler_weekday_t day;
-  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
-    return;
+  if (scheduler_weekday_value(day_str, day) != ENUMLUT_SUCCESS)
+  {
+    web_server_error_resp(request, 400, "Invalid weekday specified (%s)!", day_str);
+    return false;
+  }
 
-  scptr htable_t *jsn = jsonh_make();
-  scptr dynarr_t *weekday_schedule = generate_day_schedule_json(day);
-  jsonh_set_arr(jsn, "items", weekday_schedule);
-
-  scptr char *jsn_str = jsonh_stringify(jsn, 2);
-  request->send(200, "text/json", jsn_str);
+  return true;
 }
 
-/*
-============================================================================
-                          /scheduler/{day}/{index}                          
-============================================================================
-*/
-
-static bool web_server_route_scheduler_day_index_parse(
+INLINED static bool web_server_route_scheduler_day_index_parse(
   AsyncWebServerRequest *request,
   scheduler_weekday_t *day,
   long *index
@@ -200,6 +142,55 @@ static bool web_server_route_scheduler_day_index_parse(
   return true;
 }
 
+/*
+============================================================================
+                                 /scheduler                                 
+============================================================================
+*/
+
+void web_server_route_scheduler(AsyncWebServerRequest *request)
+{
+  scptr htable_t *jsn = jsonh_make();
+  
+  for (int i = 0; i < 7; i++)
+  {
+    scheduler_weekday_t day = (scheduler_weekday_t) i;
+    const char *weekday_name = scheduler_weekday_name(day);
+    scptr dynarr_t *weekday_schedule = scheduler_weekday_jsonify(sched, day);
+    jsonh_set_arr(jsn, weekday_name, (dynarr_t *) mman_ref(weekday_schedule));
+  }
+
+  scptr char *stringified = jsonh_stringify(jsn, 2);
+  request->send(200, "text/json", stringified);
+}
+
+/*
+============================================================================
+                            GET /scheduler/{day}                            
+============================================================================
+*/
+
+void web_server_route_scheduler_day(AsyncWebServerRequest *request)
+{
+  // Parse weekday from path arg
+  scheduler_weekday_t day;
+  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
+    return;
+
+  scptr htable_t *jsn = jsonh_make();
+  scptr dynarr_t *weekday_schedule = scheduler_weekday_jsonify(sched, day);
+  jsonh_set_arr(jsn, "items", weekday_schedule);
+
+  scptr char *jsn_str = jsonh_stringify(jsn, 2);
+  request->send(200, "text/json", jsn_str);
+}
+
+/*
+============================================================================
+                        GET /scheduler/{day}/{index}                        
+============================================================================
+*/
+
 void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
 {
   scheduler_weekday_t day;
@@ -208,10 +199,16 @@ void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
   if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
     return;
 
-  scptr htable_t *int_jsn = generate_day_ind_interval_json(day, index);
+  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day][index]);
   scptr char *int_jsn_str = jsonh_stringify(int_jsn, 2);
   request->send(200, "text/json", int_jsn_str);
 }
+
+/*
+============================================================================
+                        PUT /scheduler/{day}/{index}                        
+============================================================================
+*/
 
 void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
 {
@@ -221,22 +218,14 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
   if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
     return;
 
-  scptr char *body = NULL;
-  if (!web_server_ensure_body(request, &body))
+  scptr htable_t *body = NULL;
+  if (!web_server_ensure_json_body(request, &body))
     return;
-
-  // Parse json
-  scptr char *err = NULL;
-  scptr htable_t *body_jsn = jsonh_parse(body, &err);
-  if (!body_jsn)
-  {
-    web_server_error_resp(request, 400, "Could not parse the JSON body: %s", err);
-    return;
-  }
 
   // Parse interval from json
+  scptr char *err = NULL;
   scheduler_interval_t interval;
-  if (!scheduler_interval_parse(body_jsn, &err, &interval))
+  if (!scheduler_interval_parse(body, &err, &interval))
   {
     web_server_error_resp(request, 400, "Body data malformed: %s", err);
     return;
@@ -254,6 +243,12 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
 
   request->send(200, "text/plain", resp);
 }
+
+/*
+============================================================================
+                          Webserver Configuration                           
+============================================================================
+*/
 
 void web_server_init(scheduler_t *scheduler)
 {

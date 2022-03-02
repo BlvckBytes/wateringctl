@@ -119,6 +119,16 @@ typedef struct scheduler_interval
 bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *out);
 
 /**
+ * @brief Transform a scheduler interval into it's JSONH object data-structure
+ * 
+ * @param index Index within the array of intervals
+ * @param interval Interval to transform
+ * 
+ * @return htable_t* JSONH data structure
+ */
+htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval);
+
+/**
  * @brief Compare two scheduler intervals
  * 
  * @param a First scheduler interval
@@ -153,6 +163,16 @@ typedef struct scheduler
   scheduler_time_t last_tick_time;        // Time at which the last tick occurred
   scheduler_weekday_t last_tick_day;      // Day at which the last tick occurred
 } scheduler_t;
+
+/**
+ * @brief Transform a scheduler weekday into it's JSONH array data-structure
+ * 
+ * @param scheduler Scheduler handle
+ * @param day Day of the target week
+ * 
+ * @return htable_t* JSONH data structure
+ */
+dynarr_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day);
 
 /**
  * @brief Create a new scheduler with empty interval-lists

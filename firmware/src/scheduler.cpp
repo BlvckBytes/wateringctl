@@ -165,6 +165,22 @@ bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *
   return true;
 }
 
+htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval)
+{
+  scptr char *start_str = scheduler_time_stringify(&(interval.start));
+  scptr char *end_str = scheduler_time_stringify(&(interval.end));
+
+  scptr htable_t *int_jsn = jsonh_make();
+
+  jsonh_set_str(int_jsn, "start", (char *) mman_ref(start_str));
+  jsonh_set_str(int_jsn, "end", (char *) mman_ref(end_str));
+  jsonh_set_int(int_jsn, "identifier", interval.identifier);
+  jsonh_set_int(int_jsn, "index", index);
+  jsonh_set_bool(int_jsn, "active", interval.active);
+
+  return (htable_t *) mman_ref(int_jsn);
+}
+
 /**
  * @brief Check if a given interval is equal to the empty interval constant
  */
@@ -215,6 +231,19 @@ static int scheduler_find_interval_slot(scheduler_t *scheduler, scheduler_weekda
 
   // Target interval does not exist
   return -1;
+}
+
+dynarr_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day)
+{
+  scptr dynarr_t *weekday_schedule = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
+
+  for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
+  {
+    scptr htable_t *int_jsn = scheduler_interval_jsonify(j, scheduler->daily_schedules[day][j]);
+    jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn));
+  }
+
+  return (dynarr_t *) mman_ref(weekday_schedule);
 }
 
 bool scheduler_register_interval(scheduler_t *scheduler, scheduler_weekday_t day, scheduler_interval_t interval)
