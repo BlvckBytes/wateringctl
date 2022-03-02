@@ -1,7 +1,7 @@
 #include "web_server.h"
 
-AsyncWebServer wsrv(WEB_SERVER_PORT);
-scheduler_t *sched;
+static AsyncWebServer wsrv(WEB_SERVER_PORT);
+static scheduler_t *sched;
 
 /*
 ============================================================================
@@ -58,8 +58,7 @@ void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, 
   }
 
   // Collect segments into buffer
-  scptr char *str = strclone_s((char *) data, len);
-  strfmt((char **) request->_tempObject, &index, "%s", str);
+  strfmt((char **) request->_tempObject, &index, "%.*s", len, (char *) data);
 }
 
 INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, char **output)
