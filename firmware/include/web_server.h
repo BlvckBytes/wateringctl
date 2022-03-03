@@ -12,6 +12,11 @@
 
 #define WEB_SERVER_PORT 80
 
+typedef struct web_server_request_body
+{
+  uint8_t *content;             // Body content bytes
+} web_server_request_body_t;
+
 /**
  * @brief Define all routes and start the webserver
  */

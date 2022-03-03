@@ -46,20 +46,30 @@ void web_server_route_not_found(AsyncWebServerRequest *request)
 
 void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
-  // Create buffer on first segment of the message
+  web_server_request_body_t *body = (web_server_request_body_t *) request->_tempObject;
+
+  // Create buffer on the first segment of the message
   if(index == 0)
   {
-    // Since the framework calls free on _tempObject if it's non-null, just allocate a
-    // pointer to the mman resource we'll dealloc later ourselves
-    request->_tempObject = malloc(sizeof(char **));
+    // Allocate using malloc since the API will automatically call free after the request's lifetime
+    request->_tempObject = malloc(sizeof(web_server_request_body_t));
+    body = (web_server_request_body_t *) request->_tempObject;
 
-    // Allocate actual string buffer
-    *((char **) request->_tempObject) = (char *) mman_alloc(sizeof(char), 128, NULL);
+    // Not enough space available
+    if (!body)
+      return;
+
+    // Allocate as much memory as the whole body will require
+    body->content = (uint8_t *) mman_alloc(sizeof(uint8_t), total, NULL);
+    request->_tempObject = body;
   }
 
-  // Collect segments into buffer
-  // TODO: Somehow tell the caller if we run out of memory
-  strfmt((char **) request->_tempObject, &index, "%.*s", len, (char *) data);
+  // Not enough space for the whole body
+  if (!body->content)
+    return;
+
+  // Write the segment into the buffer
+  memcpy(&body->content[index], data, len);
 }
 
 INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, char **output)
@@ -67,10 +77,20 @@ INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, c
   // Body segment collector has been called at least once
   if (request->_tempObject)
   {
-    *output = (char *) *((void **) request->_tempObject);
+    web_server_request_body_t *body = (web_server_request_body_t *) request->_tempObject;
+
+    // Check if we had enough space
+    if (!body->content)
+    {
+      web_server_error_resp(request, 500, "Body too long, not enough space!");
+      return false;
+    }
+
+    *output = (char *) body->content;
     return true;
   }
 
+  // No body collected
   web_server_error_resp(request, 400, "No body content provided!");
   return false;
 }
@@ -81,6 +101,13 @@ INLINED static bool web_server_ensure_json_body(AsyncWebServerRequest *request, 
   scptr char *body = NULL;
   if (!web_server_ensure_str_body(request, &body))
     return false;
+
+  // Check that the content-type actually matches
+  if (request->contentType() != "application/json")
+  {
+    web_server_error_resp(request, 400, "This endpoint only accepts JSON bodies!");
+    return false;
+  }
 
   // Parse json
   scptr char *err = NULL;
