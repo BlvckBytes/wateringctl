@@ -247,7 +247,8 @@ dynarr_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t 
   for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
   {
     scptr htable_t *int_jsn = scheduler_interval_jsonify(j, scheduler->daily_schedules[day][j]);
-    jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn));
+    if (jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn)) != JOPRES_SUCCESS)
+      mman_dealloc(int_jsn);
   }
 
   return (dynarr_t *) mman_ref(weekday_schedule);

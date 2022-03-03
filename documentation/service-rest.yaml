@@ -6,7 +6,7 @@ info:
   version: 0.0.1
 
 paths:
-  /schedule:
+  /scheduler:
     get:
       tags:
       - "scheduler"
@@ -19,26 +19,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Schedule"
 
-  /schedule/{day}:
-    post:
-      tags:
-      - "scheduler"
-      summary: "Append a new interval to to a specific day"
-      parameters:
-        - name: day
-          in: path
-          schema:
-            $ref: "#/components/schemas/WeekDay"
-          required: true
-      requestBody:
-        $ref: "#/components/requestBodies/IntervalRequest"
-      responses:
-        "400":
-          description: "Malformed request"
-        "409":
-          description: "No more unoccupied slots available"
-
-  /schedule/{day}/{index}:
+  /scheduler/{day}/{index}:
     put:
       tags:
       - "scheduler"
@@ -92,6 +73,86 @@ paths:
         "400":
           description: "Malformed request"
 
+  /valves:
+    get:
+      tags:
+      - "valves"
+      summary: "Get all available valves"
+      responses:
+        "200":
+          description: "Fetch successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Valve"
+
+  /valves/{id}:
+    delete:
+      tags:
+      - "valves"
+      summary: "Turn a valve off by id"
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: number
+          required: true
+      responses:
+        "204":
+          description: "Valve turned off successfully"
+        "409":
+          description: "Valve not active"
+        "400":
+          description: "Malformed request"
+
+    post:
+      tags:
+      - "valves"
+      summary: "Turn a valve on by id"
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: number
+          required: true
+      responses:
+        "204":
+          description: "Valve turned on successfully"
+        "409":
+          description: "Valve already active"
+        "400":
+          description: "Malformed request"
+
+    put:
+      tags:
+      - "valves"
+      summary: "Change a valve's properties by id"
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: number
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/ValveRequest"
+      responses:
+        "200":
+          description: "Update successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    $ref: "#/components/schemas/Valve"
+        "400":
+          description: "Malformed request"
+
 components:
   requestBodies:
     IntervalRequest:
@@ -100,6 +161,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Interval'
+
+    ValveRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Valve'
   schemas:
     Interval:
       type: object
@@ -161,3 +229,14 @@ components:
               $ref: "#/components/schemas/ScheduledDay"
         scheduler:
           $ref: "#/components/schemas/Scheduler"
+    Valve:
+      type: object
+      properties:
+        alias:
+          type: string
+        state:
+          type: boolean
+          readOnly: true
+        identifier:
+          type: number
+          readOnly: true

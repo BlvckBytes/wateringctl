@@ -82,7 +82,7 @@ void setup()
   dbginf("Loaded scheduler's schedule from EEPROM!");
 
   // Start listening for web requests
-  web_server_init(&scheduler);
+  web_server_init(&scheduler, &valvectl);
   dbginf("Started the web server!");
 }
 

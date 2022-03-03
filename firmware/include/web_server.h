@@ -5,6 +5,7 @@
 #include <stdarg.h>
 
 #include "scheduler.h"
+#include "valve_control.h"
 #include <blvckstd/mman.h>
 #include <blvckstd/longp.h>
 #include <blvckstd/strfmt.h>
@@ -20,6 +21,6 @@ typedef struct web_server_request_body
 /**
  * @brief Define all routes and start the webserver
  */
-void web_server_init(scheduler_t *scheduler);
+void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control);
 
 #endif

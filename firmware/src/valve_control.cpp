@@ -1,5 +1,15 @@
 #include "valve_control.h"
 
+valve_t valve_control_valve_make(const char *alias)
+{
+  valve_t res = { { 0 }, false };
+
+  // Copy over the alias into the struct with a maximum length
+  strncpy(res.alias, alias, VALVE_CONTROL_ALIAS_MAXLEN);
+
+  return res;
+}
+
 valve_control_t valve_control_make()
 {
   valve_control_t vc;
@@ -65,4 +75,58 @@ void valve_control_eeprom_save(valve_control_t *vc)
     for (int j = 0; j < VALVE_CONTROL_ALIAS_MAXLEN; j++)
       EEPROM.write(addr_ind++, vc->valves[i].alias[j]);
   }
+
+  EEPROM.commit();
+}
+
+htable_t *valve_control_valve_jsonify(valve_control_t *vc, size_t valve_id)
+{
+  // Index out of range
+  if (valve_id >= VALVE_CONTROL_NUM_VALVES)
+    return NULL;
+
+  // Create a new node
+  scptr htable_t *res = jsonh_make();
+  valve_t valve = vc->valves[valve_id];
+
+  // Set alias string
+  scptr char *alias = strclone_s(valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);
+  if (jsonh_set_str(res, "alias", (char *) mman_ref(alias)) != JOPRES_SUCCESS)
+    mman_dealloc(alias);
+
+  // Set state boolean and identifier
+  jsonh_set_bool(res, "state", valve.state);
+  jsonh_set_int(res, "identifier", valve_id);
+
+  return (htable_t *) mman_ref(res);
+}
+
+bool valve_control_valve_parse(htable_t *json, char **err, valve_t *out)
+{
+  // Get the alias string
+  jsonh_opres_t jopr;
+  char *alias_s = NULL;
+  if ((jopr = jsonh_get_str(json, "alias", &alias_s)) != JOPRES_SUCCESS)
+  {
+    *err = jsonh_getter_errstr("alias", jopr);
+    return false;
+  }
+
+  // Check for empty aliases
+  size_t al = strlen(alias_s);
+  if (al == 0)
+  {
+    *err = strfmt_direct("Empty aliases are not allowed");
+    return false;
+  }
+
+  // Check for aliases that are too long to store
+  if (al >= VALVE_CONTROL_ALIAS_MAXLEN)
+  {
+    *err = strfmt_direct("The alias has to have a length between 1 and %d characters", VALVE_CONTROL_ALIAS_MAXLEN);
+    return false;
+  }
+
+  *out = valve_control_valve_make(alias_s);
+  return true;
 }

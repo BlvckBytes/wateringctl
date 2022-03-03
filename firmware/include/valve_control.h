@@ -2,6 +2,7 @@
 #define valve_control_h
 
 #include "scheduler.h"
+#include <blvckstd/jsonh.h>
 
 // Maximum number of valves that can be attached to the system
 #define VALVE_CONTROL_NUM_VALVES 8
@@ -17,6 +18,13 @@ typedef struct valve
   char alias[VALVE_CONTROL_ALIAS_MAXLEN];   // Alias name (human readable string)
   bool state;                               // Current on/off state
 } valve_t;
+
+/**
+ * @brief Create a valve struct by it's properties
+ * 
+ * @param alias Alias string, will get capped off to the max. length automatically
+ */
+valve_t valve_control_valve_make(const char *alias);
 
 typedef struct valve_control
 {
@@ -47,5 +55,31 @@ void valve_control_eeprom_save(valve_control_t *vc);
  * @param state New valve state
  */
 void valve_control_toggle(valve_control_t *vc, size_t valve_id, bool state);
+
+/**
+ * @brief Transform a valve into it's JSONH array data-structure
+ * 
+ * @param vc Valve controller handle
+ * @param valve_id ID of the target valve
+ * 
+ * @return htable_t* JSONH data structure
+ */
+htable_t *valve_control_valve_jsonify(valve_control_t *vc, size_t valve_id);
+
+/**
+ * @brief Parsse a valve's writable values from json, using the following schema:
+ * 
+ * {
+ *   "alias": "..."
+ * }
+ * 
+ * @param json JSONH json node
+ * @param err Error output buffer
+ * @param out Value output buffer
+ * 
+ * @return true Parsing successful
+ * @return false Parsing error, see err
+ */
+bool valve_control_valve_parse(htable_t *json, char **err, valve_t *out);
 
 #endif

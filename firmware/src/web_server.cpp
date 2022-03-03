@@ -2,6 +2,7 @@
 
 static AsyncWebServer wsrv(WEB_SERVER_PORT);
 static scheduler_t *sched;
+static valve_control_t *valvectl;
 
 /*
 ============================================================================
@@ -51,7 +52,13 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, co
 
 void web_server_route_not_found(AsyncWebServerRequest *request)
 {
-  web_server_error_resp(request, 404, "The requested resource was not found (" QUOTSTR ")!", request->url().c_str());
+  web_server_error_resp(
+    request,
+    404,
+    "The requested resource was not found (%s " QUOTSTR ")!",
+    request->methodToString(),
+    request->url().c_str()
+  );
 }
 
 /*
@@ -145,6 +152,28 @@ INLINED static bool web_server_ensure_json_body(AsyncWebServerRequest *request, 
 ============================================================================
 */
 
+INLINED static bool valves_parse_id(AsyncWebServerRequest *request, size_t *valve_id)
+{
+  // Parse numeric identifier
+  const char *id_str = request->pathArg(0).c_str();
+  long valve_id_l;
+  if (longp(&valve_id_l, id_str, 10) != LONGP_SUCCESS)
+  {
+    web_server_error_resp(request, 400, "Invalid non-numeric identifier (%s)!", id_str);
+    return false;
+  }
+
+  // Check identifier validity
+  if (valve_id_l < 0 || valve_id_l >= VALVE_CONTROL_NUM_VALVES)
+  {
+    web_server_error_resp(request, 400, "Invalid out-of-range identifier (%s)!", id_str);
+    return false;
+  }
+
+  *valve_id = (size_t) valve_id_l;
+  return true;
+}
+
 INLINED static bool scheduler_parse_day(AsyncWebServerRequest *request, const char *day_str, scheduler_weekday_t *day)
 {
   // Parse weekday from path arg
@@ -187,7 +216,7 @@ INLINED static bool web_server_route_scheduler_day_index_parse(
 
 /*
 ============================================================================
-                                 /scheduler                                 
+                               GET /scheduler                               
 ============================================================================
 */
 
@@ -271,14 +300,6 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
     return;
   }
 
-  // Print interval
-  scptr char *resp = strfmt_direct(
-    "interval { start=%02u:%02u:%02u, end=%02u:%02u:%02u, id=%03u }",
-    interval.start.hours, interval.start.minutes, interval.start.seconds,
-    interval.end.hours, interval.end.minutes, interval.end.seconds,
-    interval.identifier
-  );
-
   // Update the entry and save it persistently
   sched->daily_schedules[day][index] = interval;
   scheduler_eeprom_save(sched);
@@ -319,14 +340,124 @@ void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *request)
 
 /*
 ============================================================================
+                                 GET /valves                                
+============================================================================
+*/
+
+void web_server_route_valves(AsyncWebServerRequest *request)
+{
+  scptr htable_t *resp = jsonh_make();
+
+  // Create a list of all available valves
+  scptr dynarr_t *valves = dynarr_make(VALVE_CONTROL_NUM_VALVES, VALVE_CONTROL_NUM_VALVES, mman_dealloc_nr);
+  for (size_t i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
+  {
+    scptr htable_t *valve = valve_control_valve_jsonify(valvectl, i);
+
+    if (!valve)
+      continue;
+
+    if (jsonh_insert_arr_obj(valves, (htable_t *) mman_ref(valve)) != JOPRES_SUCCESS)
+      mman_dealloc(valve);
+  }
+
+  jsonh_set_arr(resp, "items", valves);
+  web_server_json_resp(request, 200, resp);
+}
+
+/*
+============================================================================
+                               PUT /valves/{id}                             
+============================================================================
+*/
+
+void web_server_route_valves_edit(AsyncWebServerRequest *request)
+{
+  size_t valve_id = 0;
+  if (!valves_parse_id(request, &valve_id))
+    return;
+
+  scptr htable_t *body = NULL;
+  if (!web_server_ensure_json_body(request, &body))
+    return;
+
+  // Parse valve from json
+  scptr char *err = NULL;
+  valve_t valve;
+  if (!valve_control_valve_parse(body, &err, &valve))
+  {
+    web_server_error_resp(request, 400, "Body data malformed: %s", err);
+    return;
+  }
+
+  // Get the target valve and patch it, then save
+  valve_t *targ_valve = &(valvectl->valves[valve_id]);
+  strncpy(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);
+  valve_control_eeprom_save(valvectl);
+
+  // Respond with the updated valve
+  scptr htable_t *valve_jsn = valve_control_valve_jsonify(valvectl, valve_id);
+  web_server_json_resp(request, 200, valve_jsn);
+}
+
+/*
+============================================================================
+                               POST /valves/{id}                            
+============================================================================
+*/
+
+void web_server_route_valves_activate(AsyncWebServerRequest *request)
+{
+  size_t valve_id;
+  if (!valves_parse_id(request, &valve_id))
+    return;
+
+  // Check the target valve
+  if(valvectl->valves[valve_id].state)
+  {
+    web_server_error_resp(request, 409, "This valve is already active");
+    return;
+  }
+
+  // Toggle valve on
+  valve_control_toggle(valvectl, valve_id, true);
+  web_server_empty_ok(request);
+}
+
+/*
+============================================================================
+                             DELETE /valves/{id}                            
+============================================================================
+*/
+
+void web_server_route_valves_deactivate(AsyncWebServerRequest *request)
+{
+  size_t valve_id;
+  if (!valves_parse_id(request, &valve_id))
+    return;
+
+  // Check the target valve
+  if(!valvectl->valves[valve_id].state)
+  {
+    web_server_error_resp(request, 409, "This valve is not active");
+    return;
+  }
+
+  // Toggle valve off
+  valve_control_toggle(valvectl, valve_id, false);
+  web_server_empty_ok(request);
+}
+
+/*
+============================================================================
                           Webserver Configuration                           
 ============================================================================
 */
 
-void web_server_init(scheduler_t *scheduler)
+void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
 {
   // /scheduler
-  wsrv.on("^/scheduler$", HTTP_GET, web_server_route_scheduler);
+  wsrv.on("^\\/scheduler$", HTTP_GET, web_server_route_scheduler);
 
   // /scheduler/{day}
   wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)$", HTTP_GET, web_server_route_scheduler_day);
@@ -337,9 +468,22 @@ void web_server_init(scheduler_t *scheduler)
   wsrv.on(sched_day_index, HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
   wsrv.on(sched_day_index, HTTP_DELETE, web_server_route_scheduler_day_index_delete);
 
+  // /valves
+  wsrv.on("^\\/valves$", HTTP_GET, web_server_route_valves);
+
+  // /valves/{id}
+  const char *valves_id = "^\\/valves\\/([0-9]+)$";
+  wsrv.on(valves_id, HTTP_PUT, web_server_route_valves_edit, NULL, web_server_str_body_handler);
+  wsrv.on(valves_id, HTTP_POST, web_server_route_valves_activate);
+  wsrv.on(valves_id, HTTP_DELETE, web_server_route_valves_deactivate);
+
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);
 
+  // Set dependency pointers
   sched = scheduler;
+  valvectl = valve_control;
+
+  // Start listening
   wsrv.begin();
 }
