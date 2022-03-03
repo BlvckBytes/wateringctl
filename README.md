@@ -9,5 +9,4 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * Run a scheduler on-board that can be fully configured
 * Switch valves manually
 * Store representative string names for each valve
-* Active valve slot detection by measuring the drawn current
 * Mobile-friendly web-UI
