@@ -1,8 +1,10 @@
 #ifndef valve_control_h
 #define valve_control_h
 
-#include "scheduler.h"
 #include <blvckstd/jsonh.h>
+
+#include "scheduler.h"
+#include "shift_register.h"
 
 // Maximum number of valves that can be attached to the system
 #define VALVE_CONTROL_NUM_VALVES 8

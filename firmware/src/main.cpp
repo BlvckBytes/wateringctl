@@ -3,6 +3,7 @@
 
 #include "scheduler.h"
 #include "web_server.h"
+#include "shift_register.h"
 #include "time_provider.h"
 #include "wifi_handler.h"
 #include "valve_control.h"
@@ -35,7 +36,7 @@ void scheduler_event_routine(
 
   // Log event
   dbginf(
-    "[%s %d:%d:%d]: %s occurred for %" PRIu16 "!\n",
+    "%s@%02d:%02d:%02d - %s occurred for %" PRIu16 "!\n",
     scheduler_weekday_name(curr_day),
     curr_time.hours, curr_time.minutes, curr_time.seconds,
     scheduler_edge_name(edge),
@@ -53,6 +54,10 @@ void setup()
     SCHEDULER_EEPROM_FOOTPRINT
     + VALVE_CONTROL_EEPROM_FOOTPRINT
   );
+
+  // Initialize shift register pins and clear initially
+  shift_register_init();
+  shift_register_clear();
 
   // Nothing will work without an active WIFi connection
   // Block until connection succeeds

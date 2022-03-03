@@ -14,7 +14,7 @@ valve_control_t valve_control_make()
 {
   valve_control_t vc;
 
-  for (int i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
+  for (size_t i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
   {
     // The identifier becomes it's array index, the state is initially off
     valve_t *valve = &(vc.valves[i]);
@@ -30,7 +30,13 @@ valve_control_t valve_control_make()
 
 INLINED static void valve_control_apply_state(valve_control_t *vc)
 {
-  // TODO: Implement applying the current state to some outputs
+  // Enable all bits that correspond to active valves within the state number
+  uint64_t state = 0;
+  for (size_t i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
+    state |= (vc->valves[i].state) << i;
+
+  // Set the bits according to the current state
+  shift_register_set_bits(state);
 }
 
 void valve_control_toggle(valve_control_t *vc, size_t valve_id, bool state)
