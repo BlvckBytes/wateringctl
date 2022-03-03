@@ -33,14 +33,16 @@ void scheduler_event_routine(
 
   // Toggle the corresponding valve
   valve_control_toggle(&valvectl, identifier, edge == EDGE_OFF_TO_ON);
+  valve_t valve = valvectl.valves[identifier];
 
   // Log event
   dbginf(
-    "%s@%02d:%02d:%02d - %s occurred for %" PRIu16 "!\n",
+    "%s@%02d:%02d:%02d - %s occurred for %" PRIu16 " (" QUOTSTR ")!\n",
     scheduler_weekday_name(curr_day),
     curr_time.hours, curr_time.minutes, curr_time.seconds,
     scheduler_edge_name(edge),
-    identifier
+    identifier,
+    valve.alias
   );
 }
 
