@@ -357,7 +357,7 @@ static void scheduler_eeprom_read_time(int *addr_ind, scheduler_time_t *time)
 
 void scheduler_eeprom_save(scheduler_t *scheduler)
 {
-  // Keep track of the current EEPROM writing-address
+  // Keep track of the current EEPROM address
   int addr_ind = 0;
 
   // Loop all days
@@ -380,7 +380,7 @@ void scheduler_eeprom_save(scheduler_t *scheduler)
 
 void scheduler_eeprom_load(scheduler_t *scheduler)
 {
-  // Keep track of the current EEPROM writing-address
+  // Keep track of the current EEPROM address
   int addr_ind = 0;
 
   // Loop all days

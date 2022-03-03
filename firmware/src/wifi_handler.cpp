@@ -6,7 +6,7 @@ static long wfh_last_recon = millis();
 bool wfh_sta_connect_dhcp()
 {
   // Load wifi station info from var store
-  dbginf("Attempting to connect to the STA \"%s\"...\n", WFH_SSID);
+  dbginf("Attempting to connect to the STA \"%s\"...", WFH_SSID);
 
   // Don't override STA&AP mode
   if (WiFi.getMode() != WIFI_AP_STA)
@@ -23,12 +23,12 @@ bool wfh_sta_connect_dhcp()
     // Timed out
     if (millis() - started > WFH_TIMEOUT)
     {
-      dbginf("WiFi connection timed out!\n");
+      dbginf("WiFi connection timed out!");
       return false;
     }
   }
 
-  dbginf("Received config from DHCP:\n");
+  dbginf("Received config from DHCP:");
   wfh_sta_dbg_conn_info();
 
   // Connection was a success, reset trials
@@ -65,7 +65,7 @@ bool wfh_sta_ensure_connected()
       return false;
 
     // Reconnect if connection broke for some reason
-    dbginf("Reconnect initialized!\n");
+    dbginf("Reconnect initialized!");
     bool success = wfh_sta_connect_dhcp();
 
     // Reactivate cooldown
@@ -95,7 +95,7 @@ void wfh_sta_dbg_conn_info()
     "  gateway: %s\n"
     "  dns_1: %s\n"
     "  dns_2: %s\n"
-    "}\n",
+    "}",
     format_ip_addr(WiFi.localIP()),
     format_ip_addr(WiFi.subnetMask()),
     format_ip_addr(WiFi.gatewayIP()),

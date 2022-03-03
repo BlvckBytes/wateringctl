@@ -8,11 +8,51 @@
 #include "valve_control.h"
 
 scheduler_t scheduler;
+valve_control_t valvectl;
+
+/**
+ * @brief This routine will be invoked whenever scheduler events occur
+ * and then toggle valves accordingly
+ * 
+ * @param edge Signal edge
+ * @param identifier Valve identifier
+ * @param curr_day Current day (for logging purposes)
+ * @param curr_time Current time (for logging purposes)
+ */
+void scheduler_event_routine(
+  scheduler_edge_t edge,
+  uint8_t identifier,
+  scheduler_weekday_t curr_day,
+  scheduler_time_t curr_time
+)
+{
+  // Invalid out-of-range identifier
+  if (identifier >= VALVE_CONTROL_NUM_VALVES) 
+    return;
+
+  // Toggle the corresponding valve
+  valve_control_toggle(&valvectl, identifier, edge == EDGE_OFF_TO_ON);
+
+  // Log event
+  dbginf(
+    "[%s %d:%d:%d]: %s occurred for %" PRIu16 "!\n",
+    scheduler_weekday_name(curr_day),
+    curr_time.hours, curr_time.minutes, curr_time.seconds,
+    scheduler_edge_name(edge),
+    identifier
+  );
+}
 
 void setup()
 {
+  // Start serial for the later use of dbginf/dbgerr
   Serial.begin(115200);
-  EEPROM.begin(SCHEDULER_EEPROM_FOOTPRINT);
+
+  // Start the eeprom with the total footprint size
+  EEPROM.begin(
+    SCHEDULER_EEPROM_FOOTPRINT
+    + VALVE_CONTROL_EEPROM_FOOTPRINT
+  );
 
   // Nothing will work without an active WIFi connection
   // Block until connection succeeds
@@ -25,13 +65,20 @@ void setup()
 
   // Create a new scheduler that's hooked up to it's dependencies
   scheduler = scheduler_make(
-    valve_control_scheduler_routine,
+    scheduler_event_routine,
     time_provider_scheduler_routine
   );
   dbginf("Created the scheduler!");
+
+  valvectl = valve_control_make();
+  dbginf("Created the valve controller!");
   
   // Load the persistent schedule from ROM
   scheduler_eeprom_load(&scheduler);
+  dbginf("Loaded scheduler's schedule from EEPROM!");
+
+  // Load the persistent valve aliases from ROM
+  valve_control_eeprom_load(&valvectl);
   dbginf("Loaded scheduler's schedule from EEPROM!");
 
   // Start listening for web requests
