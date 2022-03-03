@@ -86,7 +86,7 @@ void setup()
 
   // Load the persistent valve aliases from ROM
   valve_control_eeprom_load(&valvectl);
-  dbginf("Loaded scheduler's schedule from EEPROM!");
+  dbginf("Loaded valve aliases from EEPROM!");
 
   // Start listening for web requests
   web_server_init(&scheduler, &valvectl);
