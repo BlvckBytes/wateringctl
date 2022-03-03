@@ -58,6 +58,7 @@ void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, 
   }
 
   // Collect segments into buffer
+  // TODO: Somehow tell the caller if we run out of memory
   strfmt((char **) request->_tempObject, &index, "%.*s", len, (char *) data);
 }
 
