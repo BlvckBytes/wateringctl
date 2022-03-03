@@ -69,6 +69,28 @@ paths:
         "400":
           description: "Malformed request"
 
+    delete:
+      tags:
+      - "scheduler"
+      summary: "Delete an interval of a specific slot (by index) of a specific day"
+      parameters:
+        - name: day
+          in: path
+          schema:
+            $ref: "#/components/schemas/WeekDay"
+          required: true
+        - name: index
+          in: path
+          schema:
+            type: number
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/IntervalRequest"
+      responses:
+        "204":
+          description: "Deletion successful"
+        "400":
+          description: "Malformed request"
 
 components:
   requestBodies:

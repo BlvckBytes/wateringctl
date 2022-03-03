@@ -5,6 +5,23 @@ static scheduler_t *sched;
 
 /*
 ============================================================================
+                               Success routines                               
+============================================================================
+*/
+
+INLINED static void web_server_empty_ok(AsyncWebServerRequest *request)
+{
+  request->send(204);
+}
+
+INLINED static void web_server_json_resp(AsyncWebServerRequest *request, int status, htable_t *json)
+{
+  scptr char *stringified = jsonh_stringify(json, 2);
+  request->send(status, "application/json", stringified);
+}
+
+/*
+============================================================================
                                Error routines                               
 ============================================================================
 */
@@ -23,8 +40,7 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, co
   jsonh_set_bool(resp, "error", true);
   jsonh_set_str(resp, "message", (char *) mman_ref(error_msg));
 
-  scptr char *resp_str = jsonh_stringify(resp, 2);
-  request->send(status, "text/json", resp_str);
+  web_server_json_resp(request, status, resp);
 }
 
 /*
@@ -187,8 +203,7 @@ void web_server_route_scheduler(AsyncWebServerRequest *request)
     jsonh_set_arr(jsn, weekday_name, (dynarr_t *) mman_ref(weekday_schedule));
   }
 
-  scptr char *stringified = jsonh_stringify(jsn, 2);
-  request->send(200, "text/json", stringified);
+  web_server_json_resp(request, 200, jsn);
 }
 
 /*
@@ -208,8 +223,7 @@ void web_server_route_scheduler_day(AsyncWebServerRequest *request)
   scptr dynarr_t *weekday_schedule = scheduler_weekday_jsonify(sched, day);
   jsonh_set_arr(jsn, "items", weekday_schedule);
 
-  scptr char *jsn_str = jsonh_stringify(jsn, 2);
-  request->send(200, "text/json", jsn_str);
+  web_server_json_resp(request, 200, jsn);
 }
 
 /*
@@ -227,8 +241,7 @@ void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
     return;
 
   scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day][index]);
-  scptr char *int_jsn_str = jsonh_stringify(int_jsn, 2);
-  request->send(200, "text/json", int_jsn_str);
+  web_server_json_resp(request, 200, int_jsn);
 }
 
 /*
@@ -266,9 +279,42 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
     interval.identifier
   );
 
-  // TODO: Actually use the data instead of just printing it
+  // Update the entry and save it persistently
+  sched->daily_schedules[day][index] = interval;
+  scheduler_eeprom_save(sched);
 
-  request->send(200, "text/plain", resp);
+  // Respond with the updated entry
+  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day][index]);
+  web_server_json_resp(request, 200, int_jsn);
+}
+
+/*
+============================================================================
+                      DELETE /scheduler/{day}/{index}                       
+============================================================================
+*/
+
+void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *request)
+{
+  scheduler_weekday_t day;
+  long index;
+
+  if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
+    return;
+
+  scheduler_interval_t *targ = &(sched->daily_schedules[day][index]);
+
+  // Already an empty slot
+  if (scheduler_interval_empty(*targ))
+  {
+    web_server_error_resp(request, 404, "This index is already empty");
+    return;
+  }
+
+  // Clear slot and save persistently
+  *targ = SCHEDULER_INTERVAL_EMPTY;
+  scheduler_eeprom_save(sched);
+  web_server_empty_ok(request);
 }
 
 /*
@@ -286,10 +332,10 @@ void web_server_init(scheduler_t *scheduler)
   wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)$", HTTP_GET, web_server_route_scheduler_day);
 
   // /scheduler/{day}/index
-  wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$", HTTP_GET, web_server_route_scheduler_day_index);
-
-  // /scheduler/{day}/index
-  wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$", HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
+  const char *sched_day_index = "^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$";
+  wsrv.on(sched_day_index, HTTP_GET, web_server_route_scheduler_day_index);
+  wsrv.on(sched_day_index, HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
+  wsrv.on(sched_day_index, HTTP_DELETE, web_server_route_scheduler_day_index_delete);
 
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);

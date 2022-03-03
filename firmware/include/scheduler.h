@@ -129,6 +129,13 @@ bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *
 htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval);
 
 /**
+ * @brief Check if a given interval is equal to the empty interval constant
+ * 
+ * @param interval Interval to check
+ */
+bool scheduler_interval_empty(scheduler_interval_t interval);
+
+/**
  * @brief Compare two scheduler intervals
  * 
  * @param a First scheduler interval

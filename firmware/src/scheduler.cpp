@@ -151,6 +151,13 @@ bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *
   if (!scheduler_interval_parse_time(json, "end", err, &end))
     return false;
 
+  // Make sure that the end is greater than the start
+  if (scheduler_time_compare(end, start) != 1)
+  {
+    *err = strfmt_direct("\"end\" has to be greater than \"start\"");
+    return false;
+  }
+
   // Get identifier
   int identifier;
   jsonh_opres_t jopr;
@@ -184,7 +191,7 @@ htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval)
 /**
  * @brief Check if a given interval is equal to the empty interval constant
  */
-static bool scheduler_interval_empty(scheduler_interval_t interval)
+bool scheduler_interval_empty(scheduler_interval_t interval)
 {
   return (
     scheduler_time_compare(interval.start, SCHEDULER_INTERVAL_EMPTY.start) == 0   // Start is equal to empty
