@@ -6,13 +6,13 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 
 ## Requirements
 
-* Accomplish all I/O over WiFi
-* Control as many valves as needed by having modular boards using shift-registers
-* Run a scheduler on-board that can be fully configured
-* Switch valves manually
-* Store representative string names for each valve
-* Disableable intervals, days and valves
-* Mobile-friendly web-UI
+* [x] Accomplish all I/O over WiFi
+* [x] Control as many valves as needed by having modular boards using shift-registers
+* [x] Run a scheduler on-board that can be fully configured
+* [x] Switch valves manually
+* [x] Store representative string names for each valve
+* [x] Disableable intervals, days and valves
+* [ ] Mobile-friendly web-UI
 
 ## Hardware
 
