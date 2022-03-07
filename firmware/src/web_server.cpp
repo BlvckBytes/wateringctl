@@ -301,11 +301,15 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
   }
 
   // Update the entry and save it persistently
-  sched->daily_schedules[day][index] = interval;
+  scheduler_interval_t *targ_interval = &(sched->daily_schedules[day][index]);
+  targ_interval->disabled = interval.disabled;      // Patch disabled
+  targ_interval->end = interval.end;                // Patch end
+  targ_interval->start = interval.start;            // Patch start
+  targ_interval->identifier = interval.identifier;  // Patch identifier
   scheduler_eeprom_save(sched);
 
   // Respond with the updated entry
-  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day][index]);
+  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, *targ_interval);
   web_server_json_resp(request, 200, int_jsn);
 }
 

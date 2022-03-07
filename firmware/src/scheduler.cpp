@@ -167,8 +167,16 @@ bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *
     return false;
   }
 
+  // Get disabled state
+  bool disabled;
+  if ((jopr = jsonh_get_bool(json, "disabled", &disabled)) != JOPRES_SUCCESS)
+  {
+    *err = jsonh_getter_errstr("disabled", jopr);
+    return false;
+  }
+
   // Build result
-  *out = scheduler_interval_make(start, end, identifier);
+  *out = scheduler_interval_make(start, end, identifier, disabled);
   return true;
 }
 
@@ -184,6 +192,7 @@ htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval)
   jsonh_set_int(int_jsn, "identifier", interval.identifier);
   jsonh_set_int(int_jsn, "index", index);
   jsonh_set_bool(int_jsn, "active", interval.active);
+  jsonh_set_bool(int_jsn, "disabled", interval.disabled);
 
   return (htable_t *) mman_ref(int_jsn);
 }
@@ -213,13 +222,14 @@ bool scheduler_interval_equals(scheduler_interval_t a, scheduler_interval_t b)
   return a.identifier == b.identifier;
 }
 
-scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint8_t identifier)
+scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint8_t identifier, bool disabled)
 {
   return (scheduler_interval_t) {
     .start = start,
     .end = end,
     .identifier = identifier,
-    false
+    .active = false,
+    .disabled = disabled
   };
 }
 
@@ -318,6 +328,7 @@ void scheduler_tick(scheduler_t *scheduler)
       scheduler_time_compare(time, interval->start) == 1      // Time is after start
       && scheduler_time_compare(time, interval->end) == -1    // And time is before end
       && !interval->active                                    // And interval is not already active
+      && !interval->disabled                                  // And interval is not disabled
     )
     {
       interval->active = true;
@@ -361,6 +372,9 @@ void scheduler_eeprom_save(scheduler_t *scheduler)
   // Keep track of the current EEPROM address
   int addr_ind = 0;
 
+  // Bytepacked disable state buffer
+  static uint8_t disabled_states[SCHEDULER_NUM_DISABLED_BYTES];
+
   // Loop all days
   for (int i = 0; i < 7; i++)
   {
@@ -369,12 +383,24 @@ void scheduler_eeprom_save(scheduler_t *scheduler)
     {
       scheduler_interval_t *slot = &(scheduler->daily_schedules[i][j]);
 
+      // Save disabled state to buffer
+      int int_index = i * SCHEDULER_MAX_INTERVALS_PER_DAY + j;
+      uint8_t *tarb = &disabled_states[int_index / 8];
+      if (slot->disabled)
+        *tarb |= (1 << (int_index % 8));
+      else
+        *tarb &= ~(1 << (int_index % 8));
+
       // Write start, end and the identifier of this slot
       scheduler_eeprom_write_time(&addr_ind, slot->start);
       scheduler_eeprom_write_time(&addr_ind, slot->end);
       EEPROM.write(addr_ind++, slot->identifier);
     }
   }
+
+  // Write disabled bytes
+  for (int i = 0; i < SCHEDULER_NUM_DISABLED_BYTES; i++)
+    EEPROM.write(addr_ind++, disabled_states[i]);
 
   EEPROM.commit();
 }
@@ -396,6 +422,25 @@ void scheduler_eeprom_load(scheduler_t *scheduler)
       scheduler_eeprom_read_time(&addr_ind, &(slot->start));
       scheduler_eeprom_read_time(&addr_ind, &(slot->end));
       slot->identifier = EEPROM.read(addr_ind++);
+    }
+  }
+
+  // Read disabled bytes
+  for (int i = 0; i < SCHEDULER_NUM_DISABLED_BYTES; i++)
+  {
+    // Read state bits
+    uint8_t dbyte = EEPROM.read(addr_ind++);
+    for (int j = 0; j < 8; j++)
+    {
+      // Account for unused "padding bits"
+      int int_index = i * 8 + j;
+      if (int_index + 1 >= SCHEDULER_TOTAL_INTERVALS)
+        break;
+
+      // Apply bit to valve's disabled state
+      int targ_day = int_index / SCHEDULER_MAX_INTERVALS_PER_DAY;
+      int targ_int = int_index % SCHEDULER_MAX_INTERVALS_PER_DAY;
+      scheduler->daily_schedules[targ_day][targ_int].disabled = (dbyte >> j) & 0x01;
     }
   }
 }

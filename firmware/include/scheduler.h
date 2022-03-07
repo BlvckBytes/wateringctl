@@ -25,9 +25,18 @@
 // Maximum number of intervals a day can have
 #define SCHEDULER_MAX_INTERVALS_PER_DAY 5
 
+// Total intervals managed
+#define SCHEDULER_TOTAL_INTERVALS (SCHEDULER_MAX_INTERVALS_PER_DAY * 7)
+
+// Disabled states, bytepacked
+#define SCHEDULER_NUM_DISABLED_BYTES ((SCHEDULER_TOTAL_INTERVALS + 7) / 8)
+
 // Number of bytes the scheduler needs to persist it's schedule in the EEPROM
 // 7 weekdays times max_per_day times 7 bytes per interval (3 start, 3 end, 1 identifier)
-#define SCHEDULER_EEPROM_FOOTPRINT (7 * SCHEDULER_MAX_INTERVALS_PER_DAY * 7)
+#define SCHEDULER_EEPROM_FOOTPRINT (                            \
+  7 * SCHEDULER_TOTAL_INTERVALS /* Intervals */                 \
+  + SCHEDULER_NUM_DISABLED_BYTES  /* Interval disabled bytes */ \
+)
 
 // Day in the week
 #define _EVALS_SCHEDULER_WEEKDAY(FUN)   \
@@ -96,8 +105,9 @@ typedef struct scheduler_interval
 {
   scheduler_time_t start;              // Start of ON-time interval
   scheduler_time_t end;                // End of ON-time interval
-  uint8_t identifier;                 // Identifier provided in the scheduler's callback
+  uint8_t identifier;                  // Identifier provided in the scheduler's callback
   bool active;                         // Whether or not this interval is currently active
+  bool disabled;                       // Whether or not this interval is disabled
 } scheduler_interval_t;
 
 /**
@@ -152,8 +162,9 @@ bool scheduler_interval_equals(scheduler_interval_t a, scheduler_interval_t b);
  * @param start Time to start the interval
  * @param end Time to end the interval
  * @param identifier Identifier used for the callback
+ * @param disabled Disabled state
  */
-scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint8_t identifier);
+scheduler_interval_t scheduler_interval_make(scheduler_time_t start, scheduler_time_t end, uint8_t identifier, bool disabled);
 
 // Constant for an empty interval slot
 const scheduler_interval_t SCHEDULER_INTERVAL_EMPTY = { SCHEDULER_TIME_MIDNIGHT, SCHEDULER_TIME_MIDNIGHT, 0x0, false };
