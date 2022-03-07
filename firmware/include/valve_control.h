@@ -80,7 +80,8 @@ htable_t *valve_control_valve_jsonify(valve_control_t *vc, size_t valve_id);
  * @brief Parsse a valve's writable values from json, using the following schema:
  * 
  * {
- *   "alias": "..."
+ *   "alias": "...",
+ *   "disabled": <boolean>
  * }
  * 
  * @param json JSONH json node

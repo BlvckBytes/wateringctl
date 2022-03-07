@@ -116,7 +116,8 @@ typedef struct scheduler_interval
  * {
  *   "start": "<hours>:<minutes>:<seconds>",
  *   "end": "<hours>:<minutes>:<seconds>",
- *   "identifier": <integer>
+ *   "identifier": <integer>,
+ *   "disabled": <boolean>
  * }
  * 
  * @param json JSONH json node
