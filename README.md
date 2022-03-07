@@ -1,5 +1,7 @@
 # WateringCtl
 
+![logo](readme_images/logo.png)
+
 A web-based solenoid-valve controller used for watering the garden, plants and the like.
 
 ## Requirements
@@ -9,6 +11,7 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * Run a scheduler on-board that can be fully configured
 * Switch valves manually
 * Store representative string names for each valve
+* Disableable intervals, days and valves
 * Mobile-friendly web-UI
 
 ## Hardware
