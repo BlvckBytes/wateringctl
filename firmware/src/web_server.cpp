@@ -392,7 +392,8 @@ void web_server_route_valves_edit(AsyncWebServerRequest *request)
 
   // Get the target valve and patch it, then save
   valve_t *targ_valve = &(valvectl->valves[valve_id]);
-  strncpy(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);
+  strncpy(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);  // Patch name
+  targ_valve->disabled = valve.disabled;                                // Patch disabled state
   valve_control_eeprom_save(valvectl);
 
   // Respond with the updated valve

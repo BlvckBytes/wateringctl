@@ -12,21 +12,29 @@
 // Maximum number of characters a valve alias string can have
 #define VALVE_CONTROL_ALIAS_MAXLEN 16
 
+// Disabled states, bytepacked
+#define VALVE_CONTROL_NUM_DISABLED_BYTES ((VALVE_CONTROL_NUM_VALVES + 7) / 8)
+
 // Number of bytes valve control needs to persist it's aliases in the EEPROM
-#define VALVE_CONTROL_EEPROM_FOOTPRINT (VALVE_CONTROL_NUM_VALVES * VALVE_CONTROL_ALIAS_MAXLEN)
+#define VALVE_CONTROL_EEPROM_FOOTPRINT (                                   \
+  VALVE_CONTROL_NUM_VALVES * VALVE_CONTROL_ALIAS_MAXLEN /* Aliases */      \
+  + VALVE_CONTROL_NUM_DISABLED_BYTES /* Disabled bytes */                  \
+)
 
 typedef struct valve
 {
   char alias[VALVE_CONTROL_ALIAS_MAXLEN];   // Alias name (human readable string)
   bool state;                               // Current on/off state
+  bool disabled;                            // Disable state
 } valve_t;
 
 /**
  * @brief Create a valve struct by it's properties
  * 
  * @param alias Alias string, will get capped off to the max. length automatically
+ * @param disabled Disabled state of this valve
  */
-valve_t valve_control_valve_make(const char *alias);
+valve_t valve_control_valve_make(const char *alias, bool disabled);
 
 typedef struct valve_control
 {

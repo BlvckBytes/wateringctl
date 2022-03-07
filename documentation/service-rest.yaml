@@ -234,6 +234,8 @@ components:
       properties:
         alias:
           type: string
+        disabled:
+          type: boolean
         state:
           type: boolean
           readOnly: true
