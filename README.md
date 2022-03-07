@@ -16,6 +16,8 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 
 ## Hardware
 
+I use AutoDesk Eagle to design my PCBs, you can find the projects below in `hardware`.
+
 ### usb2serial
 
 ![usb2serial](readme_images/layout_usb2serial.png)
