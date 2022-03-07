@@ -52,10 +52,13 @@ void setup()
   Serial.begin(115200);
 
   // Start the eeprom with the total footprint size
-  EEPROM.begin(
+  size_t eeprom_footprint = (
     SCHEDULER_EEPROM_FOOTPRINT
     + VALVE_CONTROL_EEPROM_FOOTPRINT
   );
+
+  EEPROM.begin(eeprom_footprint);
+  dbginf("Initialized EEPROM for %u bytes!", eeprom_footprint);
 
   // Initialize shift register pins and clear initially
   shift_register_init();

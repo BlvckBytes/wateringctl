@@ -1,7 +1,7 @@
 openapi: 3.0.0
 
 info:
-  title: WateringCtl
+  title: wateringctl
   description: API contract for the communication with the wateringctl-firmware
   version: 0.0.1
 
@@ -18,6 +18,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Schedule"
+
+  /scheduler/{day}:
+    put:
+      tags:
+      - "scheduler"
+      summary: "Alter the properties of a specific day"
+      parameters:
+        - name: day
+          in: path
+          schema:
+            $ref: "#/components/schemas/WeekDay"
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/ScheduledDayRequest"
+      responses:
+        "200":
+          description: "Update successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduledDay"
+        "400":
+          description: "Malformed request"
 
   /scheduler/{day}/{index}:
     put:
@@ -43,10 +66,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    $ref: "#/components/schemas/Interval"
+                $ref: "#/components/schemas/Interval"
         "400":
           description: "Malformed request"
 
@@ -65,8 +85,6 @@ paths:
           schema:
             type: number
           required: true
-      requestBody:
-        $ref: "#/components/requestBodies/IntervalRequest"
       responses:
         "204":
           description: "Deletion successful"
@@ -168,6 +186,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Valve'
+
+    ScheduledDayRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ScheduledDay'
   schemas:
     Interval:
       type: object
@@ -185,9 +210,15 @@ components:
           readOnly: true
           type: boolean
     ScheduledDay:
-      type: array
-      items:
-        $ref: "#/components/schemas/Interval"
+      type: object
+      properties:
+        disabled:
+          type: boolean
+        intervals:
+          readOnly: true
+          type: array
+          items:
+            $ref: "#/components/schemas/Interval"
     WeekDay:
       type: string
       enum:

@@ -34,8 +34,9 @@
 // Number of bytes the scheduler needs to persist it's schedule in the EEPROM
 // 7 weekdays times max_per_day times 7 bytes per interval (3 start, 3 end, 1 identifier)
 #define SCHEDULER_EEPROM_FOOTPRINT (                            \
-  7 * SCHEDULER_TOTAL_INTERVALS /* Intervals */                 \
+  7 * SCHEDULER_TOTAL_INTERVALS   /* Intervals */               \
   + SCHEDULER_NUM_DISABLED_BYTES  /* Interval disabled bytes */ \
+  + 1                             /* Day disable bits */        \
 )
 
 // Day in the week
@@ -111,7 +112,7 @@ typedef struct scheduler_interval
 } scheduler_interval_t;
 
 /**
- * @brief Parsse an interval's writable values from json, using the following schema:
+ * @brief Parse an interval's writable values from json, using the following schema:
  * 
  * {
  *   "start": "<hours>:<minutes>:<seconds>",
@@ -173,25 +174,47 @@ const scheduler_interval_t SCHEDULER_INTERVAL_EMPTY = { SCHEDULER_TIME_MIDNIGHT,
 // This callback provides the user with the occurring edge as well as the identifier
 typedef void (*scheduler_callback_t)(scheduler_edge_t, uint8_t, scheduler_weekday_t, scheduler_time_t);
 
+typedef struct scheduler_day
+{
+  scheduler_interval_t intervals[SCHEDULER_MAX_INTERVALS_PER_DAY];  // Intervals of this day
+  bool disabled;                                                    // Whether or not this day is disabled
+} scheduler_day_t;
+
+/**
+ * @brief Parse a day's writable values from json, using the following schema:
+ * 
+ * {
+ *   "disabled": <boolean>
+ * }
+ * 
+ * @param json JSONH json node
+ * @param err Error output buffer
+ * @param out Value output buffer
+ * 
+ * @return true Parsing successful
+ * @return false Parsing error, see err
+ */
+bool scheduler_day_parse(htable_t *json, char **err, scheduler_day_t *out);
+
 typedef struct scheduler
 {
-  scheduler_interval_t daily_schedules[7][SCHEDULER_MAX_INTERVALS_PER_DAY];  // Mapping days of the week to their schedules
-  scheduler_callback_t callback;                                             // Callback used for interval state change reporting
-  scheduler_day_and_time_provider_t dt_provider;                             // External day/time provider function
+  scheduler_day_t daily_schedules[7];              // Mapping days to their schedules
+  scheduler_callback_t callback;                   // Callback used for interval state change reporting
+  scheduler_day_and_time_provider_t dt_provider;   // External day/time provider function
 
-  scheduler_time_t last_tick_time;        // Time at which the last tick occurred
-  scheduler_weekday_t last_tick_day;      // Day at which the last tick occurred
+  scheduler_time_t last_tick_time;                 // Time at which the last tick occurred
+  scheduler_weekday_t last_tick_day;               // Day at which the last tick occurred
 } scheduler_t;
 
 /**
- * @brief Transform a scheduler weekday into it's JSONH array data-structure
+ * @brief Transform a scheduler weekday into it's JSONH object data-structure
  * 
  * @param scheduler Scheduler handle
  * @param day Day of the target week
  * 
  * @return htable_t* JSONH data structure
  */
-dynarr_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day);
+htable_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day);
 
 /**
  * @brief Create a new scheduler with empty interval-lists

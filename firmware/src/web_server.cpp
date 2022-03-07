@@ -228,8 +228,8 @@ void web_server_route_scheduler(AsyncWebServerRequest *request)
   {
     scheduler_weekday_t day = (scheduler_weekday_t) i;
     const char *weekday_name = scheduler_weekday_name(day);
-    scptr dynarr_t *weekday_schedule = scheduler_weekday_jsonify(sched, day);
-    jsonh_set_arr(jsn, weekday_name, (dynarr_t *) mman_ref(weekday_schedule));
+    scptr htable_t *weekday= scheduler_weekday_jsonify(sched, day);
+    jsonh_set_obj(jsn, weekday_name, (htable_t *) mman_ref(weekday));
   }
 
   web_server_json_resp(request, 200, jsn);
@@ -248,11 +248,44 @@ void web_server_route_scheduler_day(AsyncWebServerRequest *request)
   if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
     return;
 
-  scptr htable_t *jsn = jsonh_make();
-  scptr dynarr_t *weekday_schedule = scheduler_weekday_jsonify(sched, day);
-  jsonh_set_arr(jsn, "items", weekday_schedule);
+  scptr htable_t *weekday_schedule = scheduler_weekday_jsonify(sched, day);
+  web_server_json_resp(request, 200, weekday_schedule);
+}
 
-  web_server_json_resp(request, 200, jsn);
+/*
+============================================================================
+                            PUT /scheduler/{day}                            
+============================================================================
+*/
+
+void web_server_route_scheduler_day_edit(AsyncWebServerRequest *request)
+{
+  // Parse weekday from path arg
+  scheduler_weekday_t day;
+  if (!scheduler_parse_day(request, request->pathArg(0).c_str(), &day))
+    return;
+
+  scptr htable_t *body = NULL;
+  if (!web_server_ensure_json_body(request, &body))
+    return;
+
+  // Parse day from json
+  scptr char *err = NULL;
+  scheduler_day_t sched_day;
+  if (!scheduler_day_parse(body, &err, &sched_day))
+  {
+    web_server_error_resp(request, 400, "Body data malformed: %s", err);
+    return;
+  }
+
+  // Update the day and save it persistently
+  scheduler_day_t *targ_day = &(sched->daily_schedules[day]);
+  targ_day->disabled = sched_day.disabled;       // Patch disabled state
+  scheduler_eeprom_save(sched);
+
+  // Respond with the updated day
+  scptr htable_t *day_jsn = scheduler_weekday_jsonify(sched, day);
+  web_server_json_resp(request, 200, day_jsn);
 }
 
 /*
@@ -269,7 +302,7 @@ void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
   if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
     return;
 
-  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day][index]);
+  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day].intervals[index]);
   web_server_json_resp(request, 200, int_jsn);
 }
 
@@ -301,7 +334,7 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
   }
 
   // Update the entry and save it persistently
-  scheduler_interval_t *targ_interval = &(sched->daily_schedules[day][index]);
+  scheduler_interval_t *targ_interval = &(sched->daily_schedules[day].intervals[index]);
   targ_interval->disabled = interval.disabled;      // Patch disabled
   targ_interval->end = interval.end;                // Patch end
   targ_interval->start = interval.start;            // Patch start
@@ -327,7 +360,7 @@ void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *request)
   if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
     return;
 
-  scheduler_interval_t *targ = &(sched->daily_schedules[day][index]);
+  scheduler_interval_t *targ = &(sched->daily_schedules[day].intervals[index]);
 
   // Already an empty slot
   if (scheduler_interval_empty(*targ))
@@ -465,7 +498,9 @@ void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
   wsrv.on("^\\/scheduler$", HTTP_GET, web_server_route_scheduler);
 
   // /scheduler/{day}
-  wsrv.on("^\\/scheduler\\/([A-Za-z0-9_]+)$", HTTP_GET, web_server_route_scheduler_day);
+  const char *sched_day = "^\\/scheduler\\/([A-Za-z0-9_]+)$";
+  wsrv.on(sched_day, HTTP_GET, web_server_route_scheduler_day);
+  wsrv.on(sched_day, HTTP_PUT, web_server_route_scheduler_day_edit, NULL, web_server_str_body_handler);
 
   // /scheduler/{day}/index
   const char *sched_day_index = "^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$";

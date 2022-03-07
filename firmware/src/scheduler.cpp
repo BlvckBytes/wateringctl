@@ -139,6 +139,21 @@ INLINED static bool scheduler_interval_parse_time(
   return true;
 }
 
+bool scheduler_day_parse(htable_t *json, char **err, scheduler_day_t *out)
+{
+  // Get disabled state
+  bool disabled;
+  jsonh_opres_t jopr;
+  if ((jopr = jsonh_get_bool(json, "disabled", &disabled)) != JOPRES_SUCCESS)
+  {
+    *err = jsonh_getter_errstr("disabled", jopr);
+    return false;
+  }
+
+  out->disabled = disabled;
+  return true;
+}
+
 bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *out)
 {
   // Parse start
@@ -238,7 +253,7 @@ static int scheduler_find_interval_slot(scheduler_t *scheduler, scheduler_weekda
   // Loop all interval slots for the target day
   for (size_t i = 0; i < SCHEDULER_MAX_INTERVALS_PER_DAY; i++)
   {
-    scheduler_interval_t slot = scheduler->daily_schedules[day][i];
+    scheduler_interval_t slot = scheduler->daily_schedules[day].intervals[i];
 
     // Not the target interval
     if (!scheduler_interval_equals(slot, interval)) continue;
@@ -250,18 +265,24 @@ static int scheduler_find_interval_slot(scheduler_t *scheduler, scheduler_weekda
   return -1;
 }
 
-dynarr_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day)
+htable_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day)
 {
-  scptr dynarr_t *weekday_schedule = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
+  scptr htable_t *weekday = htable_make(16, mman_dealloc_nr);
+  scptr dynarr_t *weekday_intervals = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
 
+  if (jsonh_set_arr(weekday, "intervals", (dynarr_t *) mman_ref(weekday_intervals)) != JOPRES_SUCCESS)
+    mman_dealloc(weekday_intervals);
+
+  scheduler_day_t targ_day = scheduler->daily_schedules[day];
   for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
   {
-    scptr htable_t *int_jsn = scheduler_interval_jsonify(j, scheduler->daily_schedules[day][j]);
-    if (jsonh_insert_arr_obj(weekday_schedule, (htable_t *) mman_ref(int_jsn)) != JOPRES_SUCCESS)
+    scptr htable_t *int_jsn = scheduler_interval_jsonify(j, targ_day.intervals[j]);
+    if (jsonh_insert_arr_obj(weekday_intervals, (htable_t *) mman_ref(int_jsn)) != JOPRES_SUCCESS)
       mman_dealloc(int_jsn);
   }
 
-  return (dynarr_t *) mman_ref(weekday_schedule);
+  jsonh_set_bool(weekday, "disabled", targ_day.disabled);
+  return (htable_t *) mman_ref(weekday);
 }
 
 bool scheduler_register_interval(scheduler_t *scheduler, scheduler_weekday_t day, scheduler_interval_t interval)
@@ -273,7 +294,7 @@ bool scheduler_register_interval(scheduler_t *scheduler, scheduler_weekday_t day
   if (slot < 0) return false;
 
   // Set the slot
-  scheduler->daily_schedules[day][slot] = interval;
+  scheduler->daily_schedules[day].intervals[slot] = interval;
   return true;
 }
 
@@ -285,7 +306,7 @@ bool scheduler_unregister_interval(scheduler_t *scheduler, scheduler_weekday_t d
   if (slot < 0) return false;
 
   // Unregister by setting the slot to an empty value
-  scheduler->daily_schedules[day][slot] = SCHEDULER_INTERVAL_EMPTY;
+  scheduler->daily_schedules[day].intervals[slot] = SCHEDULER_INTERVAL_EMPTY;
   return true;
 }
 
@@ -297,7 +318,7 @@ bool scheduler_change_interval(scheduler_t *scheduler, scheduler_weekday_t day, 
   if (slot < 0) return false;
 
   // Change the interval value
-  scheduler->daily_schedules[day][slot] = to;
+  scheduler->daily_schedules[day].intervals[slot] = to;
   return true;
 }
 
@@ -316,9 +337,10 @@ void scheduler_tick(scheduler_t *scheduler)
     return;
 
   // Loop all intervals of the day
+  scheduler_day_t curr_day = scheduler->daily_schedules[day];
   for (size_t i = 0; i < SCHEDULER_MAX_INTERVALS_PER_DAY; i++)
   {
-    scheduler_interval_t *interval = &(scheduler->daily_schedules[day][i]);
+    scheduler_interval_t *interval = &(curr_day.intervals[i]);
 
     // Skip empty slots
     if (scheduler_interval_empty(*interval)) continue;
@@ -329,6 +351,7 @@ void scheduler_tick(scheduler_t *scheduler)
       && scheduler_time_compare(time, interval->end) == -1    // And time is before end
       && !interval->active                                    // And interval is not already active
       && !interval->disabled                                  // And interval is not disabled
+      && !curr_day.disabled                                   // And current day is not disabled
     )
     {
       interval->active = true;
@@ -381,7 +404,7 @@ void scheduler_eeprom_save(scheduler_t *scheduler)
     // Loop all their slots
     for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
     {
-      scheduler_interval_t *slot = &(scheduler->daily_schedules[i][j]);
+      scheduler_interval_t *slot = &(scheduler->daily_schedules[i].intervals[j]);
 
       // Save disabled state to buffer
       int int_index = i * SCHEDULER_MAX_INTERVALS_PER_DAY + j;
@@ -402,6 +425,17 @@ void scheduler_eeprom_save(scheduler_t *scheduler)
   for (int i = 0; i < SCHEDULER_NUM_DISABLED_BYTES; i++)
     EEPROM.write(addr_ind++, disabled_states[i]);
 
+  // Write days disable byte
+  uint8_t days_disableb = 0x00;
+  for (int i = 0; i < 7; i++)
+  {
+    if (scheduler->daily_schedules[i].disabled)
+      days_disableb |= (1 << (i % 8));
+    else
+      days_disableb &= ~(1 << (i % 8));
+  }
+  EEPROM.write(addr_ind++, days_disableb);
+
   EEPROM.commit();
 }
 
@@ -416,7 +450,7 @@ void scheduler_eeprom_load(scheduler_t *scheduler)
     // Loop all their slots
     for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
     {
-      scheduler_interval_t *slot = &(scheduler->daily_schedules[i][j]);
+      scheduler_interval_t *slot = &(scheduler->daily_schedules[i].intervals[j]);
 
       // Read start, end and the identifier into this slot
       scheduler_eeprom_read_time(&addr_ind, &(slot->start));
@@ -440,9 +474,14 @@ void scheduler_eeprom_load(scheduler_t *scheduler)
       // Apply bit to valve's disabled state
       int targ_day = int_index / SCHEDULER_MAX_INTERVALS_PER_DAY;
       int targ_int = int_index % SCHEDULER_MAX_INTERVALS_PER_DAY;
-      scheduler->daily_schedules[targ_day][targ_int].disabled = (dbyte >> j) & 0x01;
+      scheduler->daily_schedules[targ_day].intervals[targ_int].disabled = (dbyte >> j) & 0x01;
     }
   }
+
+  // Read days disable byte
+  uint8_t day_disableb = EEPROM.read(addr_ind++);
+  for (int i = 0; i < 7; i++)
+    scheduler->daily_schedules[i].disabled = (day_disableb >> i) & 0x01;
 }
 
 void scheduler_schedule_print(scheduler_t *scheduler)
@@ -457,7 +496,7 @@ void scheduler_schedule_print(scheduler_t *scheduler)
     // Loop all their slots
     for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
     {
-      scheduler_interval_t slot = scheduler->daily_schedules[i][j];
+      scheduler_interval_t slot = scheduler->daily_schedules[i].intervals[j];
 
       // Print this slot with all it's properties
       Serial.printf(
