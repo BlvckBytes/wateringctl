@@ -16,7 +16,7 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * [x] No external power-supply
 * [x] USB connection to debug/upload code
 * [ ] Update firmware over WiFi
-* [ ] Status-LED where blinking-speed indicate system-states
+* [x] Status-LED where blinking-speed indicate system-states
 * [x] Control as many valves as needed by having modular boards using shift-registers
 * [x] Run a scheduler on-board that can be fully configured
 * [x] Switch valves manually
