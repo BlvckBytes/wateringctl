@@ -36,9 +36,9 @@ Converts USB signals to RX, TX, Reset and Programming-Bootmode signals and is us
 
 ### wifi
 
-This board plugs straight into the usb2serial module and represents the most barebones wifi circuit possible. Besides the 3.3V regulation as well as driving an external status-led and the relay-board breakouts, there's not much on there. The antenna is also broken out to an external antenna screw-connector to ensure proper wifi reception.
-
 ![wifi](readme_images/layout_wifi.png)
+
+This board plugs straight into the usb2serial module and represents the most barebones wifi circuit possible. Besides the 3.3V regulation as well as driving an external status-led and the relay-board breakouts, there's not much on there. The antenna is also broken out to an external antenna screw-connector to ensure proper wifi reception.
 
 ### relays
 
