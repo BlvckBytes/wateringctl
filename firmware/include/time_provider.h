@@ -3,7 +3,8 @@
 
 #include "scheduler.h"
 #include <NTPClient.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 
 #define TIME_PROVIDER_POOL          "pool.ntp.org"
 #define TIME_PROVIDER_UTC_OFFS_S    3600

@@ -26,6 +26,9 @@ bool wfh_sta_connect_dhcp()
       dbginf("WiFi connection timed out!");
       return false;
     }
+
+    status_led_update();
+    yield();
   }
 
   dbginf("Received config from DHCP:");

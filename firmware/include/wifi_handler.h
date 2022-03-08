@@ -2,7 +2,7 @@
 #define wifi_handler_h
 
 #include <IPAddress.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 
 #define WFH_SSID        "HL_HNET_2"
 #define WFH_PASS        "mysql2001"
@@ -15,6 +15,7 @@
 // IP address formatting before printing
 #define format_ip_addr(ip) ip.toString().c_str()
 
+#include "status_led.h"
 #include <blvckstd/dbglog.h>
 
 /**

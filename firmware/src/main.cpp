@@ -7,6 +7,7 @@
 #include "time_provider.h"
 #include "wifi_handler.h"
 #include "valve_control.h"
+#include "status_led.h"
 
 scheduler_t scheduler;
 valve_control_t valvectl;
@@ -63,6 +64,11 @@ void setup()
   // Initialize shift register pins and clear initially
   shift_register_init();
   shift_register_clear();
+  dbginf("Initialized shift register(s)!");
+
+  // Initialize the blinking status-led, which sets it to connecting mode
+  status_led_init();
+  dbginf("Initialized status-led!");
 
   // Nothing will work without an active WIFi connection
   // Block until connection succeeds
@@ -72,6 +78,9 @@ void setup()
   // Block until we get a time reading out of it, as time
   // is super critical on this system
   while (!time_provider_init());
+
+  // Wifi connection and time data established
+  status_led_set(STATLED_CONNECTED);
 
   // Create a new scheduler that's hooked up to it's dependencies
   scheduler = scheduler_make(
@@ -98,13 +107,17 @@ void setup()
 
 void loop()
 {
-  // Only process data if an active WIFi connection exists
-  if (!wfh_sta_ensure_connected())
-    return;
+  status_led_update();
 
-  // Only process data if we got real-time on this system
-  if (!time_provider_update())
+  if (
+    !wfh_sta_ensure_connected()   // WiFi not connected
+    || !time_provider_update()    // Time not available
+  )
+  {
+    status_led_set(STATLED_CONNECTING);
     return;
+  }
 
   scheduler_tick(&scheduler);
+  status_led_set(STATLED_CONNECTED);
 }

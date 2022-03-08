@@ -164,7 +164,7 @@ INLINED static bool valves_parse_id(AsyncWebServerRequest *request, size_t *valv
   }
 
   // Check identifier validity
-  if (valve_id_l < 0 || valve_id_l >= VALVE_CONTROL_NUM_VALVES)
+  // if (valve_id_l < 0 || valve_id_l >= VALVE_CONTROL_NUM_VALVES)
   {
     web_server_error_resp(request, 400, "Invalid out-of-range identifier (%s)!", id_str);
     return false;
@@ -488,12 +488,28 @@ void web_server_route_valves_deactivate(AsyncWebServerRequest *request)
 
 /*
 ============================================================================
+                                GET /memstat                                
+============================================================================
+*/
+
+void web_server_route_memstat(AsyncWebServerRequest *request)
+{
+  size_t mac = mman_get_alloc_count(), mdeac = mman_get_dealloc_count();
+  scptr char *resp = strfmt_direct("%lu %d %d\n", system_get_free_heap_size(), mac, mdeac);
+  request->send(200, "text/plain", resp);
+}
+
+/*
+============================================================================
                           Webserver Configuration                           
 ============================================================================
 */
 
 void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
 {
+  // /memstat, Memory statistics for debugging purposes
+  wsrv.on("/memstat", HTTP_GET, web_server_route_memstat);
+
   // /scheduler
   wsrv.on("^\\/scheduler$", HTTP_GET, web_server_route_scheduler);
 
