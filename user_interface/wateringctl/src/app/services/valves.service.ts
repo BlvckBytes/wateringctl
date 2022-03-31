@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 import { IValveRequest } from '../models/request/valve-request.interface';
 import { IValve } from '../models/valve.interface';
 import { HttpService } from './http.service';
@@ -9,12 +9,19 @@ import { HttpService } from './http.service';
 })
 export class ValvesService {
 
+  allValves = new BehaviorSubject<IValve[] | null>(null);
+
   constructor(
     private httpService: HttpService,
   ) {}
 
   getAllValves(): Observable<IValve[]> {
-    return this.httpService.get<any>('/valves').pipe(map(it => it.items));
+    return new Observable<IValve[]>(s => {
+      this.httpService.get<any>('/valves').pipe(map(it => it.items)).subscribe(v => {
+        this.allValves.next(v);
+        s.next(v);
+      });
+    });
   }
 
   putValve(

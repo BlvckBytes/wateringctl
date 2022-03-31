@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
-import { IValve } from 'src/app/models/valve.interface';
 import { SchedulerService } from 'src/app/services/scheduler.service';
 import { ValvesService } from 'src/app/services/valves.service';
 
@@ -12,17 +11,15 @@ import { ValvesService } from 'src/app/services/valves.service';
   templateUrl: './page-schedules.component.html',
   styleUrls: ['./page-schedules.component.scss']
 })
-export class PageSchedulesComponent implements OnInit {
+export class PageSchedulesComponent {
 
   private _currentSchedule = new BehaviorSubject<IScheduledDay | null>(null);
-  private _valves$ = new BehaviorSubject<IValve[] | null>(null);
 
   currentActiveIntervals: Observable<IInterval[] | null>;
 
   set selectedDay(value: string) {
     this._currentSchedule.next(null);
     this.valveService.getAllValves().subscribe(v => {
-      this._valves$.next(v);
       this.schedulerService.getDaysSchedule(value as ESchedulerWeekday).subscribe(v => {
         this._currentSchedule.next(v);
       });
@@ -73,11 +70,8 @@ export class PageSchedulesComponent implements OnInit {
   }
 
   resolveValve(interval: IInterval): string {
-    return this._valves$.value
+    return this.valveService.allValves.value
       ?.find(it => it.identifier === interval.identifier)
       ?.alias || '?';
-  }
-
-  ngOnInit(): void {
   }
 }
