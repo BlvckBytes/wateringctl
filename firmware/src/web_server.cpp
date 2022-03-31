@@ -18,7 +18,15 @@ INLINED static void web_server_empty_ok(AsyncWebServerRequest *request)
 INLINED static void web_server_json_resp(AsyncWebServerRequest *request, int status, htable_t *json)
 {
   scptr char *stringified = jsonh_stringify(json, 2);
-  request->send(status, "application/json", stringified);
+  AsyncWebServerResponse *resp = request->beginResponse(status, "application/json", stringified);
+
+  // Allow CORS requests
+  resp->addHeader("Access-Control-Allow-Origin", "*");
+  resp->addHeader("Access-Control-Max-Age", "600");
+  resp->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+  resp->addHeader("Access-Control-Allow-Headers", "*");
+
+  request->send(resp);
 }
 
 /*

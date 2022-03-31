@@ -5,13 +5,53 @@
 <div class="buttons hv-c">
   <app-button
     color="success"
-    text="{{ 'buttons.create_interval' | translate }}"
+    text="{{ 'schedules.buttons.create_interval' | translate }}"
     icon="plus.svg"
   ></app-button>
 
   <app-button
     color="warning"
-    text="{{ 'buttons.disable_day' | translate }}"
+    text="{{ 'schedules.buttons.disable_day' | translate }}"
     icon="block.svg"
   ></app-button>
+</div>
+
+<div class="schedule">
+  <table>
+    <tr>
+      <th>{{ 'schedules.intervals.target' | translate }}</th>
+      <th class="hv-c">
+        <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
+        <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+      </th>
+      <th>{{ 'schedules.intervals.actions' | translate }}</th>
+    </tr>
+    <tr
+      *ngFor="let interval of currentActiveIntervals | async"
+      class="schedule__entry"
+    >
+      <td>
+        <p class="schedule__entry__section">{{resolveValve(interval)}}</p>
+      </td>
+      <td>
+        <div class="interval hv-c">
+          <div class="interval__begin">
+            {{trimIntervalTime(interval.start)}}
+          </div>
+
+          <p>{{calcIntervalDur(interval)}}</p>
+
+          <div class="interval__end">
+            {{trimIntervalTime(interval.end)}}
+          </div>
+        </div>
+      </td>
+      <td>...</td>
+    </tr>
+    <tr
+      class="schedule__entry schedule__entry--mark-empty"
+    >
+      <td colspan="100%">{{ 'schedules.intervals.no_items' | translate }}</td>
+    </tr>
+  </table>
 </div>

@@ -8,8 +8,16 @@
     "WEEKDAY_SA": "Sa",
     "WEEKDAY_SU": "So"
   },
-  "buttons": {
-    "create_interval": "Interval erstellen",
-    "disable_day": "Tag deaktivieren"
+  "schedules": {
+    "buttons": {
+      "create_interval": "Interval erstellen",
+      "disable_day": "Tag deaktivieren"
+    },
+    "intervals": {
+      "target": "Ziel",
+      "timestamps": "Zeitstempel",
+      "actions": "Aktionen",
+      "no_items": "Keine Einträge"
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { IValveRequest } from '../models/request/valve-request.interface';
 import { IValve } from '../models/valve.interface';
 import { HttpService } from './http.service';
@@ -14,7 +14,7 @@ export class ValvesService {
   ) {}
 
   getAllValves(): Observable<IValve[]> {
-    return this.httpService.get('/valves');
+    return this.httpService.get<any>('/valves').pipe(map(it => it.items));
   }
 
   putValve(
