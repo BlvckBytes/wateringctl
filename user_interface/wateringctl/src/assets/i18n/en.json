@@ -19,5 +19,13 @@
       "actions": "Actions",
       "no_items": "No entries"
     }
+  },
+  "valves": {
+    "valves": {
+      "relay_id": "Relay #",
+      "alias": "Alias",
+      "actions": "Actions",
+      "no_items": "No entries"
+    }
   }
 }

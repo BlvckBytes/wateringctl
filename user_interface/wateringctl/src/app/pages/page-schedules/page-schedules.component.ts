@@ -15,7 +15,7 @@ export class PageSchedulesComponent {
 
   private _currentSchedule = new BehaviorSubject<IScheduledDay | null>(null);
 
-  currentActiveIntervals: Observable<IInterval[] | null>;
+  currentActiveIntervals$: Observable<IInterval[] | null>;
 
   set selectedDay(value: string) {
     this._currentSchedule.next(null);
@@ -30,7 +30,7 @@ export class PageSchedulesComponent {
     private schedulerService: SchedulerService,
     private valveService: ValvesService,
   ) {
-    this.currentActiveIntervals = this._currentSchedule
+    this.currentActiveIntervals$ = this._currentSchedule
       .asObservable()
       .pipe(
         map(it => it?.intervals

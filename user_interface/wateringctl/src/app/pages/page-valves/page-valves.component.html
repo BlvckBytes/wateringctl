@@ -1,1 +1,34 @@
-<p>page-valves works!</p>
+<table class="row-table">
+  <tr>
+    <th class="hv-c">
+      <p>{{ 'valves.valves.relay_id' | translate }}</p>
+      <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+    </th>
+    <th>
+      <p>{{ 'valves.valves.alias' | translate }}</p>
+    </th>
+    <th>
+      <p>{{ 'valves.valves.actions' | translate }}</p>
+    </th>
+  </tr>
+  <tr
+    *ngFor="let valve of valves$ | async"
+  >
+    <td>
+      <p class="badge">{{valve.identifier + 1}}</p>
+    </td>
+    <td>
+      <p class="badge">{{valve.alias}}</p>
+    </td>
+    <td>
+      <p>...</p>
+    </td>
+  </tr>
+  <tr
+    class="row-table__row--mark-empty"
+  >
+    <td colspan="100%">
+      <p>{{ 'valves.valves.no_items' | translate }}</p>
+    </td>
+  </tr>
+</table>

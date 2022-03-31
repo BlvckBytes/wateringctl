@@ -16,50 +16,47 @@
   ></app-button>
 </div>
 
-<div class="schedule">
-  <table>
-    <tr>
-      <th>
-        <p>{{ 'schedules.intervals.target' | translate }}</p>
-      </th>
-      <th class="hv-c">
-        <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
-        <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
-      </th>
-      <th>
-        <p>{{ 'schedules.intervals.actions' | translate }}</p>
-      </th>
-    </tr>
-    <tr
-      *ngFor="let interval of currentActiveIntervals | async"
-      class="schedule__entry"
-    >
-      <td>
-        <p class="schedule__entry__section">{{resolveValve(interval)}}</p>
-      </td>
-      <td>
-        <div class="interval hv-c">
-          <div class="interval__begin">
-            <p>{{trimIntervalTime(interval.start)}}</p>
-          </div>
-
-          <p>{{calcIntervalDur(interval)}}</p>
-
-          <div class="interval__end">
-            <p>{{trimIntervalTime(interval.end)}}</p>
-          </div>
+<table class="row-table">
+  <tr>
+    <th>
+      <p>{{ 'schedules.intervals.target' | translate }}</p>
+    </th>
+    <th class="hv-c">
+      <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
+      <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+    </th>
+    <th>
+      <p>{{ 'schedules.intervals.actions' | translate }}</p>
+    </th>
+  </tr>
+  <tr
+    *ngFor="let interval of currentActiveIntervals$ | async"
+  >
+    <td>
+      <p class="badge schedule__entry__section">{{resolveValve(interval)}}</p>
+    </td>
+    <td>
+      <div class="interval hv-c">
+        <div class="badge">
+          <p>{{trimIntervalTime(interval.start)}}</p>
         </div>
-      </td>
-      <td>
-        <p>...</p>
-      </td>
-    </tr>
-    <tr
-      class="schedule__entry schedule__entry--mark-empty"
-    >
-      <td colspan="100%">
-        <p>{{ 'schedules.intervals.no_items' | translate }}</p>
-      </td>
-    </tr>
-  </table>
-</div>
+
+        <p>{{calcIntervalDur(interval)}}</p>
+
+        <div class="badge">
+          <p>{{trimIntervalTime(interval.end)}}</p>
+        </div>
+      </div>
+    </td>
+    <td>
+      <p>...</p>
+    </td>
+  </tr>
+  <tr
+    class="row-table__row--mark-empty"
+  >
+    <td colspan="100%">
+      <p>{{ 'schedules.intervals.no_items' | translate }}</p>
+    </td>
+  </tr>
+</table>
