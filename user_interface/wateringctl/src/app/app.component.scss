@@ -1,0 +1,10 @@
+:host {
+  min-height: calc(var(--vh, 1vh) * 100);
+  width: 100%;
+  max-width: 500px;
+  display: block;
+  margin: 0px auto;
+
+  background: var(--dark-gray);
+  color: var(--white);
+}

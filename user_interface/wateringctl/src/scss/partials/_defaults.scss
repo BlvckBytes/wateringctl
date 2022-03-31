@@ -1,0 +1,70 @@
+@use 'util' as *;
+
+*,
+*:before,
+*:after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: 'Montserrat', sans-serif;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(2.8em + var(--spc-xl));
+  min-height: calc(var(--vh, 1vh) * 100);
+}
+
+h1 {
+  font-size: var(--fs-h1);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+}
+
+h4 {
+  font-size: var(--fs-h4);
+}
+
+p,
+a {
+  font-size: var(--fs-p1);
+}
+
+p.p--2 {
+  font-size: var(--fs-p2);
+}
+
+p.p--3 {
+  font-size: var(--fs-p3);
+}
+
+.hv-c {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg {
+  filter: $iconFilterDefault;
+
+  &--xs {
+    width: var(--icn-xs);
+    height: var(--icn-xs);
+  }
+
+  // Small is the default
+  width: var(--icn-sm);
+  height: var(--icn-sm);
+
+  &--md {
+    width: var(--icn-md);
+    height: var(--icn-md);
+  }
+}

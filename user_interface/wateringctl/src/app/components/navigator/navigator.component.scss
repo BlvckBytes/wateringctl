@@ -1,0 +1,38 @@
+@use 'config' as *;
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spc-lg);
+  margin-bottom: var(--spc-xl);
+}
+
+.logo {
+  gap: var(--spc-sm);
+  background: var(--black);
+  padding: var(--spc-sm) var(--spc-md);
+  border-radius: var(--br-sm);
+}
+
+.pages {
+  gap: var(--spc-md);
+}
+
+.page {
+  height: 2rem;
+  width: 2rem;
+  background: var(--white);
+  border-radius: var(--br-sm);
+
+  img {
+    filter: none;
+  }
+
+  &--active {
+    img {
+      filter: $iconFilterDefault;
+    }
+    background: var(--primary);
+  }
+}

@@ -1,0 +1,15 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--br-sm);
+  padding: var(--spc-xs) var(--spc-md);
+
+  p {
+    font-size: var(--fs-p2);
+  }
+}
+
+.icon {
+  margin-right: var(--spc-sm);
+}

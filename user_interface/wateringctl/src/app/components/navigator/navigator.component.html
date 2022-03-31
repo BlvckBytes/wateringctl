@@ -1,0 +1,15 @@
+<div class="logo hv-c">
+  <img class="svg" src="graphics/logo.svg" alt="logo">
+  <p>wateringctl</p>
+</div>
+
+<div class="pages hv-c">
+  <div
+    *ngFor="let link of links"
+    class="page hv-c"
+    [routerLink]="link.link"
+    [class.page--active]="currUrl === link.link"
+  >
+    <img class="svg" src="graphics/{{link.icon}}" alt="{{link.link}}">
+  </div>
+</div>
