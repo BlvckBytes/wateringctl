@@ -6,9 +6,9 @@
 
 #include "valve_control.h"
 
-#define SHIFT_REGISTER_DATA 25      // Shift register data pin
-#define SHIFT_REGISTER_STORE 26     // Shift register store pulse pin
-#define SHIFT_REGISTER_SHIFT 27     // Shift register shift pulse pin
+#define SHIFT_REGISTER_DATA  25     // Shift register data pin
+#define SHIFT_REGISTER_STORE 33     // Shift register store pulse pin
+#define SHIFT_REGISTER_SHIFT 32     // Shift register shift pulse pin
 
 /**
  * @brief Initialize the shift-register pins

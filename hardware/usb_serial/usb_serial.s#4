@@ -13376,11 +13376,6 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <junction x="-17.78" y="-10.16" grouprefs="USB-INTERFACE"/>
 </segment>
 <segment>
-<pinref part="CONN" gate="A" pin="2"/>
-<pinref part="GND1" gate="1" pin="GND"/>
-<wire x1="-20.32" y1="-53.34" x2="-2.54" y2="-53.34" width="0.1524" layer="91" grouprefs="CONNECTOR"/>
-</segment>
-<segment>
 <pinref part="R1" gate="G$1" pin="2"/>
 <wire x1="15.24" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
 <pinref part="R2" gate="G$1" pin="2"/>
@@ -13436,9 +13431,9 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <label x="-22.86" y="-30.48" size="1.778" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="CONN" gate="A" pin="4"/>
-<wire x1="-20.32" y1="-55.88" x2="-12.7" y2="-55.88" width="0.1524" layer="91" grouprefs="CONNECTOR"/>
-<label x="-12.7" y="-55.88" size="1.778" layer="95" xref="yes" grouprefs="CONNECTOR"/>
+<pinref part="CONN" gate="A" pin="5"/>
+<wire x1="-27.94" y1="-58.42" x2="-33.02" y2="-58.42" width="0.1524" layer="91"/>
+<label x="-33.02" y="-58.42" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="RX" class="0">
@@ -13453,9 +13448,9 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <label x="-22.86" y="-22.86" size="1.778" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="CONN" gate="A" pin="3"/>
-<label x="-35.56" y="-55.88" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="CONNECTOR"/>
-<wire x1="-35.56" y1="-55.88" x2="-27.94" y2="-55.88" width="0.1524" layer="91" grouprefs="CONNECTOR"/>
+<pinref part="CONN" gate="A" pin="6"/>
+<wire x1="-20.32" y1="-58.42" x2="-15.24" y2="-58.42" width="0.1524" layer="91"/>
+<label x="-15.24" y="-58.42" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$10" class="0">
@@ -13508,11 +13503,6 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <label x="43.18" y="-12.7" size="1.778" layer="95" xref="yes" grouprefs="USB-INTERFACE"/>
 </segment>
 <segment>
-<pinref part="CONN" gate="A" pin="6"/>
-<wire x1="-20.32" y1="-58.42" x2="-12.7" y2="-58.42" width="0.1524" layer="91" grouprefs="CONNECTOR"/>
-<label x="-12.7" y="-58.42" size="1.778" layer="95" xref="yes" grouprefs="CONNECTOR"/>
-</segment>
-<segment>
 <pinref part="R2" gate="G$1" pin="1"/>
 <wire x1="5.08" y1="-22.86" x2="2.54" y2="-22.86" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
 <label x="2.54" y="-22.86" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="USB-INTERFACE"/>
@@ -13529,11 +13519,6 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <wire x1="40.64" y1="17.78" x2="40.64" y2="15.24" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
 <wire x1="40.64" y1="17.78" x2="43.18" y2="17.78" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
 <label x="43.18" y="17.78" size="1.778" layer="95" xref="yes" grouprefs="USB-INTERFACE"/>
-</segment>
-<segment>
-<pinref part="CONN" gate="A" pin="5"/>
-<wire x1="-27.94" y1="-58.42" x2="-35.56" y2="-58.42" width="0.1524" layer="91" grouprefs="CONNECTOR"/>
-<label x="-35.56" y="-58.42" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="CONNECTOR"/>
 </segment>
 <segment>
 <pinref part="R1" gate="G$1" pin="1"/>
@@ -13583,13 +13568,6 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <pinref part="R15" gate="G$1" pin="1"/>
 <pinref part="LED2" gate="G$1" pin="A"/>
 <wire x1="-38.1" y1="-22.86" x2="-35.56" y2="-22.86" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$1" class="0">
-<segment>
-<pinref part="D1" gate="G$1" pin="C"/>
-<pinref part="CONN" gate="A" pin="1"/>
-<wire x1="-35.56" y1="-53.34" x2="-27.94" y2="-53.34" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

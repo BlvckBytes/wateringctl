@@ -164,7 +164,7 @@ INLINED static bool valves_parse_id(AsyncWebServerRequest *request, size_t *valv
   }
 
   // Check identifier validity
-  // if (valve_id_l < 0 || valve_id_l >= VALVE_CONTROL_NUM_VALVES)
+  if (valve_id_l < 0 || valve_id_l >= VALVE_CONTROL_NUM_VALVES)
   {
     web_server_error_resp(request, 400, "Invalid out-of-range identifier (%s)!", id_str);
     return false;

@@ -26,6 +26,8 @@ void shift_register_set_bits(uint64_t bits)
   // Store the shifted bits into the output-registers on the rising edge
   delay(1);
   digitalWrite(SHIFT_REGISTER_STORE, HIGH);
+  delay(1);
+  digitalWrite(SHIFT_REGISTER_STORE, LOW);
 }
 
 void shift_register_clear()

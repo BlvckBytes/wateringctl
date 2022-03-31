@@ -13287,8 +13287,8 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <attribute name="NAME" x="36.83" y="15.24" size="1.778" layer="95"/>
 <attribute name="VALUE" x="27.94" y="15.24" size="1.778" layer="96"/>
 </instance>
-<instance part="P+4" gate="1" x="-30.48" y="15.24" smashed="yes" grouprefs="USB-INTERFACE">
-<attribute name="VALUE" x="-33.02" y="10.16" size="1.778" layer="96" rot="R90"/>
+<instance part="P+4" gate="1" x="-25.4" y="15.24" smashed="yes" grouprefs="USB-INTERFACE">
+<attribute name="VALUE" x="-27.94" y="10.16" size="1.778" layer="96" rot="R90"/>
 </instance>
 <instance part="GND8" gate="1" x="-30.48" y="-5.08" smashed="yes" grouprefs="USB-INTERFACE">
 <attribute name="VALUE" x="-30.48" y="-7.62" size="1.778" layer="96"/>
@@ -13328,8 +13328,8 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <instance part="P+1" gate="1" x="-48.26" y="-17.78" smashed="yes">
 <attribute name="VALUE" x="-50.8" y="-22.86" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="P+2" gate="1" x="-45.72" y="-50.8" smashed="yes" grouprefs="CONNECTOR">
-<attribute name="VALUE" x="-48.26" y="-55.88" size="1.778" layer="96" rot="R90"/>
+<instance part="P+2" gate="1" x="-35.56" y="-50.8" smashed="yes" grouprefs="CONNECTOR">
+<attribute name="VALUE" x="-38.1" y="-55.88" size="1.778" layer="96" rot="R90"/>
 </instance>
 <instance part="GND1" gate="1" x="-2.54" y="-55.88" smashed="yes" grouprefs="CONNECTOR">
 <attribute name="VALUE" x="-2.54" y="-58.42" size="1.778" layer="96"/>
@@ -13349,9 +13349,9 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <attribute name="NAME" x="28.321" y="-24.384" size="1.778" layer="95" rot="R270"/>
 <attribute name="VALUE" x="23.749" y="-19.304" size="1.778" layer="96" rot="R270"/>
 </instance>
-<instance part="D1" gate="G$1" x="-38.1" y="-53.34" smashed="yes">
-<attribute name="NAME" x="-35.56" y="-52.8574" size="1.778" layer="95"/>
-<attribute name="VALUE" x="-35.56" y="-55.6514" size="1.778" layer="96"/>
+<instance part="D1" gate="G$1" x="-30.48" y="10.16" smashed="yes">
+<attribute name="NAME" x="-27.94" y="10.6426" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-27.94" y="7.8486" size="1.778" layer="96"/>
 </instance>
 <instance part="P+3" gate="1" x="17.78" y="-17.78" smashed="yes">
 <attribute name="VALUE" x="15.24" y="-22.86" size="1.778" layer="96" rot="R90"/>
@@ -13393,14 +13393,6 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 </net>
 <net name="+5V" class="0">
 <segment>
-<wire x1="-38.1" y1="10.16" x2="-33.02" y2="10.16" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<pinref part="P+4" gate="1" pin="+5V"/>
-<wire x1="-33.02" y1="10.16" x2="-30.48" y2="10.16" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<wire x1="-30.48" y1="10.16" x2="-30.48" y2="12.7" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<pinref part="J1" gate="A" pin="VCC"/>
-<junction x="-33.02" y="10.16"/>
-</segment>
-<segment>
 <pinref part="U$3" gate="G$1" pin="VCC"/>
 <wire x1="12.7" y1="12.7" x2="17.78" y2="12.7" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
 <wire x1="17.78" y1="12.7" x2="17.78" y2="15.24" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
@@ -13415,11 +13407,6 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <pinref part="P+1" gate="1" pin="+5V"/>
 </segment>
 <segment>
-<pinref part="P+2" gate="1" pin="+5V"/>
-<pinref part="D1" gate="G$1" pin="A"/>
-<wire x1="-45.72" y1="-53.34" x2="-40.64" y2="-53.34" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="R1" gate="G$1" pin="2"/>
 <wire x1="15.24" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
 <pinref part="R2" gate="G$1" pin="2"/>
@@ -13428,6 +13415,17 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <pinref part="P+3" gate="1" pin="+5V"/>
 <wire x1="17.78" y1="-22.86" x2="17.78" y2="-20.32" width="0.1524" layer="91"/>
 <junction x="17.78" y="-22.86"/>
+</segment>
+<segment>
+<pinref part="P+2" gate="1" pin="+5V"/>
+<pinref part="CONN" gate="A" pin="1"/>
+<wire x1="-35.56" y1="-53.34" x2="-27.94" y2="-53.34" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="D1" gate="G$1" pin="C"/>
+<wire x1="-27.94" y1="10.16" x2="-25.4" y2="10.16" width="0.1524" layer="91"/>
+<pinref part="P+4" gate="1" pin="+5V"/>
+<wire x1="-25.4" y1="10.16" x2="-25.4" y2="12.7" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="TX" class="0">
@@ -13593,9 +13591,8 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 </net>
 <net name="N$1" class="0">
 <segment>
-<pinref part="D1" gate="G$1" pin="C"/>
-<pinref part="CONN" gate="A" pin="1"/>
-<wire x1="-35.56" y1="-53.34" x2="-27.94" y2="-53.34" width="0.1524" layer="91"/>
+<pinref part="J1" gate="A" pin="VCC"/>
+<pinref part="D1" gate="G$1" pin="A"/>
 </segment>
 </net>
 </nets>

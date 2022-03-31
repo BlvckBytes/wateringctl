@@ -267,7 +267,7 @@ static int scheduler_find_interval_slot(scheduler_t *scheduler, scheduler_weekda
 
 htable_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day)
 {
-  scptr htable_t *weekday = htable_make(16, mman_dealloc_nr);
+  scptr htable_t *weekday = htable_make(2, mman_dealloc_nr);
   scptr dynarr_t *weekday_intervals = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
 
   if (jsonh_set_arr(weekday, "intervals", (dynarr_t *) mman_ref(weekday_intervals)) != JOPRES_SUCCESS)

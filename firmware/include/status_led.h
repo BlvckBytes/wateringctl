@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <blvckstd/enumlut.h>
 
-#define STATUS_LED_PIN 13
+#define STATUS_LED_PIN 22
 
 #define _EVALS_STATUS_LED(FUN) \
   FUN(STATLED_ERROR, 0x0)      \

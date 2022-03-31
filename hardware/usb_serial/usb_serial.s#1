@@ -13255,15 +13255,16 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <part name="R15" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="1k"/>
 <part name="R16" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="1k"/>
 <part name="J1" library="micro-usb" deviceset="MICRO-USB" device=""/>
-<part name="CONN" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-2X3" device="/90" package3d_urn="urn:adsk.eagle:package:22464/2"/>
+<part name="CONN" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-2X3" device="" package3d_urn="urn:adsk.eagle:package:22462/2"/>
 <part name="P+1" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device=""/>
 <part name="P+2" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device=""/>
 <part name="GND1" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="R1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="10k"/>
 <part name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="10k"/>
 <part name="GND2" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
-<part name="C1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="C-EU" device="C0603K" package3d_urn="urn:adsk.eagle:package:23680/2" value="10nF"/>
+<part name="C1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="C-EU" device="C0603K" package3d_urn="urn:adsk.eagle:package:23680/2" value="100nF"/>
 <part name="D1" library="diode" library_urn="urn:adsk.eagle:library:210" deviceset="DIODE-" device="MICROMELF-R" package3d_urn="urn:adsk.eagle:package:43436/2"/>
+<part name="P+3" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -13352,6 +13353,9 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <attribute name="NAME" x="-35.56" y="-52.8574" size="1.778" layer="95"/>
 <attribute name="VALUE" x="-35.56" y="-55.6514" size="1.778" layer="96"/>
 </instance>
+<instance part="P+3" gate="1" x="17.78" y="-17.78" smashed="yes">
+<attribute name="VALUE" x="15.24" y="-22.86" size="1.778" layer="96" rot="R90"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -13376,18 +13380,15 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <junction x="-17.78" y="-10.16" grouprefs="USB-INTERFACE"/>
 </segment>
 <segment>
-<pinref part="R1" gate="G$1" pin="2"/>
-<wire x1="15.24" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<pinref part="R2" gate="G$1" pin="2"/>
-<wire x1="17.78" y1="-30.48" x2="20.32" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<wire x1="15.24" y1="-22.86" x2="17.78" y2="-22.86" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<wire x1="17.78" y1="-22.86" x2="17.78" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
-<junction x="17.78" y="-30.48" grouprefs="USB-INTERFACE"/>
 <pinref part="GND2" gate="1" pin="GND"/>
+<wire x1="20.32" y1="-22.86" x2="20.32" y2="-30.48" width="0.1524" layer="91"/>
 <pinref part="C1" gate="G$1" pin="2"/>
 <wire x1="22.86" y1="-22.86" x2="20.32" y2="-22.86" width="0.1524" layer="91"/>
-<wire x1="20.32" y1="-22.86" x2="20.32" y2="-30.48" width="0.1524" layer="91"/>
-<junction x="20.32" y="-30.48"/>
+</segment>
+<segment>
+<pinref part="CONN" gate="A" pin="2"/>
+<pinref part="GND1" gate="1" pin="GND"/>
+<wire x1="-20.32" y1="-53.34" x2="-2.54" y2="-53.34" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="+5V" class="0">
@@ -13417,6 +13418,16 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <pinref part="P+2" gate="1" pin="+5V"/>
 <pinref part="D1" gate="G$1" pin="A"/>
 <wire x1="-45.72" y1="-53.34" x2="-40.64" y2="-53.34" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="R1" gate="G$1" pin="2"/>
+<wire x1="15.24" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
+<pinref part="R2" gate="G$1" pin="2"/>
+<wire x1="15.24" y1="-22.86" x2="17.78" y2="-22.86" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
+<wire x1="17.78" y1="-22.86" x2="17.78" y2="-30.48" width="0.1524" layer="91" grouprefs="USB-INTERFACE"/>
+<pinref part="P+3" gate="1" pin="+5V"/>
+<wire x1="17.78" y1="-22.86" x2="17.78" y2="-20.32" width="0.1524" layer="91"/>
+<junction x="17.78" y="-22.86"/>
 </segment>
 </net>
 <net name="TX" class="0">

@@ -3,7 +3,7 @@
 
 #include "scheduler.h"
 #include <NTPClient.h>
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <WiFiUdp.h>
 
 #define TIME_PROVIDER_POOL          "pool.ntp.org"

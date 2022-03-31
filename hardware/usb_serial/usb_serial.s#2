@@ -13580,6 +13580,13 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <wire x1="-38.1" y1="-22.86" x2="-35.56" y2="-22.86" width="0.1524" layer="91"/>
 </segment>
 </net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="D1" gate="G$1" pin="C"/>
+<pinref part="CONN" gate="A" pin="1"/>
+<wire x1="-35.56" y1="-53.34" x2="-27.94" y2="-53.34" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 </sheets>

@@ -5826,6 +5826,10 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <part name="P+2" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+12V" device=""/>
 <part name="P+6" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+12V" device=""/>
 <part name="P+7" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device=""/>
+<part name="R9" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="1k"/>
+<part name="R10" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="1k"/>
+<part name="R11" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="1k"/>
+<part name="GND13" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -6019,6 +6023,21 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 </instance>
 <instance part="P+7" gate="1" x="50.8" y="12.7" smashed="yes" grouprefs="CONTROL_IO">
 <attribute name="VALUE" x="48.26" y="7.62" size="1.778" layer="96" rot="R90"/>
+</instance>
+<instance part="R9" gate="G$1" x="10.16" y="-15.24" smashed="yes" grouprefs="CONTROL_IO">
+<attribute name="NAME" x="6.35" y="-13.7414" size="1.778" layer="95"/>
+<attribute name="VALUE" x="6.35" y="-18.542" size="1.778" layer="96"/>
+</instance>
+<instance part="R10" gate="G$1" x="10.16" y="-20.32" smashed="yes" grouprefs="CONTROL_IO">
+<attribute name="NAME" x="6.35" y="-18.8214" size="1.778" layer="95"/>
+<attribute name="VALUE" x="6.35" y="-23.622" size="1.778" layer="96"/>
+</instance>
+<instance part="R11" gate="G$1" x="10.16" y="-25.4" smashed="yes" grouprefs="CONTROL_IO">
+<attribute name="NAME" x="6.35" y="-23.9014" size="1.778" layer="95"/>
+<attribute name="VALUE" x="6.35" y="-28.702" size="1.778" layer="96"/>
+</instance>
+<instance part="GND13" gate="1" x="17.78" y="-27.94" smashed="yes" grouprefs="CONTROL_IO">
+<attribute name="VALUE" x="15.24" y="-30.48" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -6242,6 +6261,19 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <pinref part="CONTROL_OUT" gate="A" pin="4"/>
 <pinref part="GND12" gate="1" pin="GND"/>
 </segment>
+<segment>
+<pinref part="R9" gate="G$1" pin="2"/>
+<wire x1="15.24" y1="-15.24" x2="17.78" y2="-15.24" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<wire x1="17.78" y1="-15.24" x2="17.78" y2="-20.32" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<pinref part="R10" gate="G$1" pin="2"/>
+<wire x1="17.78" y1="-20.32" x2="15.24" y2="-20.32" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<pinref part="R11" gate="G$1" pin="2"/>
+<wire x1="15.24" y1="-25.4" x2="17.78" y2="-25.4" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<wire x1="17.78" y1="-25.4" x2="17.78" y2="-20.32" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<junction x="17.78" y="-20.32" grouprefs="CONTROL_IO"/>
+<pinref part="GND13" gate="1" pin="GND"/>
+<junction x="17.78" y="-25.4" grouprefs="CONTROL_IO"/>
+</segment>
 </net>
 <net name="DATA_IN" class="0">
 <segment>
@@ -6253,6 +6285,11 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <pinref part="IC1" gate="A" pin="SER"/>
 <wire x1="-99.06" y1="99.06" x2="-101.6" y2="99.06" width="0.1524" layer="91" grouprefs="RELAY_CONTROL"/>
 <label x="-101.6" y="99.06" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="RELAY_CONTROL"/>
+</segment>
+<segment>
+<pinref part="R9" gate="G$1" pin="1"/>
+<wire x1="5.08" y1="-15.24" x2="2.54" y2="-15.24" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<label x="2.54" y="-15.24" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="CONTROL_IO"/>
 </segment>
 </net>
 <net name="STORE" class="0">
@@ -6271,6 +6308,11 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <wire x1="35.56" y1="-2.54" x2="40.64" y2="-2.54" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
 <label x="40.64" y="-2.54" size="1.778" layer="95" xref="yes" grouprefs="CONTROL_IO"/>
 </segment>
+<segment>
+<pinref part="R10" gate="G$1" pin="1"/>
+<wire x1="5.08" y1="-20.32" x2="2.54" y2="-20.32" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<label x="2.54" y="-20.32" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="CONTROL_IO"/>
+</segment>
 </net>
 <net name="SHIFT" class="0">
 <segment>
@@ -6287,6 +6329,11 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <pinref part="CONTROL_OUT" gate="A" pin="1"/>
 <wire x1="35.56" y1="-5.08" x2="40.64" y2="-5.08" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
 <label x="40.64" y="-5.08" size="1.778" layer="95" xref="yes" grouprefs="CONTROL_IO"/>
+</segment>
+<segment>
+<pinref part="R11" gate="G$1" pin="1"/>
+<wire x1="5.08" y1="-25.4" x2="2.54" y2="-25.4" width="0.1524" layer="91" grouprefs="CONTROL_IO"/>
+<label x="2.54" y="-25.4" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="CONTROL_IO"/>
 </segment>
 </net>
 <net name="N$11" class="0">
