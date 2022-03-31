@@ -19,12 +19,16 @@
 <div class="schedule">
   <table>
     <tr>
-      <th>{{ 'schedules.intervals.target' | translate }}</th>
+      <th>
+        <p>{{ 'schedules.intervals.target' | translate }}</p>
+      </th>
       <th class="hv-c">
         <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
         <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
       </th>
-      <th>{{ 'schedules.intervals.actions' | translate }}</th>
+      <th>
+        <p>{{ 'schedules.intervals.actions' | translate }}</p>
+      </th>
     </tr>
     <tr
       *ngFor="let interval of currentActiveIntervals | async"
@@ -36,13 +40,13 @@
       <td>
         <div class="interval hv-c">
           <div class="interval__begin">
-            {{trimIntervalTime(interval.start)}}
+            <p>{{trimIntervalTime(interval.start)}}</p>
           </div>
 
           <p>{{calcIntervalDur(interval)}}</p>
 
           <div class="interval__end">
-            {{trimIntervalTime(interval.end)}}
+            <p>{{trimIntervalTime(interval.end)}}</p>
           </div>
         </div>
       </td>
