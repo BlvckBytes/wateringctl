@@ -12,8 +12,8 @@
     }
   }
 
-  td {
-    padding: var(--spc-sm) 0;
+  td, th {
+    padding: var(--spc-sm) var(--spc-md);
   }
 
   tr:not(:first-of-type) {

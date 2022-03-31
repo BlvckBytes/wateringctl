@@ -49,6 +49,18 @@ p.p--3 {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  &--spc-sm {
+    gap: var(--spc-sm);
+  }
+
+  &--spc-md {
+    gap: var(--spc-md);
+  }
+
+  &--spc-lg {
+    gap: var(--spc-lg);
+  }
 }
 
 .svg {

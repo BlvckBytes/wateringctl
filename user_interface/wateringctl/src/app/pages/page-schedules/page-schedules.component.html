@@ -21,9 +21,11 @@
     <th>
       <p>{{ 'schedules.intervals.target' | translate }}</p>
     </th>
-    <th class="hv-c">
-      <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
-      <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+    <th>
+      <div class="hv-c">
+        <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
+        <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+      </div>
     </th>
     <th>
       <p>{{ 'schedules.intervals.actions' | translate }}</p>
@@ -33,7 +35,7 @@
     *ngFor="let interval of currentActiveIntervals$ | async"
   >
     <td>
-      <p class="badge schedule__entry__section">{{resolveValve(interval)}}</p>
+      <p class="badge valve__alias schedule__entry__section">{{resolveValve(interval)}}</p>
     </td>
     <td>
       <div class="interval hv-c">
@@ -49,7 +51,20 @@
       </div>
     </td>
     <td>
-      <p>...</p>
+      <div class="hv-c hv-c--spc-sm">
+        <app-button
+          icon="trash.svg"
+          color="warning"
+        ></app-button>
+        <app-button
+          icon="block.svg"
+          color="warning"
+        ></app-button>
+        <app-button
+          icon="play.svg"
+          color="beige"
+        ></app-button>
+      </div>
     </td>
   </tr>
   <tr

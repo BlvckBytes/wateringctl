@@ -1,8 +1,10 @@
 <table class="row-table">
   <tr>
-    <th class="hv-c">
-      <p>{{ 'valves.valves.relay_id' | translate }}</p>
-      <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+    <th>
+      <div class="hv-c">
+        <p>{{ 'valves.valves.relay_id' | translate }}</p>
+        <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+      </div>
     </th>
     <th>
       <p>{{ 'valves.valves.alias' | translate }}</p>
@@ -18,10 +20,19 @@
       <p class="badge">{{valve.identifier + 1}}</p>
     </td>
     <td>
-      <p class="badge">{{valve.alias}}</p>
+      <p class="badge valve__alias">{{valve.alias}}</p>
     </td>
     <td>
-      <p>...</p>
+      <div class="hv-c hv-c--spc-sm">
+        <app-button
+          icon="block.svg"
+          color="warning"
+        ></app-button>
+        <app-button
+          icon="play.svg"
+          color="beige"
+        ></app-button>
+      </div>
     </td>
   </tr>
   <tr

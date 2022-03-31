@@ -1,1 +1,1 @@
-export type ButtonColor = 'gray' | 'warning' | 'success';
+export type ButtonColor = 'beige' | 'warning' | 'success';

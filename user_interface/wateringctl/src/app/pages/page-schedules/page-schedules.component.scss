@@ -3,6 +3,11 @@
   margin: var(--spc-lg) 0 var(--spc-xl) 0;
 }
 
+.valve__alias {
+  word-wrap: break-word;
+  max-width: 10rem;
+}
+
 .interval {
   border-radius: var(--br-sm);
   justify-content: space-between;
