@@ -41,6 +41,19 @@ paths:
                 $ref: "#/components/schemas/ScheduledDay"
         "400":
           description: "Malformed request"
+    get:
+      tags:
+      - "scheduler"
+      summary: "Get the schedule of a specific day"
+      responses:
+        "200":
+          description: "Fetch successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduledDay"
+        "400":
+          description: "Malformed request"
 
   /scheduler/{day}/{index}:
     put:

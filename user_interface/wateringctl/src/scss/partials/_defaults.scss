@@ -67,4 +67,12 @@ p.p--3 {
     width: var(--icn-md);
     height: var(--icn-md);
   }
+
+  &--no-filter {
+    filter: none;
+  }
+
+  &--preserve-ratio {
+    height: auto;
+  }
 }

@@ -1,0 +1,15 @@
+{
+  "weekdays": {
+    "WEEKDAY_MO": "Mo",
+    "WEEKDAY_TU": "Di",
+    "WEEKDAY_WE": "Mi",
+    "WEEKDAY_TH": "Do",
+    "WEEKDAY_FR": "Fr",
+    "WEEKDAY_SA": "Sa",
+    "WEEKDAY_SU": "So"
+  },
+  "buttons": {
+    "create_interval": "Interval erstellen",
+    "disable_day": "Tag deaktivieren"
+  }
+}

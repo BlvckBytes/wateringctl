@@ -8,6 +8,14 @@
   margin-bottom: var(--spc-xl);
 }
 
+.language {
+  padding: var(--spc-sm) var(--spc-md);
+
+  img {
+    border-radius: 50%;
+  }
+}
+
 .logo {
   gap: var(--spc-sm);
   background: var(--black);

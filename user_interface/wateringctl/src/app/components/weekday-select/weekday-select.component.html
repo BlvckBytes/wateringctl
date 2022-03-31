@@ -3,4 +3,4 @@
   class="day"
   [class.day--active]="day === selectedDay"
   (click)="selectDay(day)"
-><h2>{{day}}</h2></div>
+><h2>{{ 'weekdays.' + day | translate }}</h2></div>

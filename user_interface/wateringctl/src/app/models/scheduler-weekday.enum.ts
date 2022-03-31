@@ -1,0 +1,9 @@
+export enum ESchedulerWeekday {
+  MONDAY    = 'WEEKDAY_MO',
+  TUESDAY   = 'WEEKDAY_TU',
+  WEDNESDAY = 'WEEKDAY_WE',
+  THURSDAY  = 'WEEKDAY_TH',
+  FRIDAY    = 'WEEKDAY_FR',
+  SATURDAY  = 'WEEKDAY_SA',
+  SUNDAY    = 'WEEKDAY_SU'
+}

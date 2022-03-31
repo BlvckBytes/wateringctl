@@ -1,5 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
+import { ITranslationLanguage } from 'src/app/models/translation-language.interface';
+import { LanguageService } from 'src/app/services/language.service';
 import { SubSink } from 'subsink';
 import { INavigatorLink } from './navigatior-link.interface';
 
@@ -12,6 +14,7 @@ export class NavigatorComponent implements OnDestroy {
 
   private subs = new SubSink();
 
+  currLang: ITranslationLanguage;
   currUrl = '/';
   links: INavigatorLink[] = [
     { link: '/valves', icon: 'valve.svg' },
@@ -19,12 +22,20 @@ export class NavigatorComponent implements OnDestroy {
   ];
 
   constructor(
-    router: Router
+    router: Router,
+    private langService: LanguageService,
   ) {
     this.subs.sink = router.events.subscribe(re => {
       if (!(re instanceof NavigationEnd)) return;
       this.currUrl = re.urlAfterRedirects;
     });
+
+    this.currLang = langService.selectedLanguage();
+  }
+
+  nextLanguage() {
+    this.langService.nextLanguage();
+    this.currLang = this.langService.selectedLanguage();
   }
 
   ngOnDestroy() {
