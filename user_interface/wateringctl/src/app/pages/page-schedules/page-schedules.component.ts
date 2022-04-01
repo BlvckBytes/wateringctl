@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
-import { IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
+import { compareIntervalStarts, IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
 import { SchedulerService } from 'src/app/services/scheduler.service';
@@ -15,7 +15,23 @@ export class PageSchedulesComponent {
 
   private _currentSchedule = new BehaviorSubject<IScheduledDay | null>(null);
 
-  currentActiveIntervals$: Observable<IInterval[] | null>;
+  timestampSortAsc = true;
+  get currentActiveIntervals$(): Observable<IInterval[] | null> {
+    return this._currentSchedule.asObservable().pipe(
+      map(it => {
+        if (!it?.intervals) return null;
+
+        let preproc = it?.intervals
+          ?.sort(compareIntervalStarts)
+          ?.filter(it => !isIntervalEmpty(it));
+
+        if (!this.timestampSortAsc)
+          preproc = preproc?.reverse();
+
+        return preproc;
+      })
+    );
+  }
 
   set selectedDay(value: string) {
     this._currentSchedule.next(null);
@@ -29,15 +45,7 @@ export class PageSchedulesComponent {
   constructor(
     private schedulerService: SchedulerService,
     private valveService: ValvesService,
-  ) {
-    this.currentActiveIntervals$ = this._currentSchedule
-      .asObservable()
-      .pipe(
-        map(it => it?.intervals
-          ?.filter(it => !isIntervalEmpty(it)) || null
-        )
-      );
-  }
+  ) {}
 
   trimIntervalTime(time: string): string {
     const parsed = parseIntervalTime(time);

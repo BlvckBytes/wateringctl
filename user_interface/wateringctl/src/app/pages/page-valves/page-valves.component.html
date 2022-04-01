@@ -1,9 +1,16 @@
 <table class="row-table">
   <tr>
-    <th>
+    <th
+      (click)="valveIdSortAsc = !valveIdSortAsc"
+    >
       <div class="hv-c">
         <p>{{ 'valves.valves.relay_id' | translate }}</p>
-        <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+        <img
+          class="svg svg--xs"
+          [class.svg--flip-x]="valveIdSortAsc"
+          src="graphics/dropdown.svg"
+          alt="dropdown"
+        >
       </div>
     </th>
     <th>

@@ -4,3 +4,11 @@ export interface IValve {
   state: boolean;
   identifier: number;
 }
+
+export const compareValveIds = (a: IValve, b: IValve): number => {
+  if (a.identifier > b.identifier)
+    return 1;
+  if (a.identifier < b.identifier)
+    return -1;
+  return 0;
+}

@@ -21,10 +21,19 @@
     <th>
       <p>{{ 'schedules.intervals.target' | translate }}</p>
     </th>
-    <th>
-      <div class="hv-c">
+    <th
+      (click)="timestampSortAsc = !timestampSortAsc"
+    >
+      <div
+        class="hv-c"
+      >
         <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
-        <img class="svg svg--xs" src="graphics/dropdown.svg" alt="dropdown">
+        <img
+          class="svg svg--xs"
+          [class.svg--flip-x]="timestampSortAsc"
+          src="graphics/dropdown.svg"
+          alt="dropdown"
+        >
       </div>
     </th>
     <th>
