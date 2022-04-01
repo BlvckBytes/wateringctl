@@ -17,6 +17,8 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 
 ![enclosure_inside](readme_images/enclosure_inside.jpg)
 
+![ui](readme_images/ui.png)
+
 ## Requirements
 
 * [x] Accomplish all I/O over WiFi
@@ -24,14 +26,16 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * [x] No external power-supply
 * [x] USB connection to debug/upload code
 * [ ] Update firmware over WiFi
-* [ ] Sync up multiple UI-clients
+* [ ] Sync up multiple UI-clients (websocket event-system)
 * [x] Status-LED where blinking-speed indicate system-states
 * [x] Control as many valves as needed by having modular boards using shift-registers
 * [x] Run a scheduler on-board that can be fully configured
 * [x] Switch valves manually
 * [x] Store representative string names for each valve
 * [x] Disableable intervals, days and valves
-* [ ] Mobile-friendly web-UI
+* [ ] Launch predefined intervals on demand
+* [ ] Manually activate valves for a certain duration
+* [X] Mobile-friendly web-UI
 
 ## Hardware
 
