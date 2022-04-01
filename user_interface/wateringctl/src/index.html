@@ -9,6 +9,25 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;500;600&display=swap" rel="stylesheet"> 
+
+  <script>
+    // Update vh custom property to current percentage of inner-height
+    let initial = true;
+    const updateVh = () => {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
+
+      if (initial) {
+        document.documentElement.style.setProperty('--vh-initial', `${vh}px`)
+        initial = false;
+      }
+    }
+    
+    // Call every time the window is resized, as well as initially
+    window.onresize = () => updateVh();
+    updateVh();
+  </script>
+
 </head>
 <body>
   <app-root></app-root>

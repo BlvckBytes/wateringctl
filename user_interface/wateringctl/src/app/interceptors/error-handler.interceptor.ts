@@ -18,10 +18,6 @@ export class ErrorHandlerHttpInterceptor implements HttpInterceptor {
     this.loadingService.pushTask();
 
     return next.handle(req).pipe(
-      tap(it => {
-        if (it instanceof HttpResponse)
-          this.loadingService.popTask();
-      }),
       catchError((err: any) => {
         if (err instanceof HttpErrorResponse) {
           this.loadingService.popTask();
@@ -45,7 +41,11 @@ export class ErrorHandlerHttpInterceptor implements HttpInterceptor {
         }
 
         return throwError(() => err);
-      })
+      }),
+      tap(it => {
+        if (it instanceof HttpResponse)
+          this.loadingService.popTask();
+      }),
     );
   }
 }
