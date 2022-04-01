@@ -65,8 +65,9 @@
           color="warning"
         ></app-button>
         <app-button
+          (click)="toggleIntervalDisable(interval)"
           icon="block.svg"
-          color="warning"
+          [color]="interval.disabled ? 'warning' : 'beige'"
         ></app-button>
         <app-button
           icon="play.svg"

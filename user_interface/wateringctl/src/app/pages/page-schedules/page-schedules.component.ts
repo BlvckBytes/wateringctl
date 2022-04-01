@@ -218,4 +218,15 @@ export class PageSchedulesComponent implements IStatePersistable {
       icon: 'warning.svg'
     });
   }
+
+  toggleIntervalDisable(interval: IInterval) {
+    this.schedulerService.putDaysIndexedInterval(
+      this._currentDay as ESchedulerWeekday,
+      interval.index,
+      {
+        ...interval,
+        disabled: !interval.disabled,
+      }
+    ).subscribe(() => this.loadSchedule(false));
+  }
 }
