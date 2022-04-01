@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, delay, map, Observable } from 'rxjs';
+import { BehaviorSubject, debounceTime, delay, map, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +13,8 @@ export class LoadingIndicatorService {
       .pipe(
         // Prevents the ExpressionChangedAfterItHasBeenCheckedError
         delay(0),
+        // Prevents jittering
+        debounceTime(100),
         map(it => it != 0),
       );
   }
