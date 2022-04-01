@@ -40,7 +40,8 @@
         ></app-button>
         <app-button
           icon="play.svg"
-          color="beige"
+          [color]="valve.state ? 'success' : 'beige'"
+          (click)="toggleState(valve)"
         ></app-button>
       </div>
     </td>

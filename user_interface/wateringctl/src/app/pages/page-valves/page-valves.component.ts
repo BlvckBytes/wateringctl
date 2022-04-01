@@ -93,4 +93,11 @@ export class PageValvesComponent implements IStatePersistable {
       }
     ).subscribe(() => this.loadValves());
   }
+
+  toggleState(valve: IValve) {
+    if (valve.state)
+      this.valvesService.deactivateValve(valve.identifier).subscribe(() => this.loadValves());
+    else
+      this.valvesService.activateValve(valve.identifier).subscribe(() => this.loadValves());
+  }
 }
