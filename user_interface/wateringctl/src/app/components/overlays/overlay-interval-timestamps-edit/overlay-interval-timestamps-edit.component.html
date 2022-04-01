@@ -14,11 +14,27 @@
   </div>
 
   <div class="time-select hv-c">
-    <app-vert-range [to]="23"></app-vert-range>
+    <app-vert-range
+      [from]="0"
+      [to]="23"
+      (selected)="hoursChanged($event)"
+    ></app-vert-range>
+
     <p>:</p>
-    <app-vert-range></app-vert-range>
+
+    <app-vert-range
+      [from]="0"
+      [to]="59"
+      (selected)="minutesChanged($event)"
+    ></app-vert-range>
+
     <p>:</p>
-    <app-vert-range></app-vert-range>
+
+    <app-vert-range
+      [from]="0"
+      [to]="59"
+      (selected)="secondsChanged($event)"
+    ></app-vert-range>
   </div>
 
   <app-button

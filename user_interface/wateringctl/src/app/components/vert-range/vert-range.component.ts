@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-import { from } from 'rxjs';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-vert-range',
@@ -14,21 +13,22 @@ export class VertRangeComponent implements AfterViewInit, OnInit {
   @Input() to: number = 59;
   @Input() padTo: number = 2;
 
+  @Output() selected = new EventEmitter<number>();
+
+  @Input() set currentValue(value: number) {
+    this.currNum = value;
+    this.updateValues(false);
+  }
+
   values: string[] = [];
   private deltaScalerDesktop = 1/20;
   private deltaScalerMobile = 1/12;
 
-  _currNum = this.from;
-  set currNum(value: number) {
-    this._currNum = value;
-    this.updateValues();
-  }
-  get currNum() {
-    return this._currNum;
-  }
+  private currNum = this.from;
 
   ngOnInit(): void {
     this.currNum = this.from;
+    this.updateValues();
   }
 
   ngAfterViewInit(): void {
@@ -48,18 +48,23 @@ export class VertRangeComponent implements AfterViewInit, OnInit {
   }
 
   private applyDeltaY(delta: number) {
-    this.currNum = (this._currNum + delta) % (this.to + 1);
-    if (this._currNum < 0)
+    this.currNum = (this.currNum + delta) % (this.to + 1);
+    if (this.currNum < 0)
       this.currNum = this.to;
+
+    this.updateValues();
   }
 
-  private updateValues() {
+  private updateValues(emit: boolean = true) {
     this.values = [];
 
     const v = Math.floor(this.currNum);
     this.values.push(this.padNumber(v == this.from ? this.to : v - 1));
     this.values.push(this.padNumber(v));
     this.values.push(this.padNumber((v + 1) % (this.to + 1)));
+
+    if (emit)
+      this.selected.emit(v);
   }
 
   private padNumber(value: number): string {

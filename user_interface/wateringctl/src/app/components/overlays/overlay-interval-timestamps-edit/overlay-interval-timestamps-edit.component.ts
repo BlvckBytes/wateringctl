@@ -18,6 +18,18 @@ export class OverlayIntervalTimestampsEditComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  hoursChanged(value: number) {
+    console.log(`hours: ${value}`);
+  }
+
+  minutesChanged(value: number) {
+    console.log(`minutes: ${value}`);
+  }
+
+  secondsChanged(value: number) {
+    console.log(`seconds: ${value}`);
+  }
+
   resolveValveAlias(interval?: IInterval): string {
     return this.valveService.resolveValveAlias(interval);
   }
