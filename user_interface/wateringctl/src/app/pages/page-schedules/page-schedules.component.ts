@@ -64,17 +64,6 @@ export class PageSchedulesComponent implements IStatePersistable {
     );
   }
 
-  private loadSchedule(clear: boolean = true) {
-    if (clear)
-      this._currentSchedule.next(null);
-
-    this.valveService.getAllValves().subscribe(v => {
-      this.schedulerService.getDaysSchedule(this._currentDay as ESchedulerWeekday).subscribe(v => {
-        this._currentSchedule.next(v);
-      });
-    });
-  }
-
   set selectedDay(value: string) {
     this._currentDay = value;
     this.loadSchedule();
@@ -89,8 +78,23 @@ export class PageSchedulesComponent implements IStatePersistable {
     this.stateService.load(this);
   }
 
+  private loadSchedule(clear: boolean = true) {
+    if (clear)
+      this._currentSchedule.next(null);
+
+    this.valveService.getAllValves().subscribe(v => {
+      this.schedulerService.getDaysSchedule(this._currentDay as ESchedulerWeekday).subscribe(v => {
+        this._currentSchedule.next(v);
+      });
+    });
+  }
+
   resolveValveAlias(interval?: IInterval): string {
     return this.valveService.resolveValveAlias(interval);
+  }
+
+  isCurrentActiveDayDisabled(): boolean {
+    return this._currentSchedule.value?.disabled || false;
   }
 
   private saveTarget(interval: IInterval, newTarget: string) {
@@ -137,5 +141,16 @@ export class PageSchedulesComponent implements IStatePersistable {
       },
       userClosable: true,
     });
+  }
+
+  toggleDayDisabled() {
+    const schedule = this._currentSchedule.value;
+
+    if (!schedule)
+      return;
+
+    this.schedulerService.putDaysSchedule(this._currentDay as ESchedulerWeekday, {
+      disabled: !schedule.disabled,
+    },).subscribe(() => this.loadSchedule(false));
   }
 }

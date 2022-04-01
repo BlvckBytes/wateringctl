@@ -10,7 +10,8 @@
   ></app-button>
 
   <app-button
-    color="warning"
+    (click)="toggleDayDisabled()"
+    [color]="isCurrentActiveDayDisabled() ? 'warning' : 'beige'"
     text="{{ 'schedules.buttons.disable_day' | translate }}"
     icon="block.svg"
   ></app-button>
