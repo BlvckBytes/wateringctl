@@ -35,7 +35,8 @@
       <div class="hv-c hv-c--spc-sm">
         <app-button
           icon="block.svg"
-          color="warning"
+          [color]="valve.disabled ? 'warning' : 'beige'"
+          (click)="toggleDisable(valve)"
         ></app-button>
         <app-button
           icon="play.svg"

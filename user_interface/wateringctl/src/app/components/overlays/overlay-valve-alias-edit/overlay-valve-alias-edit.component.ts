@@ -1,7 +1,9 @@
 import { Component, Input } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { IValve } from 'src/app/models/valve.interface';
+import { KeyEventsService } from 'src/app/services/key-events.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
+import { SubSink } from 'subsink';
 
 @Component({
   selector: 'app-overlay-valve-alias-edit',
@@ -10,16 +12,24 @@ import { OverlaysService } from 'src/app/services/overlays.service';
 })
 export class OverlayValveAliasEditComponent {
 
+  private subs = new SubSink();
+
   newAlias: FormControl;
   @Input() valve?: IValve = undefined;
   @Input() saved: (newAlias: string) => void = () => {};
 
   constructor(
     private overlaysService: OverlaysService,
+    keysService: KeyEventsService,
   ) {
     this.newAlias = new FormControl('', [
       Validators.required, Validators.minLength(3), Validators.maxLength(16)
     ]);
+
+    this.subs.sink = keysService.key$.subscribe(e => {
+      if (e.key !== 'Enter') return;
+      this.save();
+    });
   }
 
   save() {

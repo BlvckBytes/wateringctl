@@ -84,4 +84,13 @@ export class PageValvesComponent implements IStatePersistable {
       disabled: valve.disabled,
     }).subscribe(() => this.loadValves());
   }
+
+  toggleDisable(valve: IValve) {
+    this.valvesService.putValve(
+      valve.identifier, {
+        disabled: !valve.disabled,
+        alias: valve.alias,
+      }
+    ).subscribe(() => this.loadValves());
+  }
 }

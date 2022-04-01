@@ -16,6 +16,7 @@ import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.
 import { TextboxComponent } from './components/textbox/textbox.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ErrorHandlerHttpInterceptor } from './interceptors/error-handler.interceptor';
+import { AutofocusDirective } from './directives/autofocus.directive';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import { ErrorHandlerHttpInterceptor } from './interceptors/error-handler.interc
     NotificationCenterComponent,
     OverlayValveAliasEditComponent,
     OverlayStackComponent,
-    TextboxComponent
+    TextboxComponent,
+    AutofocusDirective
   ],
   imports: [
     BrowserModule,

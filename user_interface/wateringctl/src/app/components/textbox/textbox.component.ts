@@ -26,6 +26,7 @@ export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnIn
   @Input() showValidation = true;
   @Input() clearable = false;
   @Input() control!: FormControl;
+  @Input() focused = false;
 
   // #region Class binding flags
 
