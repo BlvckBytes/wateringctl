@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { map } from 'rxjs';
 import { OverlayValveAliasEditComponent } from 'src/app/components/overlays/overlay-valve-alias-edit/overlay-valve-alias-edit.component';
+import { IStatePersistable } from 'src/app/models/state-persistable.interface';
 import { compareValveIds, IValve } from 'src/app/models/valve.interface';
+import { ComponentStateService } from 'src/app/services/component-state.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { ValvesService } from 'src/app/services/valves.service';
 
@@ -10,9 +12,34 @@ import { ValvesService } from 'src/app/services/valves.service';
   templateUrl: './page-valves.component.html',
   styleUrls: ['./page-valves.component.scss']
 })
-export class PageValvesComponent {
+export class PageValvesComponent implements IStatePersistable {
 
-  valveIdSortAsc = true;
+  // #region State persisting
+
+  stateToken = 'page-valves';
+
+  get state(): any {
+    return {
+      valveIdSortAsc: this._valveIdSortAsc
+    };
+  }
+
+  set state(v: any) {
+    if (!v) return;
+    this._valveIdSortAsc = v.valveIdSortAsc;
+  }
+
+  // #endregion
+
+  _valveIdSortAsc = true;
+  get valveIdSortAsc() {
+    return this._valveIdSortAsc;
+  }
+  set valveIdSortAsc(v: boolean) {
+    this._valveIdSortAsc = v;
+    this.stateService.save(this);
+  }
+
   get valves$() {
     return this.valvesService.allValves.asObservable().pipe(
       map(it => {
@@ -30,7 +57,9 @@ export class PageValvesComponent {
   constructor(
     private valvesService: ValvesService,
     private overlaysService: OverlaysService,
+    private stateService: ComponentStateService,
   ) {
+    this.stateService.load(this);
     this.loadValves();
   }
 

@@ -15,7 +15,7 @@
   }
 
   &__alias {
-    max-width: 10rem;
+    max-width: calc(var(--fs-p1) * 9);
     word-break: break-all;
   }
 }

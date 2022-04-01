@@ -3,6 +3,8 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import { compareIntervalStarts, IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
+import { IStatePersistable } from 'src/app/models/state-persistable.interface';
+import { ComponentStateService } from 'src/app/services/component-state.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { SchedulerService } from 'src/app/services/scheduler.service';
@@ -13,11 +15,36 @@ import { ValvesService } from 'src/app/services/valves.service';
   templateUrl: './page-schedules.component.html',
   styleUrls: ['./page-schedules.component.scss']
 })
-export class PageSchedulesComponent {
+export class PageSchedulesComponent implements IStatePersistable {
+
+  // #region State persisting
+
+  stateToken = 'page-schedules';
+
+  get state(): any {
+    return {
+      timestampSortAsc: this._timestampSortAsc
+    };
+  }
+
+  set state(v: any) {
+    if (!v) return;
+    this._timestampSortAsc = v.timestampSortAsc;
+  }
+
+  // #endregion
 
   private _currentSchedule = new BehaviorSubject<IScheduledDay | null>(null);
 
-  timestampSortAsc = true;
+  _timestampSortAsc = true;
+  get timestampSortAsc() {
+    return this._timestampSortAsc;
+  }
+  set timestampSortAsc(v: boolean) {
+    this._timestampSortAsc = v;
+    this.stateService.save(this);
+  }
+
   get currentActiveIntervals$(): Observable<IInterval[] | null> {
     return this._currentSchedule.asObservable().pipe(
       map(it => {
@@ -48,8 +75,10 @@ export class PageSchedulesComponent {
     private schedulerService: SchedulerService,
     private valveService: ValvesService,
     private notificationService: NotificationsService,
-    private overlaysService: OverlaysService,
-  ) {}
+    private stateService: ComponentStateService,
+  ) {
+    this.stateService.load(this);
+  }
 
   notificationTest() {
     this.notificationService.publish({
