@@ -12,18 +12,20 @@ static valve_control_t *valvectl;
 ============================================================================
 */
 
-INLINED static void web_server_empty_ok(AsyncWebServerRequest *request)
-{
-  request->send(204);
-}
-
 INLINED static void web_server_append_cors_headers(AsyncWebServerResponse *resp)
 {
   // Allow CORS requests
   resp->addHeader("Access-Control-Allow-Origin", "*");
   resp->addHeader("Access-Control-Max-Age", "600");
-  resp->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+  resp->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
   resp->addHeader("Access-Control-Allow-Headers", "*");
+}
+
+INLINED static void web_server_empty_ok(AsyncWebServerRequest *request)
+{
+  AsyncWebServerResponse *resp = request->beginResponse(204);
+  web_server_append_cors_headers(resp);
+  request->send(resp);
 }
 
 INLINED static void web_server_json_resp(AsyncWebServerRequest *request, int status, htable_t *json)
