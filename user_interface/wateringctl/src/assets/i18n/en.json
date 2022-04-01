@@ -11,7 +11,8 @@
   "textbox_errors": {
     "required": "Value required",
     "minlength": "At least {{details.requiredLength}} chars",
-    "maxlength": "At most {{details.requiredLength}} chars"
+    "maxlength": "At most {{details.requiredLength}} chars",
+    "suggestionmismatch": "Has to match one of the suggestions"
   },
   "server_errors": {
     "VALVE_ALIAS_DUP": "This alias is already in use",

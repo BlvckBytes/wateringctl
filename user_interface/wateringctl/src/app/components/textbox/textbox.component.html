@@ -1,6 +1,6 @@
 <!-- Wrapper for easy multi-class binding -->
 <div 
-  [class]="mkClasses('textbox')"
+  class="textbox"
 >
   <!-- Icon next to placeholder -->
   <img
@@ -37,6 +37,16 @@
       (click)="clear()"
     >
   </div>
+</div>
+
+<div 
+  class="suggestions"
+  *ngIf="suggestions.length > 0"
+>
+  <p
+    *ngFor="let suggestion of suggestions"
+    (click)="applySuggestion(suggestion)"
+  >{{suggestion}}</p>
 </div>
 
 <!-- Only render errors when control has been touched or changed -->

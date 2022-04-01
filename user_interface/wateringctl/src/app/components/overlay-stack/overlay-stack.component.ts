@@ -32,16 +32,11 @@ export class OverlayStackComponent implements OnDestroy {
         const wrapper = document.createElement('div');
         wrapper.className = 'overlay hv-c';
         wrapper.style.zIndex = index.toString();
+        elem.onclick = (e) => e.stopPropagation();
         wrapper.appendChild(elem);
 
-        // Create close cross
-        if (ov.userClosable) {
-          const cross = document.createElement('img');
-          cross.src = 'graphics/plus.svg';
-          cross.className = 'overlay__close svg svg--md';
-          cross.onclick = () => overlaysS.destroy(i[index]);
-          elem.appendChild(cross);
-        }
+        if (ov.userClosable)
+          wrapper.onclick = () => overlaysS.destroy(i[index]);
 
         // Append wrapper to host
         h.appendChild(wrapper);

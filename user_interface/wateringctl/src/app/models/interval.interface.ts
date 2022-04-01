@@ -4,6 +4,7 @@ export interface IInterval {
   identifier: number;
   index: number;
   active: boolean;
+  disabled: boolean;
 }
 
 export const isIntervalEmpty = (interval: IInterval): boolean => {

@@ -3,6 +3,8 @@
   color: var(--white);
   background: var(--primary);
   padding: var(--spc-xs) var(--spc-sm);
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2rem;
 }

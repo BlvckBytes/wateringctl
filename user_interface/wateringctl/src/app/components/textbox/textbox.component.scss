@@ -4,6 +4,7 @@
   display: block;
   position: relative;
   isolation: isolate;
+  z-index: 2;
 
   &, .textbox {
     border-radius: var(--br-md);
@@ -15,7 +16,7 @@
 
   // Has content in textbox
   &.--has-content {
-    margin-top: var(--spc-lg);
+    margin-top: calc(var(--line-height) * 1rem);
 
     // Shift placeholder if input has a value
     .textbox__placeholder {
@@ -31,7 +32,7 @@
     }
 
     .textbox {
-      border: var(--bw-md) solid var(--black);
+      border: var(--bw-md) solid var(--primary);
     }
   }
 
@@ -73,15 +74,8 @@
   gap: var(--spc-sm);
   border: var(--bw-md) solid var(--white);
   position: relative;
-  z-index: 1;
-
-  &--large {
-    padding: var(--spc-sm) var(--spc-md);
-  }
-
-  &--medium {
-    padding: var(--spc-xs) var(--spc-sm);
-  }
+  z-index: 2;
+  padding: var(--spc-sm) var(--spc-md);
 
   // Ensure scaling
   &, &__wrapper, &__input {
@@ -140,6 +134,38 @@
   @at-root :host.--invalid & {
     border: var(--bw-md) solid var(--warning);
     background: var(--warning--d--o);
+  }
+}
+
+.suggestions {
+  width: 100%;
+  position: absolute;
+  top: calc(
+    1rem * var(--line-height) +   /* textbox input height */
+    2 * var(--spc-sm) +           /* textbox padding */
+    2 * var(--bw-md) +            /* textbox border */
+    var(--spc-sm)                 /* "margin top" of suggestions */
+  );
+  background: var(--primary-light);
+  border: var(--bw-md) solid var(--primary);
+  border-radius: var(--br-md);
+
+  max-height: calc(
+    (
+    var(--line-height) * var(--fs-p1) +
+    var(--spc-sm) * 2
+    ) * 3.5                       /* Show about 3.5 items at a time */
+  );
+
+  overflow-y: scroll;
+
+  p {
+    user-select: none;
+    padding: var(--spc-sm) 0 var(--spc-sm) var(--spc-md);
+
+    &:nth-child(even) {
+      background: var(--primary-light--d);
+    }
   }
 }
 

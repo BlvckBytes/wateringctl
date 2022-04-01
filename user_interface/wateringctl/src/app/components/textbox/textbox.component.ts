@@ -1,9 +1,8 @@
 import { AfterViewInit, ChangeDetectorRef, Component, DoCheck, HostBinding, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { BehaviorSubject, merge } from 'rxjs';
+import { AbstractControl, AsyncValidatorFn, ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ValidationErrors } from '@angular/forms';
+import { BehaviorSubject, merge, Observable, of } from 'rxjs';
 import { distinctUntilChanged, skip, startWith } from 'rxjs/operators';
 import { SubSink } from 'subsink';
-import { TextboxSize } from './textbox-size.type';
 
 @Component({
   selector: 'app-textbox',
@@ -22,11 +21,11 @@ export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnIn
   @Input() placeholder?: string;
   @Input() icon?: string;
   @Input() type = 'text';
-  @Input() size: TextboxSize = 'large';
   @Input() showValidation = true;
   @Input() clearable = false;
   @Input() control!: FormControl;
   @Input() focused = false;
+  @Input() typeahead: string[] = [];
 
   // #region Class binding flags
 
@@ -60,6 +59,8 @@ export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnIn
   private subs = new SubSink();
   private touched$ = new BehaviorSubject(false);
 
+  suggestions: string[] = [];
+
   constructor (
     private cd: ChangeDetectorRef,
   ) {}
@@ -86,8 +87,27 @@ export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnIn
     ).subscribe(() => this.updateModifiers());
   }
 
+  private matchesSuggestion() {
+    return this.typeahead.find(it => it === this.control.value) !== undefined;
+  }
+
+  private suggestionValidator(): AsyncValidatorFn {
+    return (_: AbstractControl): Observable<ValidationErrors | null> => {
+      if (this.matchesSuggestion())
+        return of(null);
+
+      return of({
+        suggestionmismatch: true
+      });
+    };
+  }
+
   ngOnInit(): void {
     this.updateModifiers();
+
+    // Apply typeahead validator if applicable
+    if (this.typeahead.length > 0)
+      this.control.addAsyncValidators(this.suggestionValidator());
   }
 
   ngOnDestroy() {
@@ -103,25 +123,24 @@ export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnIn
    */
   private updateModifiers() {
     // Neither empty nor null
-    this.hasContent = this.control.value !== '' && this.control.value !== null;
+    const currValue = this.control.value;
+    this.hasContent = currValue !== '' && this.control.value !== null;
 
     // Needs to be touched or have content in order to be applied
     this.isValid = (this.control.touched || this.hasContent) && this.control.valid && this.showValidation;
     this.isInvalid = (this.control.touched || this.hasContent) && !this.control.valid && this.showValidation;
 
+    // Only suggest when content is present
+    this.suggestions = [];
+    if (this.hasContent) {
+      // Don't suggest when an ignore-case match is already typed out
+      if (!this.matchesSuggestion())
+        this.suggestions = this.typeahead
+          .filter(it => it.toLowerCase().includes(currValue.toLowerCase()));
+    }
+
     this.cd.detectChanges();
   }
-
-  /**
-   * Create a class string based on current flags
-   * @param additional Additional classes
-   * @returns Class string to be bound
-   */
-  mkClasses(additional = '') {
-    const pr = "textbox--";
-    return `${pr}${this.size} ${additional}`;
-  }
-
   // #endregion
 
   // #region Events
@@ -135,6 +154,10 @@ export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnIn
 
   clear() {
     this.control.setValue('');
+  }
+
+  applySuggestion(suggestion: string) {
+    this.control.setValue(suggestion);
   }
 
   listErrors(): string[] {

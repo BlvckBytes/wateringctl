@@ -11,7 +11,8 @@
   "textbox_errors": {
     "required": "Wert erforderlich",
     "minlength": "Mindestens {{details.requiredLength}} Zeichen",
-    "maxlength": "Maximal {{details.requiredLength}} Zeichen"
+    "maxlength": "Maximal {{details.requiredLength}} Zeichen",
+    "suggestionmismatch": "Muss einem der Vorschläge gleichen"
   },
   "server_errors": {
     "VALVE_ALIAS_DUP": "Dieser Alias ist bereits in Verwendung",
@@ -29,7 +30,9 @@
       "target": "Ziel",
       "timestamps": "Zeitstempel",
       "actions": "Aktionen",
-      "no_items": "Keine Einträge"
+      "no_items": "Keine Einträge",
+      "new_target": "Neues Ziel",
+      "save": "Speichern"
     }
   },
   "valves": {

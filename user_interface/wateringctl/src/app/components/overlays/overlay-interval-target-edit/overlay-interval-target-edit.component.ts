@@ -42,6 +42,10 @@ export class OverlayIntervalTargetEditComponent {
     this.overlaysService.destroyLatest();
   }
 
+  generateTargetTypeahead(): string[] {
+    return this.availableValves.map(it => it.alias);
+  }
+
   resolveValve(interval?: IInterval): string {
     return this.availableValves
       .find(it => it.identifier === interval?.identifier)
