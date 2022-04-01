@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Observable } from 'rxjs';
 import { LoadingIndicatorService } from './services/loading-indicator.service';
 
 @Component({
@@ -8,7 +9,7 @@ import { LoadingIndicatorService } from './services/loading-indicator.service';
 })
 export class AppComponent {
 
-  get isLoading(): boolean {
+  get isLoading(): Observable<boolean> {
     return this.loadingService.isActive;
   }
 

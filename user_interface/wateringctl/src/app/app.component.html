@@ -1,5 +1,5 @@
 <div
-  *ngIf="isLoading"
+  *ngIf="isLoading | async"
   class="loading"
 >
   <img src="graphics/gear.svg" alt="gear">
@@ -7,7 +7,7 @@
 
 <div
   class="wrapper"
-  [class.wrapper--blurred]="isLoading"
+  [class.wrapper--blurred]="isLoading | async"
 >
   <app-overlay-stack></app-overlay-stack>
   <app-notification-center></app-notification-center>
