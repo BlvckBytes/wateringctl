@@ -18,8 +18,15 @@
     "VALVE_ALIAS_DUP": "Dieser Alias ist bereits in Verwendung",
     "VALVE_ALREADY_ACTIVE": "Dieses Ventil ist bereits aktiv",
     "VALVE_NOT_ACTIVE": "Dieses Ventil ist nicht aktiv",
+    "NO_INT_SLOTS": "Es gibt keine freien Intervalplätze mehr",
     "default": "Es trat ein interner Fehler auf",
     "headline": "Erfolglos"
+  },
+  "delete_confirmation": {
+    "headline": "Löschungsbestätigung",
+    "text": "Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "schedules": {
     "buttons": {

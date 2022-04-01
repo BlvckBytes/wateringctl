@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { OverlayIntervalTargetEditComponent } from 'src/app/components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
 import { OverlayIntervalTimestampsEditComponent } from 'src/app/components/overlays/overlay-interval-timestamps-edit/overlay-interval-timestamps-edit.component';
@@ -7,6 +8,7 @@ import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
 import { IStatePersistable } from 'src/app/models/state-persistable.interface';
 import { ComponentStateService } from 'src/app/services/component-state.service';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { SchedulerService } from 'src/app/services/scheduler.service';
 import { ValvesService } from 'src/app/services/valves.service';
@@ -74,6 +76,8 @@ export class PageSchedulesComponent implements IStatePersistable {
     private valveService: ValvesService,
     private stateService: ComponentStateService,
     private overlayService: OverlaysService,
+    private notificationsService: NotificationsService,
+    private tranService: TranslateService
   ) {
     this.stateService.load(this);
   }
@@ -145,12 +149,73 @@ export class PageSchedulesComponent implements IStatePersistable {
 
   toggleDayDisabled() {
     const schedule = this._currentSchedule.value;
-
-    if (!schedule)
+    if (schedule === null)
       return;
 
     this.schedulerService.putDaysSchedule(this._currentDay as ESchedulerWeekday, {
       disabled: !schedule.disabled,
     },).subscribe(() => this.loadSchedule(false));
+  }
+
+  createInterval() {
+    const schedule = this._currentSchedule.value;
+    if (schedule === null)
+      return;
+
+    const nextEmpty = schedule.intervals.find(it => isIntervalEmpty(it));
+    if (!nextEmpty) {
+      this.notificationsService.publish({
+        headline: this.tranService.instant('server_errors.headline'),
+        text: this.tranService.instant('server_errors.NO_INT_SLOTS'),
+        color: 'warning',
+        timeout: 5000,
+        buttons: [],
+        icon: 'warning.svg'
+      });
+      return;
+    }
+
+    const now = new Date();
+    this.schedulerService.putDaysIndexedInterval(
+      this._currentDay as ESchedulerWeekday,
+      nextEmpty.index,
+      {
+        identifier: 0,
+        disabled: false,
+        start: `${now.getHours()}:${now.getMinutes()}:00`,
+        end: `${now.getHours()}:${now.getMinutes() + 5}:00`,
+      }
+    ).subscribe(() => this.loadSchedule(false));
+  }
+
+  private deleteIntervalConfirm(interval: IInterval) {
+    this.schedulerService.deleteDaysIndexedInterval(
+      this._currentDay as ESchedulerWeekday,
+      interval.index
+    ).subscribe(() => this.loadSchedule(false));
+  }
+
+  deleteInterval(interval: IInterval) {
+    const handle = this.notificationsService.publish({
+      headline: this.tranService.instant('delete_confirmation.headline'),
+      text: this.tranService.instant('delete_confirmation.text'),
+      color: 'warning',
+      buttons: [
+        {
+          text: this.tranService.instant('delete_confirmation.yes'),
+          callback: () => {
+            this.deleteIntervalConfirm(interval);
+            this.notificationsService.destroy(handle);
+          },
+        },
+        {
+          text: this.tranService.instant('delete_confirmation.no'),
+          callback: () => {
+            this.notificationsService.destroy(handle);
+          },
+        }
+      ],
+      icon: 'warning.svg'
+    });
   }
 }

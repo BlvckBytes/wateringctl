@@ -5,6 +5,6 @@ export interface INotification {
   text: string;
   icon: string;
   color: 'success' | 'warning';
-  timeout: number | undefined;
+  timeout?: number;
   buttons: INotificationButton[];
 }

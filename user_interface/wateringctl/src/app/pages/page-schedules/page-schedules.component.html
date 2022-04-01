@@ -4,6 +4,7 @@
 
 <div class="buttons hv-c">
   <app-button
+    (click)="createInterval()"
     color="success"
     text="{{ 'schedules.buttons.create_interval' | translate }}"
     icon="plus.svg"
@@ -59,6 +60,7 @@
     <td>
       <div class="hv-c hv-c--spc-sm">
         <app-button
+          (click)="deleteInterval(interval)"
           icon="trash.svg"
           color="warning"
         ></app-button>

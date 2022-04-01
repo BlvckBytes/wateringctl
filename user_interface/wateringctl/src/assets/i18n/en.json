@@ -18,8 +18,15 @@
     "VALVE_ALIAS_DUP": "This alias is already in use",
     "VALVE_ALREADY_ACTIVE": "This valve is already active",
     "VALVE_NOT_ACTIVE": "This valve is not active",
+    "NO_INT_SLOTS": "There are no more vacant interval slots",
     "default": "An internal error occurred",
     "headline": "Unsuccessful"
+  },
+  "delete_confirmation": {
+    "headline": "Confirm Deletion",
+    "text": "Are you sure that you want to delete this item?",
+    "yes": "yes",
+    "no": "no"
   },
   "schedules": {
     "buttons": {

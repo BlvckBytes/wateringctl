@@ -24,12 +24,14 @@ export class NotificationsService {
     this._items$.next(this.items);
   }
 
-  publish(item: INotification) {
+  publish(item: INotification): INotification {
     this.items.push(item);
     this._items$.next(this.items);
 
     // Apply timeout if set
     if (item.timeout)
       setTimeout(() => this.destroy(item), item.timeout);
+
+    return item;
   }
 }
