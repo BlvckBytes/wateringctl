@@ -11,6 +11,8 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { WeekdaySelectComponent } from './components/weekday-select/weekday-select.component';
 import { ButtonComponent } from './components/button/button.component';
 import { NotificationCenterComponent } from './components/notification-center/notification-center.component';
+import { OverlayValveAliasEditComponent } from './components/overlays/overlay-valve-alias-edit/overlay-valve-alias-edit.component';
+import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +23,8 @@ import { NotificationCenterComponent } from './components/notification-center/no
     WeekdaySelectComponent,
     ButtonComponent,
     NotificationCenterComponent,
+    OverlayValveAliasEditComponent,
+    OverlayStackComponent
   ],
   imports: [
     BrowserModule,

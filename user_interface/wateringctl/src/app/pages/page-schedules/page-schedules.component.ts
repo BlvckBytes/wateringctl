@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
+import { OverlayValveAliasEditComponent } from 'src/app/components/overlays/overlay-valve-alias-edit/overlay-valve-alias-edit.component';
 import { compareIntervalStarts, IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
 import { NotificationsService } from 'src/app/services/notifications.service';
+import { OverlaysService } from 'src/app/services/overlays.service';
 import { SchedulerService } from 'src/app/services/scheduler.service';
 import { ValvesService } from 'src/app/services/valves.service';
 
@@ -47,6 +49,7 @@ export class PageSchedulesComponent {
     private schedulerService: SchedulerService,
     private valveService: ValvesService,
     private notificationService: NotificationsService,
+    private overlaysService: OverlaysService,
   ) {}
 
   notificationTest() {
@@ -57,6 +60,16 @@ export class PageSchedulesComponent {
       buttons: [],
       icon: "trash.svg",
       timeout: 5000,
+    });
+  }
+
+  overlayTest() {
+    this.overlaysService.publish({
+      component: OverlayValveAliasEditComponent,
+      inputs: {
+        alias: 'Hello, world!'
+      },
+      userClosable: true,
     });
   }
 

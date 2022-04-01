@@ -26,7 +26,7 @@
       #{$name}--d: if($delta, color.adjust($color, $lightness: -$delta), null),
 
       // Transparent versions
-      #{$name}-opac: if($opac, color.adjust($color, $alpha: -$opac), null),
+      #{$name}--o: if($opac, color.adjust($color, $alpha: -$opac), null),
       #{$name}--l--o: if($delta and $opac, color.adjust($color, $lightness: $delta, $alpha: -$opac), null),
       #{$name}--d--o: if($delta and $opac, color.adjust($color, $lightness: -$delta, $alpha: -$opac), null),
     ));
