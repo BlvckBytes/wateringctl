@@ -1,5 +1,7 @@
 #include "web_server.h"
 
+ENUM_LUT_FULL_IMPL(web_server_error, _EVALS_WEB_SERVER_ERROR);
+
 static AsyncWebServer wsrv(WEB_SERVER_PORT);
 static scheduler_t *sched;
 static valve_control_t *valvectl;
@@ -15,16 +17,21 @@ INLINED static void web_server_empty_ok(AsyncWebServerRequest *request)
   request->send(204);
 }
 
-INLINED static void web_server_json_resp(AsyncWebServerRequest *request, int status, htable_t *json)
+INLINED static void web_server_append_cors_headers(AsyncWebServerResponse *resp)
 {
-  scptr char *stringified = jsonh_stringify(json, 2);
-  AsyncWebServerResponse *resp = request->beginResponse(status, "application/json", stringified);
-
   // Allow CORS requests
   resp->addHeader("Access-Control-Allow-Origin", "*");
   resp->addHeader("Access-Control-Max-Age", "600");
   resp->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
   resp->addHeader("Access-Control-Allow-Headers", "*");
+}
+
+INLINED static void web_server_json_resp(AsyncWebServerRequest *request, int status, htable_t *json)
+{
+  scptr char *stringified = jsonh_stringify(json, 2);
+
+  AsyncWebServerResponse *resp = request->beginResponse(status, "application/json", stringified);
+  web_server_append_cors_headers(resp);
 
   request->send(resp);
 }
@@ -35,7 +42,7 @@ INLINED static void web_server_json_resp(AsyncWebServerRequest *request, int sta
 ============================================================================
 */
 
-static void web_server_error_resp(AsyncWebServerRequest *request, int status, const char *fmt, ...)
+static void web_server_error_resp(AsyncWebServerRequest *request, int status, web_server_error_t code, const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -46,7 +53,10 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, co
 
   scptr htable_t *resp = jsonh_make();
 
+  scptr char *error_code_name = strclone(web_server_error_name(code));
+
   jsonh_set_bool(resp, "error", true);
+  jsonh_set_str(resp, "code", error_code_name);
   jsonh_set_str(resp, "message", (char *) mman_ref(error_msg));
 
   web_server_json_resp(request, status, resp);
@@ -62,7 +72,7 @@ void web_server_route_not_found(AsyncWebServerRequest *request)
 {
   web_server_error_resp(
     request,
-    404,
+    404, RESOURCE_NOT_FOUND,
     "The requested resource was not found (%s " QUOTSTR ")!",
     request->methodToString(),
     request->url().c_str()
@@ -113,7 +123,7 @@ INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, c
     // Check if we had enough space
     if (!body->content)
     {
-      web_server_error_resp(request, 500, "Body too long, not enough space!");
+      web_server_error_resp(request, 500, BODY_TOO_LONG, "Body too long, not enough space!");
       return false;
     }
 
@@ -122,7 +132,7 @@ INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, c
   }
 
   // No body collected
-  web_server_error_resp(request, 400, "No body content provided!");
+  web_server_error_resp(request, 400, NO_CONTENT, "No body content provided!");
   return false;
 }
 
@@ -136,7 +146,7 @@ INLINED static bool web_server_ensure_json_body(AsyncWebServerRequest *request, 
   // Check that the content-type actually matches
   if (request->contentType() != "application/json")
   {
-    web_server_error_resp(request, 400, "This endpoint only accepts JSON bodies!");
+    web_server_error_resp(request, 400, NOT_JSON, "This endpoint only accepts JSON bodies!");
     return false;
   }
 
@@ -145,7 +155,7 @@ INLINED static bool web_server_ensure_json_body(AsyncWebServerRequest *request, 
   scptr htable_t *body_jsn = jsonh_parse(body, &err);
   if (!body_jsn)
   {
-    web_server_error_resp(request, 400, "Could not parse the JSON body: %s", err);
+    web_server_error_resp(request, 400, INVALID_JSON, "Could not parse the JSON body: %s", err);
     return false;
   }
 
@@ -167,14 +177,14 @@ INLINED static bool valves_parse_id(AsyncWebServerRequest *request, size_t *valv
   long valve_id_l;
   if (longp(&valve_id_l, id_str, 10) != LONGP_SUCCESS)
   {
-    web_server_error_resp(request, 400, "Invalid non-numeric identifier (%s)!", id_str);
+    web_server_error_resp(request, 400, NON_NUM_ID, "Invalid non-numeric identifier (%s)!", id_str);
     return false;
   }
 
   // Check identifier validity
   if (valve_id_l < 0 || valve_id_l >= VALVE_CONTROL_NUM_VALVES)
   {
-    web_server_error_resp(request, 400, "Invalid out-of-range identifier (%s)!", id_str);
+    web_server_error_resp(request, 400, OUT_OF_RANGE_ID, "Invalid out-of-range identifier (%s)!", id_str);
     return false;
   }
 
@@ -187,7 +197,7 @@ INLINED static bool scheduler_parse_day(AsyncWebServerRequest *request, const ch
   // Parse weekday from path arg
   if (scheduler_weekday_value(day_str, day) != ENUMLUT_SUCCESS)
   {
-    web_server_error_resp(request, 400, "Invalid weekday specified (%s)!", day_str);
+    web_server_error_resp(request, 400, INVALID_WEEKDAY, "Invalid weekday specified (%s)!", day_str);
     return false;
   }
 
@@ -208,14 +218,14 @@ INLINED static bool web_server_route_scheduler_day_index_parse(
   const char *index_str = request->pathArg(1).c_str();
   if (longp(index, index_str, 10) != LONGP_SUCCESS)
   {
-    web_server_error_resp(request, 400, "Invalid non-numeric index (%s)!", index_str);
+    web_server_error_resp(request, 400, NON_NUM_ID, "Invalid non-numeric index (%s)!", index_str);
     return false;
   }
 
   // Check index validity
   if (*index < 0 || *index >= SCHEDULER_MAX_INTERVALS_PER_DAY)
   {
-    web_server_error_resp(request, 400, "Invalid out-of-range index (%s)!", index_str);
+    web_server_error_resp(request, 400, OUT_OF_RANGE_ID, "Invalid out-of-range index (%s)!", index_str);
     return false;
   }
 
@@ -282,7 +292,7 @@ void web_server_route_scheduler_day_edit(AsyncWebServerRequest *request)
   scheduler_day_t sched_day;
   if (!scheduler_day_parse(body, &err, &sched_day))
   {
-    web_server_error_resp(request, 400, "Body data malformed: %s", err);
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: %s", err);
     return;
   }
 
@@ -337,7 +347,7 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
   scheduler_interval_t interval;
   if (!scheduler_interval_parse(body, &err, &interval))
   {
-    web_server_error_resp(request, 400, "Body data malformed: %s", err);
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: %s", err);
     return;
   }
 
@@ -373,7 +383,7 @@ void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *request)
   // Already an empty slot
   if (scheduler_interval_empty(*targ))
   {
-    web_server_error_resp(request, 404, "This index is already empty");
+    web_server_error_resp(request, 404, INDEX_EMPTY, "This index is already empty");
     return;
   }
 
@@ -431,8 +441,23 @@ void web_server_route_valves_edit(AsyncWebServerRequest *request)
   valve_t valve;
   if (!valve_control_valve_parse(body, &err, &valve))
   {
-    web_server_error_resp(request, 400, "Body data malformed: %s", err);
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: %s", err);
     return;
+  }
+
+  // Check if that name is already in use, ignore casing
+  for (size_t i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
+  {
+    // Skip self
+    if (i == valve_id)
+      continue;
+
+    // Name collision
+    if (strncasecmp(valvectl->valves[i].alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN) == 0)
+    {
+      web_server_error_resp(request, 409, VALVE_ALIAS_DUP, "The alias " QUOTSTR " is already in use", valve.alias);
+      return;
+    }
   }
 
   // Get the target valve and patch it, then save
@@ -461,7 +486,7 @@ void web_server_route_valves_activate(AsyncWebServerRequest *request)
   // Check the target valve
   if(valvectl->valves[valve_id].state)
   {
-    web_server_error_resp(request, 409, "This valve is already active");
+    web_server_error_resp(request, 409, VALVE_ALREADY_ACTIVE, "This valve is already active");
     return;
   }
 
@@ -485,7 +510,7 @@ void web_server_route_valves_deactivate(AsyncWebServerRequest *request)
   // Check the target valve
   if(!valvectl->valves[valve_id].state)
   {
-    web_server_error_resp(request, 409, "This valve is not active");
+    web_server_error_resp(request, 409, VALVE_NOT_ACTIVE, "This valve is not active");
     return;
   }
 
@@ -503,8 +528,21 @@ void web_server_route_valves_deactivate(AsyncWebServerRequest *request)
 void web_server_route_memstat(AsyncWebServerRequest *request)
 {
   size_t mac = mman_get_alloc_count(), mdeac = mman_get_dealloc_count();
-  scptr char *resp = strfmt_direct("%lu %d %d\n", system_get_free_heap_size(), mac, mdeac);
+  scptr char *resp = strfmt_direct("%lu %lu %lu\n", esp_get_free_heap_size(), mac, mdeac);
   request->send(200, "text/plain", resp);
+}
+
+/*
+============================================================================
+                                OPTIONS ...                                 
+============================================================================
+*/
+
+void web_server_route_any_options(AsyncWebServerRequest *request)
+{
+  AsyncWebServerResponse *resp = request->beginResponse(204);
+  web_server_append_cors_headers(resp);
+  request->send(resp);
 }
 
 /*
@@ -517,29 +555,37 @@ void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
 {
   // /memstat, Memory statistics for debugging purposes
   wsrv.on("/memstat", HTTP_GET, web_server_route_memstat);
+  wsrv.on("/memstat", HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler
-  wsrv.on("^\\/scheduler$", HTTP_GET, web_server_route_scheduler);
+  const char *p_sched = "^\\/scheduler$";
+  wsrv.on(p_sched, HTTP_GET, web_server_route_scheduler);
+  wsrv.on(p_sched, HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler/{day}
-  const char *sched_day = "^\\/scheduler\\/([A-Za-z0-9_]+)$";
-  wsrv.on(sched_day, HTTP_GET, web_server_route_scheduler_day);
-  wsrv.on(sched_day, HTTP_PUT, web_server_route_scheduler_day_edit, NULL, web_server_str_body_handler);
+  const char *p_sched_day = "^\\/scheduler\\/([A-Za-z0-9_]+)$";
+  wsrv.on(p_sched_day, HTTP_GET, web_server_route_scheduler_day);
+  wsrv.on(p_sched_day, HTTP_PUT, web_server_route_scheduler_day_edit, NULL, web_server_str_body_handler);
+  wsrv.on(p_sched_day, HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler/{day}/index
-  const char *sched_day_index = "^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$";
-  wsrv.on(sched_day_index, HTTP_GET, web_server_route_scheduler_day_index);
-  wsrv.on(sched_day_index, HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
-  wsrv.on(sched_day_index, HTTP_DELETE, web_server_route_scheduler_day_index_delete);
+  const char *p_sched_day_index = "^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$";
+  wsrv.on(p_sched_day_index, HTTP_GET, web_server_route_scheduler_day_index);
+  wsrv.on(p_sched_day_index, HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
+  wsrv.on(p_sched_day_index, HTTP_DELETE, web_server_route_scheduler_day_index_delete);
+  wsrv.on(p_sched_day_index, HTTP_OPTIONS, web_server_route_any_options);
 
   // /valves
-  wsrv.on("^\\/valves$", HTTP_GET, web_server_route_valves);
+  const char *p_valves = "^\\/valves$";
+  wsrv.on(p_valves, HTTP_GET, web_server_route_valves);
+  wsrv.on(p_valves, HTTP_OPTIONS, web_server_route_any_options);
 
   // /valves/{id}
-  const char *valves_id = "^\\/valves\\/([0-9]+)$";
-  wsrv.on(valves_id, HTTP_PUT, web_server_route_valves_edit, NULL, web_server_str_body_handler);
-  wsrv.on(valves_id, HTTP_POST, web_server_route_valves_activate);
-  wsrv.on(valves_id, HTTP_DELETE, web_server_route_valves_deactivate);
+  const char *p_valves_id = "^\\/valves\\/([0-9]+)$";
+  wsrv.on(p_valves_id, HTTP_PUT, web_server_route_valves_edit, NULL, web_server_str_body_handler);
+  wsrv.on(p_valves_id, HTTP_POST, web_server_route_valves_activate);
+  wsrv.on(p_valves_id, HTTP_DELETE, web_server_route_valves_deactivate);
+  wsrv.on(p_valves_id, HTTP_OPTIONS, web_server_route_any_options);
 
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);
