@@ -596,6 +596,9 @@ void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
   sched = scheduler;
   valvectl = valve_control;
 
+  // Initialize the websocket
+  web_socket_init(&wsrv);
+
   // Start listening
   wsrv.begin();
 }

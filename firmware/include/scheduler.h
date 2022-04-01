@@ -12,6 +12,8 @@
 #include <blvckstd/partial_strdup.h>
 #include <blvckstd/longp.h>
 
+#include "web_socket.h"
+
 /*
   The scheduler schedules on-times over the period of one
   week, where each weekday may have multiple on-times.

@@ -356,6 +356,11 @@ void scheduler_tick(scheduler_t *scheduler)
     {
       interval->active = true;
       scheduler->callback(EDGE_OFF_TO_ON, interval->identifier, day, time);
+
+      // Broadcast scheduler on event
+      scptr char *ev_arg = strfmt_direct("%d", i);
+      web_socket_broadcast_event(WSE_INTERVAL_SCHED_ON, ev_arg);
+
       continue;
     }
 
@@ -367,6 +372,11 @@ void scheduler_tick(scheduler_t *scheduler)
     {
       interval->active = false;
       scheduler->callback(EDGE_ON_TO_OFF, interval->identifier, day, time);
+
+      // Broadcast scheduler off event
+      scptr char *ev_arg = strfmt_direct("%d", i);
+      web_socket_broadcast_event(WSE_INTERVAL_SCHED_OFF, ev_arg);
+
       continue;
     }
   }

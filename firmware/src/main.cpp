@@ -4,6 +4,7 @@
 #include "scheduler.h"
 #include "web_server.h"
 #include "shift_register.h"
+#include "web_socket.h"
 #include "time_provider.h"
 #include "wifi_handler.h"
 #include "valve_control.h"
@@ -118,6 +119,7 @@ void loop()
     return;
   }
 
+  web_socket_cleanup();
   scheduler_tick(&scheduler);
   status_led_set(STATLED_CONNECTED);
 }

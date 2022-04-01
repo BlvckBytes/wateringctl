@@ -45,6 +45,10 @@ void valve_control_toggle(valve_control_t *vc, size_t valve_id, bool state)
   if (valve_id >= VALVE_CONTROL_NUM_VALVES)
     return;
 
+  // Broadcast valve on/off event
+  scptr char *ev_arg = strfmt_direct("%d", valve_id);
+  web_socket_broadcast_event(state ? WSE_VALVE_ON : WSE_VALVE_OFF, ev_arg);
+
   // Set the valve's state and apply it to the output
   vc->valves[valve_id].state = state;
   valve_control_apply_state(vc);
