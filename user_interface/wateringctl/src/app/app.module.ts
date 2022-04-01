@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NavigatorComponent } from './components/navigator/navigator.component';
@@ -15,6 +15,7 @@ import { OverlayValveAliasEditComponent } from './components/overlays/overlay-va
 import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.component';
 import { TextboxComponent } from './components/textbox/textbox.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { ErrorHandlerHttpInterceptor } from './interceptors/error-handler.interceptor';
 
 @NgModule({
   declarations: [
@@ -42,7 +43,9 @@ import { ReactiveFormsModule } from '@angular/forms';
     }),
     ReactiveFormsModule,
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorHandlerHttpInterceptor, multi: true },
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

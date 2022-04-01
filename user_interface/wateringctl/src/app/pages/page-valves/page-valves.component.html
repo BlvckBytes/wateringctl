@@ -26,7 +26,9 @@
     <td>
       <p class="badge">{{valve.identifier + 1}}</p>
     </td>
-    <td>
+    <td
+      (click)="editAlias(valve)"
+    >
       <p class="badge valve__alias">{{valve.alias}}</p>
     </td>
     <td>

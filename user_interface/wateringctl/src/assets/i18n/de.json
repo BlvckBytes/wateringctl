@@ -13,6 +13,13 @@
     "minlength": "Mindestens {{details.requiredLength}} Zeichen",
     "maxlength": "Maximal {{details.requiredLength}} Zeichen"
   },
+  "server_errors": {
+    "VALVE_ALIAS_DUP": "Dieser Alias ist bereits in Verwendung",
+    "VALVE_ALREADY_ACTIVE": "Dieses Ventil ist bereits aktiv",
+    "VALVE_NOT_ACTIVE": "Dieses Ventil ist nicht aktiv",
+    "default": "Es trat ein interner Fehler auf",
+    "headline": "Erfolglos"
+  },
   "schedules": {
     "buttons": {
       "create_interval": "Interval erstellen",

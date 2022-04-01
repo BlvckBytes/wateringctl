@@ -20,7 +20,6 @@ export class ValvesService {
       this.httpService.get<any>('/valves').pipe(map(it => it.items)).subscribe(v => {
         this.allValves.next(v);
         s.next(v);
-        console.log(v);
       });
     });
   }

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
+import { IValve } from 'src/app/models/valve.interface';
 import { OverlaysService } from 'src/app/services/overlays.service';
 
 @Component({
@@ -10,8 +11,7 @@ import { OverlaysService } from 'src/app/services/overlays.service';
 export class OverlayValveAliasEditComponent {
 
   newAlias: FormControl;
-  @Input() alias: string | null = null;
-  @Input() relayId: number | null = null;
+  @Input() valve?: IValve = undefined;
   @Input() saved: (newAlias: string) => void = () => {};
 
   constructor(

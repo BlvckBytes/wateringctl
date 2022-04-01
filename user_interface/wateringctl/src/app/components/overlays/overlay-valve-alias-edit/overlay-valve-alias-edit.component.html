@@ -2,11 +2,11 @@
   <div class="valve-info">
     <div class="hv-c">
       <p>{{ 'valves.valves.relay_id' | translate }}</p>
-      <p class="badge">{{relayId}}</p>
+      <p class="badge">{{valve ? valve.identifier + 1 : 0}}</p>
     </div>
     <div class="hv-c">
       <p>{{ 'valves.valves.alias' | translate }}</p>
-      <p class="badge valve-info__alias">{{alias}}</p>
+      <p class="badge valve-info__alias">{{valve?.alias}}</p>
     </div>
   </div>
 

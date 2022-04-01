@@ -1,4 +1,5 @@
 import { Component, ElementRef, EmbeddedViewRef, OnDestroy } from '@angular/core';
+import { KeyEventsService } from 'src/app/services/key-events.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { SubSink } from 'subsink';
 
@@ -13,6 +14,7 @@ export class OverlayStackComponent implements OnDestroy {
 
   constructor(
     overlaysS: OverlaysService,
+    keyS: KeyEventsService,
     ref: ElementRef
   ) {
     this.subs.sink = overlaysS.overlays$.subscribe(i => {
@@ -23,7 +25,7 @@ export class OverlayStackComponent implements OnDestroy {
         h.removeChild(h.firstChild);
 
       // Loop items indexed
-      i.forEach(([_, item], index) => {
+      i.forEach(([ov, item], index) => {
         const elem = (item.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
 
         // Create wrapper with matching z-index
@@ -33,15 +35,23 @@ export class OverlayStackComponent implements OnDestroy {
         wrapper.appendChild(elem);
 
         // Create close cross
-        const cross = document.createElement('img');
-        cross.src = 'graphics/plus.svg';
-        cross.className = 'overlay__close svg svg--md';
-        cross.onclick = () => overlaysS.destroy(i[index]);
-        elem.appendChild(cross);
+        if (ov.userClosable) {
+          const cross = document.createElement('img');
+          cross.src = 'graphics/plus.svg';
+          cross.className = 'overlay__close svg svg--md';
+          cross.onclick = () => overlaysS.destroy(i[index]);
+          elem.appendChild(cross);
+        }
 
         // Append wrapper to host
         h.appendChild(wrapper);
       });
+    });
+
+    // Listen for escape key hits
+    this.subs.sink = keyS.key$.subscribe(e => {
+      if (e.key !== 'Escape') return;
+      overlaysS.destroyLatest();
     });
   }
 
