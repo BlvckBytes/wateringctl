@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { map, Observer } from 'rxjs';
 import { OverlayValveAliasEditComponent } from 'src/app/components/overlays/overlay-valve-alias-edit/overlay-valve-alias-edit.component';
+import { OverlayValveTimerComponent } from 'src/app/components/overlays/overlay-valve-timer/overlay-valve-timer.component';
 import { IStatePersistable } from 'src/app/models/state-persistable.interface';
 import { compareValveIds, IValve } from 'src/app/models/valve.interface';
 import { ComponentStateService } from 'src/app/services/component-state.service';
@@ -78,6 +79,16 @@ export class PageValvesComponent implements IStatePersistable {
       inputs: {
         valve,
         saved: (newAlias: string) => this.saveAlias(valve, newAlias),
+      },
+      userClosable: true,
+    });
+  }
+
+  editTimer(valve: IValve) {
+    this.overlaysService.publish({
+      component: OverlayValveTimerComponent,
+      inputs: {
+        valve
       },
       userClosable: true,
     });

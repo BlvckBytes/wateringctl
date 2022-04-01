@@ -21,6 +21,7 @@ import { OverlayIntervalTargetEditComponent } from './components/overlays/overla
 import { TimespanComponent } from './components/timespan/timespan.component';
 import { VertRangeComponent } from './components/vert-range/vert-range.component';
 import { OverlayIntervalTimestampsEditComponent } from './components/overlays/overlay-interval-timestamps-edit/overlay-interval-timestamps-edit.component';
+import { OverlayValveTimerComponent } from './components/overlays/overlay-valve-timer/overlay-valve-timer.component';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,8 @@ import { OverlayIntervalTimestampsEditComponent } from './components/overlays/ov
     OverlayIntervalTargetEditComponent,
     TimespanComponent,
     VertRangeComponent,
-    OverlayIntervalTimestampsEditComponent
+    OverlayIntervalTimestampsEditComponent,
+    OverlayValveTimerComponent
   ],
   imports: [
     BrowserModule,

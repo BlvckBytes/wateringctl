@@ -1,0 +1,25 @@
+.valve-info {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+
+  .badge {
+    margin-left: var(--spc-sm);
+  }
+
+  &__alias {
+    max-width: calc(var(--fs-p1) * 9);
+    word-break: break-all;
+  }
+}
+
+.time-select {
+  margin: var(--spc-lg) 0;
+
+  p {
+    font-size: var(--fs-h1);
+    margin: 0 var(--spc-sm);
+  }
+}

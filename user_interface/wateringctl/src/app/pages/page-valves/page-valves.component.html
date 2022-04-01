@@ -43,6 +43,11 @@
           [color]="valve.state ? 'success' : 'beige'"
           (click)="toggleState(valve)"
         ></app-button>
+        <app-button
+          icon="stopwatch.svg"
+          color="beige"
+          (click)="editTimer(valve)"
+        ></app-button>
       </div>
     </td>
   </tr>

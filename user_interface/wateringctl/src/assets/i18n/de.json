@@ -49,7 +49,9 @@
       "actions": "Aktionen",
       "no_items": "Keine Einträge",
       "new_alias": "Neuer Alias",
-      "save": "Speichern"
+      "save": "Speichern",
+      "start": "Start",
+      "stop": "Stop"
     }
   }
 }

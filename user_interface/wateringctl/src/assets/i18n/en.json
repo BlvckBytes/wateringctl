@@ -49,7 +49,9 @@
       "actions": "Actions",
       "no_items": "No entries",
       "new_alias": "New Alias",
-      "save": "Save"
+      "save": "Save",
+      "start": "Start",
+      "stop": "Stop"
     }
   }
 }

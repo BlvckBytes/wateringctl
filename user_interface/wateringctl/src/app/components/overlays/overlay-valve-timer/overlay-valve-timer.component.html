@@ -1,0 +1,44 @@
+<div class="modal">
+  <div class="valve-info">
+    <div class="hv-c">
+      <p>{{ 'valves.valves.relay_id' | translate }}</p>
+      <p class="badge">{{valve ? valve.identifier + 1 : 0}}</p>
+    </div>
+    <div class="hv-c">
+      <p>{{ 'valves.valves.alias' | translate }}</p>
+      <p class="badge valve-info__alias">{{valve?.alias}}</p>
+    </div>
+  </div>
+
+  <div class="time-select hv-c">
+    <app-vert-range
+      [from]="0"
+      [to]="23"
+    ></app-vert-range>
+
+    <p>:</p>
+
+    <app-vert-range
+      [from]="0"
+      [to]="59"
+    ></app-vert-range>
+
+    <p>:</p>
+
+    <app-vert-range
+      [from]="0"
+      [to]="59"
+    ></app-vert-range>
+  </div>
+
+  <div class="modal__buttons">
+    <app-button
+      color="beige"
+      text="{{ 'valves.valves.start' | translate }}"
+    ></app-button>
+    <app-button
+      color="beige"
+      text="{{ 'valves.valves.stop' | translate }}"
+    ></app-button>
+  </div>
+</div>
