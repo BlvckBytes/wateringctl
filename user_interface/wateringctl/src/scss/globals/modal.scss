@@ -1,0 +1,12 @@
+.modal {
+  width: 80%;
+  min-height: 10rem;
+  background: var(--white);
+  border-radius: var(--br-lg);
+  margin: 0px auto;
+  color: var(--black);
+  padding: var(--spc-lg) var(--spc-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

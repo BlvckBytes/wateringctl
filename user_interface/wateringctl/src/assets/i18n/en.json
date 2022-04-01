@@ -8,6 +8,11 @@
     "WEEKDAY_SA": "Sa",
     "WEEKDAY_SU": "Su"
   },
+  "textbox_errors": {
+    "required": "Value required",
+    "minlength": "At least {{details.requiredLength}} chars",
+    "maxlength": "At most {{details.requiredLength}} chars"
+  },
   "schedules": {
     "buttons": {
       "create_interval": "Create Interval",
@@ -25,7 +30,9 @@
       "relay_id": "Relay #",
       "alias": "Alias",
       "actions": "Actions",
-      "no_items": "No entries"
+      "no_items": "No entries",
+      "new_alias": "New Alias",
+      "save": "Save"
     }
   }
 }

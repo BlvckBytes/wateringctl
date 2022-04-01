@@ -13,6 +13,8 @@ import { ButtonComponent } from './components/button/button.component';
 import { NotificationCenterComponent } from './components/notification-center/notification-center.component';
 import { OverlayValveAliasEditComponent } from './components/overlays/overlay-valve-alias-edit/overlay-valve-alias-edit.component';
 import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.component';
+import { TextboxComponent } from './components/textbox/textbox.component';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -24,7 +26,8 @@ import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.
     ButtonComponent,
     NotificationCenterComponent,
     OverlayValveAliasEditComponent,
-    OverlayStackComponent
+    OverlayStackComponent,
+    TextboxComponent
   ],
   imports: [
     BrowserModule,
@@ -36,7 +39,8 @@ import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.
         useFactory: (http: HttpClient) => new TranslateHttpLoader(http, '/i18n/'),
         deps: [HttpClient],
       },
-    })
+    }),
+    ReactiveFormsModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

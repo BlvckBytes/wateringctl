@@ -67,7 +67,9 @@ export class PageSchedulesComponent {
     this.overlaysService.publish({
       component: OverlayValveAliasEditComponent,
       inputs: {
-        alias: 'Hello, world!'
+        alias: 'Hello, world!',
+        relayId: 5,
+        saved: (alias: string) => console.log(alias)
       },
       userClosable: true,
     });

@@ -1,1 +1,27 @@
-<h1>{{alias}}</h1>
+<div class="modal">
+  <div class="valve-info">
+    <div class="hv-c">
+      <p>{{ 'valves.valves.relay_id' | translate }}</p>
+      <p class="badge">{{relayId}}</p>
+    </div>
+    <div class="hv-c">
+      <p>{{ 'valves.valves.alias' | translate }}</p>
+      <p class="badge valve-info__alias">{{alias}}</p>
+    </div>
+  </div>
+
+  <div class="tb-alias">
+    <app-textbox
+      placeholder="{{ 'valves.valves.new_alias' | translate }}"
+      [control]="newAlias"
+      [dark]="true"
+    ></app-textbox>
+  </div>
+
+  <app-button
+    (click)="save()"
+    [color]="newAlias.valid ? 'success' : 'beige'"
+    text="{{ 'valves.valves.save' | translate }}"
+    icon="save.svg"
+  ></app-button>
+</div>

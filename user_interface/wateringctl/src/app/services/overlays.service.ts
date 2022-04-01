@@ -50,9 +50,11 @@ export class OverlaysService {
    * Publish a new overlay to the stack to be rendered
    * @param item Overlay to publish
    */
-  publish(item: IOverlay) {
-    this.items.push(this.instantiate(item));
+  publish(item: IOverlay): ComponentOverlay {
+    const inst = this.instantiate(item);
+    this.items.push(inst);
     this._overlays$.next(this.items);
+    return inst;
   }
 
   /**

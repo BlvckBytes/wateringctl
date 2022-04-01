@@ -69,15 +69,18 @@ $var-states: (
 
     // Border width
     bw-sm: 1px,
-    bw-md: 1.2px,
-    bw-lg: 1.5px,
-    bw-xl: 2px,
+    bw-md: 1.9px,
+    bw-lg: 3px,
+    bw-xl: 4px,
 
     // Animation duration
     ad-sm: 50ms,
     ad-md: 85ms,
     ad-lg: 105ms,
     ad-xl: 200ms,
+
+    // Line height of text (font-size scale factor)
+    line-height: 1.4,
   ),
 
   television: (),
