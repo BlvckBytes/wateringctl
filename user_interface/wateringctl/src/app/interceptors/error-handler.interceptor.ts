@@ -1,7 +1,8 @@
-import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, Observable, throwError } from 'rxjs';
+import { catchError, Observable, tap, throwError } from 'rxjs';
+import { LoadingIndicatorService } from '../services/loading-indicator.service';
 import { NotificationsService } from '../services/notifications.service';
 
 @Injectable()
@@ -10,10 +11,17 @@ export class ErrorHandlerHttpInterceptor implements HttpInterceptor {
   constructor(
     private notificationsService: NotificationsService,
     private tranService: TranslateService,
+    private loadingService: LoadingIndicatorService,
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    this.loadingService.pushTask();
+
     return next.handle(req).pipe(
+      tap(it => {
+        if (it instanceof HttpResponse)
+          this.loadingService.popTask();
+      }),
       catchError((err: any) => {
         if (err instanceof HttpErrorResponse) {
           const { code } = err.error;
