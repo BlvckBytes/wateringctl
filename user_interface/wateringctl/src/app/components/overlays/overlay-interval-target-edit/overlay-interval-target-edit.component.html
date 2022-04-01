@@ -1,0 +1,31 @@
+<div class="modal">
+  <div class="hv-c schedule-info">
+    <div class="hv-c schedule-info__entry">
+      <p>{{ 'schedules.intervals.target' | translate }}</p>
+      <p class="badge">{{resolveValve(interval)}}</p>
+    </div>
+    <div class="hv-c schedule-info__entry">
+      <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
+      <app-timespan
+        *ngIf="interval"
+        [interval]="interval"
+      ></app-timespan>
+    </div>
+  </div>
+
+  <div class="tb-target">
+    <app-textbox
+      placeholder="{{ 'schedules.intervals.new_target' | translate }}"
+      [control]="newTarget"
+      [dark]="true"
+      [focused]="true"
+    ></app-textbox>
+  </div>
+
+  <app-button
+    (click)="save()"
+    [color]="newTarget.valid ? 'success' : 'beige'"
+    text="{{ 'schedules.intervals.save' | translate }}"
+    icon="save.svg"
+  ></app-button>
+</div>

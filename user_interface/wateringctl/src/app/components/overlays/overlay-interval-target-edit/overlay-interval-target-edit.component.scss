@@ -1,0 +1,15 @@
+.schedule-info {
+  flex-direction: column;
+  width: 100%;
+  gap: var(--spc-sm);
+
+  &__entry {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.tb-target {
+  margin: var(--spc-lg) 0;
+  width: 100%;
+}

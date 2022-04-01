@@ -29,7 +29,9 @@
       "target": "Target",
       "timestamps": "Timestamps",
       "actions": "Actions",
-      "no_items": "No entries"
+      "no_items": "No entries",
+      "new_target": "New Target",
+      "save": "Save"
     }
   },
   "valves": {

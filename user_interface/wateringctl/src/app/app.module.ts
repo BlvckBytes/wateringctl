@@ -17,6 +17,8 @@ import { TextboxComponent } from './components/textbox/textbox.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ErrorHandlerHttpInterceptor } from './interceptors/error-handler.interceptor';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { OverlayIntervalTargetEditComponent } from './components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
+import { TimespanComponent } from './components/timespan/timespan.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +32,9 @@ import { AutofocusDirective } from './directives/autofocus.directive';
     OverlayValveAliasEditComponent,
     OverlayStackComponent,
     TextboxComponent,
-    AutofocusDirective
+    AutofocusDirective,
+    OverlayIntervalTargetEditComponent,
+    TimespanComponent
   ],
   imports: [
     BrowserModule,

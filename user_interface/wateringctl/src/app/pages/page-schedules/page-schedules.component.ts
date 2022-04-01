@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
+import { OverlayIntervalTargetEditComponent } from 'src/app/components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
 import { compareIntervalStarts, IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
@@ -76,6 +77,7 @@ export class PageSchedulesComponent implements IStatePersistable {
     private valveService: ValvesService,
     private notificationService: NotificationsService,
     private stateService: ComponentStateService,
+    private overlayService: OverlaysService,
   ) {
     this.stateService.load(this);
   }
@@ -91,39 +93,20 @@ export class PageSchedulesComponent implements IStatePersistable {
     });
   }
 
-  trimIntervalTime(time: string): string {
-    const parsed = parseIntervalTime(time);
-    const parts = time.split(':');
-    return (
-      parts[0] + ':' + parts[1] + (parsed[2] > 0 ? `:${parts[2]}` : '')
-    );
-  }
-
-  formatTimeString(seconds: number): string {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor((seconds % 3600) % 60);
-
-    return (
-      (h > 0 ? `${h}h` : '') +
-      (m > 0 ? ` ${m}m` : '') +
-      (s > 0 ? ` ${s}s` : '') 
-    ).trim();
-  }
-
-  calcIntervalDur(interval: IInterval): string {
-    const start = parseIntervalTime(interval.start);
-    const end = parseIntervalTime(interval.end);
-    return this.formatTimeString(
-      (end[2] - start[2]) +
-      (end[1] - start[1]) * 60 +
-      (end[0] - start[0]) * 3600
-    );
-  }
-
   resolveValve(interval: IInterval): string {
     return this.valveService.allValves.value
       ?.find(it => it.identifier === interval.identifier)
       ?.alias || '?';
+  }
+
+  editTarget(interval: IInterval) {
+    this.overlayService.publish({
+      component: OverlayIntervalTargetEditComponent,
+      inputs: {
+        interval,
+        availableValves: this.valveService.allValves.value,
+      },
+      userClosable: true,
+    });
   }
 }

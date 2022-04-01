@@ -44,21 +44,15 @@
   <tr
     *ngFor="let interval of currentActiveIntervals$ | async"
   >
-    <td>
+    <td
+      (click)="editTarget(interval)"
+    >
       <p class="badge valve__alias schedule__entry__section">{{resolveValve(interval)}}</p>
     </td>
     <td>
-      <div class="interval hv-c">
-        <div class="badge">
-          <p>{{trimIntervalTime(interval.start)}}</p>
-        </div>
-
-        <p>{{calcIntervalDur(interval)}}</p>
-
-        <div class="badge">
-          <p>{{trimIntervalTime(interval.end)}}</p>
-        </div>
-      </div>
+      <app-timespan
+        [interval]="interval"
+      ></app-timespan>
     </td>
     <td>
       <div class="hv-c hv-c--spc-sm">
