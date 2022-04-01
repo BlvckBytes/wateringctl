@@ -1,14 +1,16 @@
 <div class="modal">
   <div class="hv-c schedule-info">
     <div class="hv-c schedule-info__entry">
-      <p>{{ 'schedules.intervals.target' | translate }}</p>
+      <p class="schedule-info__descriptor">{{ 'schedules.intervals.target' | translate }}</p>
       <p class="badge">{{resolveValveAlias(interval)}}</p>
     </div>
     <div class="hv-c schedule-info__entry">
-      <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
+      <p class="schedule-info__descriptor">{{ 'schedules.intervals.timestamps' | translate }}</p>
       <app-timespan
-        *ngIf="interval"
-        [interval]="interval"
+        *ngIf="displayInterval"
+        [selectable]="true"
+        [interval]="displayInterval"
+        (selected)="timespanSelected($event)"
       ></app-timespan>
     </div>
   </div>
@@ -17,6 +19,7 @@
     <app-vert-range
       [from]="0"
       [to]="23"
+      [currentValue]="hoursValue"
       (selected)="hoursChanged($event)"
     ></app-vert-range>
 
@@ -25,6 +28,7 @@
     <app-vert-range
       [from]="0"
       [to]="59"
+      [currentValue]="minutesValue"
       (selected)="minutesChanged($event)"
     ></app-vert-range>
 
@@ -33,13 +37,14 @@
     <app-vert-range
       [from]="0"
       [to]="59"
+      [currentValue]="secondsValue"
       (selected)="secondsChanged($event)"
     ></app-vert-range>
   </div>
 
   <app-button
     (click)="save()"
-    color="success"
+    [color]="isTimespanValid() ? 'success' : 'beige'"
     text="{{ 'schedules.intervals.save' | translate }}"
     icon="save.svg"
   ></app-button>

@@ -1,9 +1,17 @@
-<div class="badge">
+<div
+  (click)="selection = 'start'"
+  class="badge"
+  [class.badge--selected]="selectable && selection === 'start'"
+>
   <p>{{trimIntervalTime(interval.start)}}</p>
 </div>
 
 <p>{{calcIntervalDur(interval)}}</p>
 
-<div class="badge">
+<div
+  (click)="selection = 'end'"
+  class="badge"
+  [class.badge--selected]="selectable && selection === 'end'"
+>
   <p>{{trimIntervalTime(interval.end)}}</p>
 </div>

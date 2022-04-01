@@ -20,6 +20,10 @@ export const parseIntervalTime = (time: string): number[] => {
   return time.split(':').map(it => Number.parseInt(it));
 };
 
+export const stringifyIntervalTime = (time: number[]): string => {
+  return time.map(it => String(it).padStart(2, '0')).join(':');
+};
+
 export const compareIntervalStarts = (a: IInterval, b: IInterval): number => {
   return compareIntervalTimes(a.start, b.start);
 }
@@ -37,3 +41,13 @@ export const compareIntervalTimes = (a: string, b: string): number => {
 
   return 0;
 };
+
+export const calcIntervalDurSecs = (interval: IInterval): number => {
+  const start = parseIntervalTime(interval.start);
+  const end = parseIntervalTime(interval.end);
+  return (
+    (end[2] - start[2]) +
+    (end[1] - start[1]) * 60 +
+    (end[0] - start[0]) * 3600
+  );
+}

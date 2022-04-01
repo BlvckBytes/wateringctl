@@ -120,11 +120,20 @@ export class PageSchedulesComponent implements IStatePersistable {
     });
   }
 
+  private saveTimespans(interval: IInterval, start: string, end: string) {
+    this.schedulerService.putDaysIndexedInterval(this._currentDay as ESchedulerWeekday, interval.index, {
+      identifier: interval.identifier,
+      disabled: interval.disabled,
+      start, end,
+    }).subscribe(() => this.loadSchedule(false));
+  }
+
   editTimespans(interval: IInterval) {
     this.overlayService.publish({
       component: OverlayIntervalTimestampsEditComponent,
       inputs: {
-        interval
+        interval,
+        saved: (start: string, end: string) => this.saveTimespans(interval, start, end),
       },
       userClosable: true,
     });

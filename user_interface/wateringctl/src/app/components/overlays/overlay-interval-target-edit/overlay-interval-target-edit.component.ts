@@ -40,7 +40,7 @@ export class OverlayIntervalTargetEditComponent {
     if (!this.newTarget.valid)
       return;
 
-    this.saved?.(this.newTarget.value);
+    this.saved(this.newTarget.value);
     this.overlaysService.destroyLatest();
   }
 

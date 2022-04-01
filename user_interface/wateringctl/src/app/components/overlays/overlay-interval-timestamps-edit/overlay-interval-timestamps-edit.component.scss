@@ -16,4 +16,9 @@
     width: 100%;
     justify-content: space-between;
   }
+
+  &__descriptor {
+    padding-right: var(--spc-md);
+    word-break: break-all;
+  }
 }

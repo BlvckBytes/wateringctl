@@ -15,20 +15,24 @@ export class VertRangeComponent implements AfterViewInit, OnInit {
 
   @Output() selected = new EventEmitter<number>();
 
+  private _valueSet = false;
   @Input() set currentValue(value: number) {
     this.currNum = value;
     this.updateValues(false);
+    this._valueSet = true;
   }
 
   values: string[] = [];
-  private deltaScalerDesktop = 1/20;
-  private deltaScalerMobile = 1/12;
+  private deltaScalerDesktop = 1 / 20;
+  private deltaScalerMobile = 1 / 12;
 
   private currNum = this.from;
 
   ngOnInit(): void {
-    this.currNum = this.from;
-    this.updateValues();
+    if (!this._valueSet) {
+      this.currNum = this.from;
+      this.updateValues();
+    }
   }
 
   ngAfterViewInit(): void {

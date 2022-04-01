@@ -1,15 +1,33 @@
-import { Component, Input } from '@angular/core';
-import { interval } from 'rxjs';
-import { IInterval, parseIntervalTime } from 'src/app/models/interval.interface';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { calcIntervalDurSecs, IInterval, parseIntervalTime } from 'src/app/models/interval.interface';
+
+export type TimespanSelection = 'start' | 'end';
 
 @Component({
   selector: 'app-timespan',
   templateUrl: './timespan.component.html',
   styleUrls: ['./timespan.component.scss']
 })
-export class TimespanComponent {
+export class TimespanComponent implements OnInit {
 
   @Input() interval!: IInterval;
+  @Input() selectable: boolean = false;
+  @Output() selected = new EventEmitter<TimespanSelection>();
+
+  private _selection: TimespanSelection = 'start';
+  set selection(value: TimespanSelection) {
+    this._selection = value;
+
+    if (this.selectable)
+      this.selected.emit(value);
+  }
+  get selection() {
+    return this._selection;
+  }
+
+  ngOnInit(): void {
+    this.selection = 'start';
+  }
 
   trimIntervalTime(time: string): string {
     const parsed = parseIntervalTime(time);
@@ -17,6 +35,10 @@ export class TimespanComponent {
     return (
       parts[0] + ':' + parts[1] + (parsed[2] > 0 ? `:${parts[2]}` : '')
     );
+  }
+
+  calcIntervalDur(interval: IInterval): string {
+    return this.formatTimeString(calcIntervalDurSecs(interval));
   }
 
   formatTimeString(seconds: number): string {
@@ -27,17 +49,7 @@ export class TimespanComponent {
     return (
       (h > 0 ? `${h}h` : '') +
       (m > 0 ? ` ${m}m` : '') +
-      (s > 0 ? ` ${s}s` : '') 
+      (s > 0 || (h <= 0 && m <= 0) ? ` ${s}s` : '') 
     ).trim();
-  }
-
-  calcIntervalDur(interval: IInterval): string {
-    const start = parseIntervalTime(interval.start);
-    const end = parseIntervalTime(interval.end);
-    return this.formatTimeString(
-      (end[2] - start[2]) +
-      (end[1] - start[1]) * 60 +
-      (end[0] - start[0]) * 3600
-    );
   }
 }

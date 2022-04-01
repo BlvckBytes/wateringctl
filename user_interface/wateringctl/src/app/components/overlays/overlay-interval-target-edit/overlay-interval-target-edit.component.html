@@ -1,11 +1,11 @@
 <div class="modal">
   <div class="hv-c schedule-info">
     <div class="hv-c schedule-info__entry">
-      <p>{{ 'schedules.intervals.target' | translate }}</p>
+      <p class="schedule-info__descriptor">{{ 'schedules.intervals.target' | translate }}</p>
       <p class="badge">{{resolveValveAlias(interval)}}</p>
     </div>
     <div class="hv-c schedule-info__entry">
-      <p>{{ 'schedules.intervals.timestamps' | translate }}</p>
+      <p class="schedule-info__descriptor">{{ 'schedules.intervals.timestamps' | translate }}</p>
       <app-timespan
         *ngIf="interval"
         [interval]="interval"
