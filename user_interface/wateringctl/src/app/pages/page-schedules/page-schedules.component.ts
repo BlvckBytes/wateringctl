@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable, Observer } from 'rxjs';
 import { OverlayIntervalTargetEditComponent } from 'src/app/components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
 import { OverlayIntervalTimestampsEditComponent } from 'src/app/components/overlays/overlay-interval-timestamps-edit/overlay-interval-timestamps-edit.component';
 import { compareIntervalStarts, IInterval, isIntervalEmpty } from 'src/app/models/interval.interface';
@@ -36,6 +36,11 @@ export class PageSchedulesComponent implements IStatePersistable {
   }
 
   // #endregion
+
+  private loadScheduleObs: Partial<Observer<any>> = {
+    next: () => this.loadSchedule(false),
+    error: () => this.loadSchedule(false),
+  };
 
   private _currentSchedule = new BehaviorSubject<IScheduledDay | null>(null);
   private _currentDay: string = "";
@@ -113,7 +118,7 @@ export class PageSchedulesComponent implements IStatePersistable {
       end: interval.end,
       identifier: targetValve.identifier,
       disabled: interval.disabled,
-    }).subscribe(() => this.loadSchedule(false));
+    }).subscribe(this.loadScheduleObs);
   }
 
   editTarget(interval: IInterval) {
@@ -133,7 +138,7 @@ export class PageSchedulesComponent implements IStatePersistable {
       identifier: interval.identifier,
       disabled: interval.disabled,
       start, end,
-    }).subscribe(() => this.loadSchedule(false));
+    }).subscribe(this.loadScheduleObs);
   }
 
   editTimespans(interval: IInterval) {
@@ -154,7 +159,7 @@ export class PageSchedulesComponent implements IStatePersistable {
 
     this.schedulerService.putDaysSchedule(this._currentDay as ESchedulerWeekday, {
       disabled: !schedule.disabled,
-    },).subscribe(() => this.loadSchedule(false));
+    },).subscribe(this.loadScheduleObs);
   }
 
   createInterval() {
@@ -185,14 +190,14 @@ export class PageSchedulesComponent implements IStatePersistable {
         start: `${now.getHours()}:${now.getMinutes()}:00`,
         end: `${now.getHours()}:${now.getMinutes() + 5}:00`,
       }
-    ).subscribe(() => this.loadSchedule(false));
+    ).subscribe(this.loadScheduleObs);
   }
 
   private deleteIntervalConfirm(interval: IInterval) {
     this.schedulerService.deleteDaysIndexedInterval(
       this._currentDay as ESchedulerWeekday,
       interval.index
-    ).subscribe(() => this.loadSchedule(false));
+    ).subscribe(this.loadScheduleObs);
   }
 
   deleteInterval(interval: IInterval) {
@@ -227,6 +232,6 @@ export class PageSchedulesComponent implements IStatePersistable {
         ...interval,
         disabled: !interval.disabled,
       }
-    ).subscribe(() => this.loadSchedule(false));
+    ).subscribe(this.loadScheduleObs);
   }
 }

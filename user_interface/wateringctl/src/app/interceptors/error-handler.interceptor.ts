@@ -24,10 +24,10 @@ export class ErrorHandlerHttpInterceptor implements HttpInterceptor {
       }),
       catchError((err: any) => {
         if (err instanceof HttpErrorResponse) {
+          this.loadingService.popTask();
           const { code } = err.error;
-          if (!code) return throwError(() => err);
 
-          const key = `server_errors.${code}`;
+          const key = `server_errors.${code || 'default'}`;
           let trans = this.tranService.instant(key);
           const headline = this.tranService.instant('server_errors.headline');
 
