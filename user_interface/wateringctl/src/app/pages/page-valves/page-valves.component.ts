@@ -1,19 +1,25 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { map, Observer } from 'rxjs';
 import { OverlayValveAliasEditComponent } from 'src/app/components/overlays/overlay-valve-alias-edit/overlay-valve-alias-edit.component';
 import { OverlayValveTimerComponent } from 'src/app/components/overlays/overlay-valve-timer/overlay-valve-timer.component';
 import { IStatePersistable } from 'src/app/models/state-persistable.interface';
 import { compareValveIds, IValve } from 'src/app/models/valve.interface';
+import { EWebSocketEventType } from 'src/app/models/web-socket-event-type.enum';
+import { IWebSocketEvent } from 'src/app/models/web-socket-event.interface';
 import { ComponentStateService } from 'src/app/services/component-state.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { ValvesService } from 'src/app/services/valves.service';
+import { WebSocketEventsService } from 'src/app/services/web-socket-events.service';
+import { SubSink } from 'subsink';
 
 @Component({
   selector: 'app-page-valves',
   templateUrl: './page-valves.component.html',
   styleUrls: ['./page-valves.component.scss']
 })
-export class PageValvesComponent implements IStatePersistable {
+export class PageValvesComponent implements IStatePersistable, OnDestroy {
+
+  private _subs = new SubSink();
 
   // #region State persisting
 
@@ -64,9 +70,26 @@ export class PageValvesComponent implements IStatePersistable {
     private valvesService: ValvesService,
     private overlaysService: OverlaysService,
     private stateService: ComponentStateService,
+    eventService: WebSocketEventsService,
   ) {
     this.stateService.load(this);
     this.loadValves();
+    this._subs.sink = eventService.events.subscribe(v => this.handleWSE(v));
+  }
+
+  ngOnDestroy(): void {
+    this._subs.unsubscribe();
+  }
+
+  private handleWSE(wse: IWebSocketEvent) {
+    if (
+      wse.type === EWebSocketEventType.WSE_VALVE_ON ||
+      wse.type === EWebSocketEventType.WSE_VALVE_OFF
+    ) {
+      const id = Number.parseInt(wse.arg);
+      const targ = this.valvesService.allValves.value?.find(it => it.identifier === id);
+      if (targ) targ.state = wse.type === EWebSocketEventType.WSE_VALVE_ON;
+    }
   }
 
   private loadValves() {

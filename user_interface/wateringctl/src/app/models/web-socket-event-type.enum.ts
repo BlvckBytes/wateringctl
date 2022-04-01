@@ -1,0 +1,6 @@
+export enum EWebSocketEventType {
+  WSE_INTERVAL_SCHED_ON   = "WSE_INTERVAL_SCHED_ON",
+  WSE_INTERVAL_SCHED_OFF  = "WSE_INTERVAL_SCHED_OFF",
+  WSE_VALVE_ON            = "WSE_VALVE_ON",
+  WSE_VALVE_OFF           = "WSE_VALVE_OFF",
+}
