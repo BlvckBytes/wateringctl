@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
+import { IInterval } from '../models/interval.interface';
 import { IValveRequest } from '../models/request/valve-request.interface';
 import { IValve } from '../models/valve.interface';
 import { HttpService } from './http.service';
@@ -41,5 +42,11 @@ export class ValvesService {
     id: number
   ): Observable<void> {
     return this.httpService.delete(`/valves/${id}`);
+  }
+
+  resolveValveAlias(interval?: IInterval): string {
+    return this.allValves.value
+      ?.find(it => it.identifier === interval?.identifier)
+      ?.alias || '?';
   }
 }

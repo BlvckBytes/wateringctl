@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { OverlayIntervalTargetEditComponent } from 'src/app/components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
+import { OverlayIntervalTimestampsEditComponent } from 'src/app/components/overlays/overlay-interval-timestamps-edit/overlay-interval-timestamps-edit.component';
 import { compareIntervalStarts, IInterval, isIntervalEmpty } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
@@ -88,10 +89,8 @@ export class PageSchedulesComponent implements IStatePersistable {
     this.stateService.load(this);
   }
 
-  resolveValve(interval: IInterval): string {
-    return this.valveService.allValves.value
-      ?.find(it => it.identifier === interval.identifier)
-      ?.alias || '?';
+  resolveValveAlias(interval?: IInterval): string {
+    return this.valveService.resolveValveAlias(interval);
   }
 
   private saveTarget(interval: IInterval, newTarget: string) {
@@ -116,6 +115,16 @@ export class PageSchedulesComponent implements IStatePersistable {
         interval,
         availableValves: this.valveService.allValves.value,
         saved: (newTarget: string) => this.saveTarget(interval, newTarget),
+      },
+      userClosable: true,
+    });
+  }
+
+  editTimespans(interval: IInterval) {
+    this.overlayService.publish({
+      component: OverlayIntervalTimestampsEditComponent,
+      inputs: {
+        interval
       },
       userClosable: true,
     });

@@ -4,6 +4,7 @@ import { IInterval } from 'src/app/models/interval.interface';
 import { IValve } from 'src/app/models/valve.interface';
 import { KeyEventsService } from 'src/app/services/key-events.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
+import { ValvesService } from 'src/app/services/valves.service';
 import { SubSink } from 'subsink';
 
 @Component({
@@ -22,6 +23,7 @@ export class OverlayIntervalTargetEditComponent {
 
   constructor(
     private overlaysService: OverlaysService,
+    private valveService: ValvesService,
     keysService: KeyEventsService,
   ) {
     this.newTarget = new FormControl('', [
@@ -46,9 +48,7 @@ export class OverlayIntervalTargetEditComponent {
     return this.availableValves.map(it => it.alias);
   }
 
-  resolveValve(interval?: IInterval): string {
-    return this.availableValves
-      .find(it => it.identifier === interval?.identifier)
-      ?.alias || '?';
+  resolveValveAlias(interval?: IInterval): string {
+    return this.valveService.resolveValveAlias(interval);
   }
 }

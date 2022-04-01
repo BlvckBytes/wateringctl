@@ -1,0 +1,6 @@
+<div #evHandle class="event-handle"></div>
+
+<p
+  *ngFor="let v of values; let i = index"
+  [class.--light]="i % 2 == 0"
+>{{v}}</p>

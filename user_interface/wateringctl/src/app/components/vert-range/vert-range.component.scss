@@ -1,0 +1,32 @@
+:host {
+  position: relative;
+  background: var(--beige--o);
+  display: block;
+  color: var(--black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spc-sm);
+  width: calc(var(--fs-h1) * 2 + var(--spc-sm));
+  border-radius: var(--br-sm);
+  gap: var(--spc-md);
+  font-weight: 300;
+  touch-action: none;
+
+  p {
+    user-select: none;
+    font-size: var(--fs-h1);
+    z-index: 1;
+    position: relative;
+
+    &.--light {
+      color: var(--black--l--o);
+    }
+  }
+}
+
+.event-handle {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}

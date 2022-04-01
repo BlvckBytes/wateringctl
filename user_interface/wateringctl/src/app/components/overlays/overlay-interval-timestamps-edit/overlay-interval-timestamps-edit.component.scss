@@ -1,0 +1,19 @@
+.time-select {
+  margin: var(--spc-lg) 0;
+
+  p {
+    font-size: var(--fs-h1);
+    margin: 0 var(--spc-sm);
+  }
+}
+
+.schedule-info {
+  flex-direction: column;
+  width: 100%;
+  gap: var(--spc-sm);
+
+  &__entry {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

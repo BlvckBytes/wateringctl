@@ -19,6 +19,8 @@ import { ErrorHandlerHttpInterceptor } from './interceptors/error-handler.interc
 import { AutofocusDirective } from './directives/autofocus.directive';
 import { OverlayIntervalTargetEditComponent } from './components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
 import { TimespanComponent } from './components/timespan/timespan.component';
+import { VertRangeComponent } from './components/vert-range/vert-range.component';
+import { OverlayIntervalTimestampsEditComponent } from './components/overlays/overlay-interval-timestamps-edit/overlay-interval-timestamps-edit.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +36,9 @@ import { TimespanComponent } from './components/timespan/timespan.component';
     TextboxComponent,
     AutofocusDirective,
     OverlayIntervalTargetEditComponent,
-    TimespanComponent
+    TimespanComponent,
+    VertRangeComponent,
+    OverlayIntervalTimestampsEditComponent
   ],
   imports: [
     BrowserModule,

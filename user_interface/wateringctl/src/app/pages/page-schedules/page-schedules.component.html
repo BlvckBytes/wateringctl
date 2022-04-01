@@ -46,9 +46,11 @@
     <td
       (click)="editTarget(interval)"
     >
-      <p class="badge valve__alias schedule__entry__section">{{resolveValve(interval)}}</p>
+      <p class="badge valve__alias schedule__entry__section">{{resolveValveAlias(interval)}}</p>
     </td>
-    <td>
+    <td
+      (click)="editTimespans(interval)"
+    >
       <app-timespan
         [interval]="interval"
       ></app-timespan>
