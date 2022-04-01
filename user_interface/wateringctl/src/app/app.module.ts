@@ -10,6 +10,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { WeekdaySelectComponent } from './components/weekday-select/weekday-select.component';
 import { ButtonComponent } from './components/button/button.component';
+import { NotificationCenterComponent } from './components/notification-center/notification-center.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { ButtonComponent } from './components/button/button.component';
     PageValvesComponent,
     PageSchedulesComponent,
     WeekdaySelectComponent,
-    ButtonComponent
+    ButtonComponent,
+    NotificationCenterComponent,
   ],
   imports: [
     BrowserModule,

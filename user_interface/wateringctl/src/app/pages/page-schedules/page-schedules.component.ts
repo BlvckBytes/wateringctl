@@ -3,6 +3,7 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import { compareIntervalStarts, IInterval, isIntervalEmpty, parseIntervalTime } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { SchedulerService } from 'src/app/services/scheduler.service';
 import { ValvesService } from 'src/app/services/valves.service';
 
@@ -45,7 +46,19 @@ export class PageSchedulesComponent {
   constructor(
     private schedulerService: SchedulerService,
     private valveService: ValvesService,
+    private notificationService: NotificationsService,
   ) {}
+
+  notificationTest() {
+    this.notificationService.publish({
+      headline: "Test",
+      text: "This is an example of a notification",
+      color: "warning",
+      buttons: [],
+      icon: "trash.svg",
+      timeout: 5000,
+    });
+  }
 
   trimIntervalTime(time: string): string {
     const parsed = parseIntervalTime(time);

@@ -22,13 +22,13 @@
       $name: $color,
 
       // Light and dark versions
-      #{$name}-light: if($delta, color.adjust($color, $lightness: $delta), null),
-      #{$name}-dark: if($delta, color.adjust($color, $lightness: -$delta), null),
+      #{$name}--l: if($delta, color.adjust($color, $lightness: $delta), null),
+      #{$name}--d: if($delta, color.adjust($color, $lightness: -$delta), null),
 
       // Transparent versions
       #{$name}-opac: if($opac, color.adjust($color, $alpha: -$opac), null),
-      #{$name}-light-opac: if($delta and $opac, color.adjust($color, $lightness: $delta, $alpha: -$opac), null),
-      #{$name}-dark-opac: if($delta and $opac, color.adjust($color, $lightness: -$delta, $alpha: -$opac), null),
+      #{$name}--l--o: if($delta and $opac, color.adjust($color, $lightness: $delta, $alpha: -$opac), null),
+      #{$name}--d--o: if($delta and $opac, color.adjust($color, $lightness: -$delta, $alpha: -$opac), null),
     ));
   }
 
