@@ -268,8 +268,13 @@ INLINED static void scheduler_tick_intervals(scheduler_t *scheduler, scheduler_w
 
     // Interval turned off
     if (
-      scheduler_time_compare(time, interval->end) == 1        // Time is after end
-      && interval->active                                     // And interval is active
+      (
+        scheduler_time_compare(time, interval->end) == 1        // Time is after end
+        && interval->active                                     // And interval is active
+      ) ||
+      (
+        interval->active && interval->disabled                  // Interval has been disabled during active state
+      )
     )
     {
       interval->active = false;
