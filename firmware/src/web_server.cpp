@@ -585,6 +585,102 @@ void web_server_route_valves_deactivate(AsyncWebServerRequest *request)
 
 /*
 ============================================================================
+                            POST /valves/{id}/timer                         
+============================================================================
+*/
+
+void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
+{
+  size_t valve_id = 0;
+  if (!valves_parse_id(request, &valve_id))
+    return;
+
+  scptr htable_t *body = NULL;
+  if (!web_server_ensure_json_body(request, &body))
+    return;
+
+  // Get timer value from json
+  jsonh_opres_t jopr;
+  char *timer_str = NULL;
+  if ((jopr = jsonh_get_str(body, "timer", &timer_str)) != JOPRES_SUCCESS)
+  {
+    scptr char *err = jsonh_getter_errstr("timer", jopr);
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: %s", err);
+    return;
+  }
+
+  // Parse timer string
+  scptr char *err = NULL;
+  scheduler_time_t timer;
+  if (!scheduler_time_parse(timer_str, &err, &timer))
+  {
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: %s", err);
+    return;
+  }
+
+  // Ensure the timer is not empty
+  if (scheduler_time_compare(timer, SCHEDULER_TIME_MIDNIGHT) == 0)
+  {
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: \"timer\" cannot be zero");
+    return;
+  }
+
+  valve_t *targ_valve = &(valvectl->valves[valve_id]);
+
+  // Check the target valve
+  if(scheduler_time_compare(targ_valve->timer, SCHEDULER_TIME_MIDNIGHT) != 0)
+  {
+    web_server_error_resp(request, 409, VALVE_TIMER_NOT_ACTIVE, "This valve already has an active timer");
+    return;
+  }
+
+  // Set timer and turn on valve
+  targ_valve->timer = timer;
+  valve_control_toggle(valvectl, valve_id, true);
+
+  scptr char *ev_args_timer = strfmt_direct("%lu;%s", valve_id, scheduler_time_stringify(&timer));
+  web_socket_broadcast_event(WSE_VALVE_TIMER_SET, ev_args_timer);
+
+  scptr char *ev_args_off = strfmt_direct("%lu", valve_id);
+  web_socket_broadcast_event(WSE_VALVE_ON, ev_args_off);
+
+  web_server_empty_ok(request);
+}
+
+/*
+============================================================================
+                          DELETE /valves/{id}/timer                         
+============================================================================
+*/
+
+void web_server_route_valves_timer_clear(AsyncWebServerRequest *request)
+{
+  size_t valve_id;
+  if (!valves_parse_id(request, &valve_id))
+    return;
+
+  valve_t *targ_valve = &(valvectl->valves[valve_id]);
+
+  // Check the target valve
+  if(scheduler_time_compare(targ_valve->timer, SCHEDULER_TIME_MIDNIGHT) == 0)
+  {
+    web_server_error_resp(request, 409, VALVE_TIMER_NOT_ACTIVE, "This valve has no active timer");
+    return;
+  }
+
+  // Clear timer and turn off valve
+  targ_valve->timer = SCHEDULER_TIME_MIDNIGHT;
+  valve_control_toggle(valvectl, valve_id, false);
+
+  scptr char *ev_args = strfmt_direct("%lu", valve_id);
+  web_socket_broadcast_event(WSE_VALVE_TIMER_CLEARED, ev_args);
+  web_socket_broadcast_event(WSE_VALVE_OFF, ev_args);
+
+  web_server_empty_ok(request);
+}
+
+/*
+============================================================================
                                 GET /memstat                                
 ============================================================================
 */
@@ -650,6 +746,12 @@ void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
   wsrv.on(p_valves_id, HTTP_POST, web_server_route_valves_activate);
   wsrv.on(p_valves_id, HTTP_DELETE, web_server_route_valves_deactivate);
   wsrv.on(p_valves_id, HTTP_OPTIONS, web_server_route_any_options);
+
+  // /valves/id/timer
+  const char *p_valves_id_timer = "^\\/valves\\/([0-9]+)\\/timer$";
+  wsrv.on(p_valves_id_timer, HTTP_POST, web_server_route_valves_timer_set, NULL, web_server_str_body_handler);
+  wsrv.on(p_valves_id_timer, HTTP_DELETE, web_server_route_valves_timer_clear);
+  wsrv.on(p_valves_id_timer, HTTP_OPTIONS, web_server_route_any_options);
 
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);

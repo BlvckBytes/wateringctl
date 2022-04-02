@@ -2,7 +2,7 @@
 
 valve_t valve_control_valve_make(const char *alias, bool disabled)
 {
-  valve_t res = { { 0 }, false, disabled };
+  valve_t res = { { 0 }, false, disabled, SCHEDULER_TIME_MIDNIGHT };
 
   // Copy over the alias into the struct with a maximum length
   strncpy(res.alias, alias, VALVE_CONTROL_ALIAS_MAXLEN);
@@ -16,13 +16,8 @@ valve_control_t valve_control_make()
 
   for (size_t i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
   {
-    // The identifier becomes it's array index, the state is initially off
     valve_t *valve = &(vc.valves[i]);
-    valve->state = false;
-
-    // Clear all alias bytes (empty string)
-    for (int j = 0; j < VALVE_CONTROL_ALIAS_MAXLEN; j++)
-      valve->alias[j] = 0;
+    *valve = valve_control_valve_make("?", false);
   }
 
   return vc;
@@ -137,7 +132,11 @@ htable_t *valve_control_valve_jsonify(valve_control_t *vc, size_t valve_id)
   if (jsonh_set_str(res, "alias", (char *) mman_ref(alias)) != JOPRES_SUCCESS)
     mman_dealloc(alias);
 
-  // Set state boolean and identifier
+  // Set timer string
+  scptr char *timer = scheduler_time_stringify(&(valve.timer));
+  if (jsonh_set_str(res, "timer", (char *) mman_ref(timer)) != JOPRES_SUCCESS)
+    mman_dealloc(timer);
+
   jsonh_set_bool(res, "state", valve.state);
   jsonh_set_bool(res, "disabled", valve.disabled);
   jsonh_set_int(res, "identifier", valve_id);

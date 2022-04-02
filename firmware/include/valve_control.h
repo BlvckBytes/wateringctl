@@ -26,6 +26,7 @@ typedef struct valve
   char alias[VALVE_CONTROL_ALIAS_MAXLEN];   // Alias name (human readable string)
   bool state;                               // Current on/off state
   bool disabled;                            // Disable state
+  scheduler_time_t timer;                   // Timers remaining time
 } valve_t;
 
 /**
