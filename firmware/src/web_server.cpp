@@ -630,7 +630,7 @@ void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
   // Ensure the timer is not empty
   if (scheduler_time_compare(timer, SCHEDULER_TIME_MIDNIGHT) == 0)
   {
-    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: \"duration\" cannot be zero");
+    web_server_error_resp(request, 400, VALVE_TIMER_ZERO, "Body data malformed: \"duration\" cannot be zero");
     return;
   }
 
