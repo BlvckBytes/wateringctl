@@ -13,6 +13,9 @@
 #include <blvckstd/longp.h>
 
 #include "web_socket.h"
+#include "valve_control.h"
+#include "scheduler_time.h"
+#include "scheduler_macros.h"
 
 /*
   The scheduler schedules on-times over the period of one
@@ -24,22 +27,6 @@
   The identifier has to be provided when an interval is being created.
 */
 
-// Maximum number of intervals a day can have
-#define SCHEDULER_MAX_INTERVALS_PER_DAY 5
-
-// Total intervals managed
-#define SCHEDULER_TOTAL_INTERVALS (SCHEDULER_MAX_INTERVALS_PER_DAY * 7)
-
-// Disabled states, bytepacked
-#define SCHEDULER_NUM_DISABLED_BYTES ((SCHEDULER_TOTAL_INTERVALS + 7) / 8)
-
-// Number of bytes the scheduler needs to persist it's schedule in the EEPROM
-// 7 weekdays times max_per_day times 7 bytes per interval (3 start, 3 end, 1 identifier)
-#define SCHEDULER_EEPROM_FOOTPRINT (                            \
-  7 * SCHEDULER_TOTAL_INTERVALS   /* Intervals */               \
-  + SCHEDULER_NUM_DISABLED_BYTES  /* Interval disabled bytes */ \
-  + 1                             /* Day disable bits */        \
-)
 
 // Day in the week
 #define _EVALS_SCHEDULER_WEEKDAY(FUN)   \
@@ -59,58 +46,16 @@
 ENUM_TYPEDEF_FULL_IMPL(scheduler_weekday, _EVALS_SCHEDULER_WEEKDAY);
 ENUM_TYPEDEF_FULL_IMPL(scheduler_edge, _EVALS_SCHEDULER_EDGE);
 
-typedef struct scheduler_time
-{
-  uint8_t hours;                       // Hours of the target time
-  uint8_t minutes;                     // Minutes of the target time
-  uint8_t seconds;                     // Seconds of the target time
-} scheduler_time_t;
-
-const scheduler_time_t SCHEDULER_TIME_MIDNIGHT = { 00, 00, 00 };
-
-/**
- * @brief Stringify a time into the common "hh:mm:ss" format
- * 
- * @param time Time to stringify
- * @return char* Stringified time, mman-alloced
- */
-char *scheduler_time_stringify(const scheduler_time_t *time);
-
-/**
- * @brief Parse a scheduler time from a given string using the
- * format <hours>:<minutes>:<seconds>, where each block needs to be an
- * integer between 0 and either 23 or 59, but blocks don't need to be
- * padded with zeros to match two digits
- * 
- * @param str Input string
- * @param err Error output buffer
- * @param out Output value buffer
- * 
- * @return true Parsing success
- * @return false On parsing errors, see err
- */
-bool scheduler_time_parse(const char *str, char **err, scheduler_time_t *out);
-
-/**
- * @brief Compare two scheduler times
- * 
- * @param a First scheduler time
- * @param b Second scheduler time
- * 
- * @return int 0 on equality, -1 if a occurrs before b, 1 if a occurrs after b
- */
-int scheduler_time_compare(scheduler_time_t a, scheduler_time_t b);
-
 // This function is used by the scheduler to get the current time and weekday from an external provider
 typedef void (*scheduler_day_and_time_provider_t)(scheduler_weekday_t*, scheduler_time_t*);
 
 typedef struct scheduler_interval
 {
-  scheduler_time_t start;              // Start of ON-time interval
-  scheduler_time_t end;                // End of ON-time interval
-  uint8_t identifier;                  // Identifier provided in the scheduler's callback
-  bool active;                         // Whether or not this interval is currently active
-  bool disabled;                       // Whether or not this interval is disabled
+  scheduler_time_t start;    // Start of ON-time interval
+  scheduler_time_t end;      // End of ON-time interval
+  uint8_t identifier;        // Identifier provided in the scheduler's callback
+  bool active;               // Whether or not this interval is currently active
+  bool disabled;             // Whether or not this interval is disabled
 } scheduler_interval_t;
 
 /**
@@ -267,8 +212,9 @@ bool scheduler_change_interval(scheduler_t *scheduler, scheduler_weekday_t day, 
  * @brief Update the scheduler's internals, should be called in some kind of main-loop
  * 
  * @param scheduler Scheduler to tick
+ * @param valve_ctl Valve controller to tick
  */
-void scheduler_tick(scheduler_t *scheduler);
+void scheduler_tick(scheduler_t *scheduler, valve_control_t *valve_ctl);
 
 /**
  * @brief Save a scheduler's schedule to the eeprom
@@ -279,10 +225,5 @@ void scheduler_eeprom_save(scheduler_t *scheduler);
  * @brief Load a scheduler's schedule from the eeprom
  */
 void scheduler_eeprom_load(scheduler_t *scheduler);
-
-/**
- * @brief Print a scheduler's schedule to the serial monitor
- */
-void scheduler_schedule_print(scheduler_t *scheduler);
 
 #endif

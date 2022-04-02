@@ -2,7 +2,7 @@
 
 valve_t valve_control_valve_make(const char *alias, bool disabled)
 {
-  valve_t res = { { 0 }, false, disabled, SCHEDULER_TIME_MIDNIGHT };
+  valve_t res = { { 0 }, false, disabled, SCHEDULER_TIME_MIDNIGHT, false };
 
   // Copy over the alias into the struct with a maximum length
   strncpy(res.alias, alias, VALVE_CONTROL_ALIAS_MAXLEN);

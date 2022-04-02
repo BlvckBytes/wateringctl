@@ -3,8 +3,10 @@
 
 #include <blvckstd/jsonh.h>
 
-#include "scheduler.h"
 #include "shift_register.h"
+#include "scheduler_time.h"
+#include "web_socket.h"
+#include "scheduler_macros.h"
 
 // Maximum number of valves that can be attached to the system
 #define VALVE_CONTROL_NUM_VALVES 8
@@ -27,6 +29,7 @@ typedef struct valve
   bool state;                               // Current on/off state
   bool disabled;                            // Disable state
   scheduler_time_t timer;                   // Timers remaining time
+  bool has_timer;                           // Whether or not this valve has an active timer
 } valve_t;
 
 /**

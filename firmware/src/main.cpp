@@ -120,6 +120,6 @@ void loop()
   }
 
   web_socket_cleanup();
-  scheduler_tick(&scheduler);
+  scheduler_tick(&scheduler, &valvectl);
   status_led_set(STATLED_CONNECTED);
 }

@@ -645,6 +645,7 @@ void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
 
   // Set timer and turn on valve
   targ_valve->timer = timer;
+  targ_valve->has_timer = true;
   valve_control_toggle(valvectl, valve_id, true);
 
   scptr char *timer_strval = scheduler_time_stringify(&timer);
@@ -680,6 +681,7 @@ void web_server_route_valves_timer_clear(AsyncWebServerRequest *request)
 
   // Clear timer and turn off valve
   targ_valve->timer = SCHEDULER_TIME_MIDNIGHT;
+  targ_valve->has_timer = false;
   valve_control_toggle(valvectl, valve_id, false);
 
   scptr char *timer_strval = scheduler_time_stringify(&SCHEDULER_TIME_MIDNIGHT);

@@ -14,95 +14,6 @@ scheduler_t scheduler_make(scheduler_callback_t callback, scheduler_day_and_time
   };
 }
 
-char *scheduler_time_stringify(const scheduler_time_t *time)
-{
-  return strfmt_direct("%02d:%02d:%02d", time->hours, time->minutes, time->seconds);
-}
-
-/**
- * @brief Subroutine to parse a time-part: 00-max
- * 
- * @param part Time-part string to parse
- * @param part_name Name of this part, used for error messages
- * @param err Error output buffer
- * @param max Maximum value this part can take
- * @param out Output value buffer
- * 
- * @return true Parsing successful
- * @return false Parsing error, see err
- */
-INLINED static bool scheduler_time_parse_part(
-  char *part,
-  const char *part_name,
-  char **err,
-  long max,
-  uint8_t *out
-)
-{
-  long result;
-  if (
-    longp(&result, part, 10) != LONGP_SUCCESS  // No number
-    || !(result >= 0 && result <= max)         // Or not between 0-max
-  )
-  {
-    *err = strfmt_direct(QUOTSTR " of " QUOTSTR " is not valid (0-%ld)", part_name, part, max);
-    return false;
-  }
-
-  *out = (uint8_t) result;
-  return true;
-}
-
-bool scheduler_time_parse(const char *str, char **err, scheduler_time_t *out)
-{
-  size_t str_offs = 0;
-  scptr char *hours_s = partial_strdup(str, &str_offs, ":", false);
-  scptr char *minutes_s = partial_strdup(str, &str_offs, ":", false);
-  scptr char *seconds_s = partial_strdup(str, &str_offs, "\0", false);
-
-  // Missing any time-part
-  if (!hours_s || !minutes_s || !seconds_s)
-  {
-    *err = strfmt_direct("Invalid format, use HH:MM:SS");
-    return false;
-  }
-
-  scheduler_time_t result = { 00, 00, 00 };
-
-  // Parse hours
-  if (!scheduler_time_parse_part(hours_s, "Hours", err, 23, &(result.hours)))
-    return false;
-
-  // Parse minutes
-  if (!scheduler_time_parse_part(minutes_s, "Minutes", err, 59, &(result.minutes)))
-    return false;
-
-  // Parse seconds
-  if (!scheduler_time_parse_part(seconds_s, "Seconds", err, 59, &(result.seconds)))
-    return false;
-
-  *out = result;
-  return true;
-}
-
-int scheduler_time_compare(scheduler_time_t a, scheduler_time_t b)
-{
-  // Hours differ, compare hours
-  if (a.hours > b.hours) return 1;
-  if (a.hours < b.hours) return -1;
-
-  // Hours equal, minutes differ, compare minutes
-  if (a.minutes > b.minutes) return 1;
-  if (a.minutes < b.minutes) return -1;
-
-  // Minutes equal, seconds differ, compare seconds
-  if (a.seconds > b.seconds) return 1;
-  if (a.seconds < b.seconds) return -1;
-
-  // All values equal, times are equal
-  return 0;
-}
-
 /**
  * @brief Parse an interval's time-property from json by a specific key
  * 
@@ -322,20 +233,11 @@ bool scheduler_change_interval(scheduler_t *scheduler, scheduler_weekday_t day, 
   return true;
 }
 
-void scheduler_tick(scheduler_t *scheduler)
+/**
+ * @brief Tick all intervals of the current day
+ */
+INLINED static void scheduler_tick_intervals(scheduler_t *scheduler, scheduler_weekday_t day, scheduler_time_t time)
 {
-  // Fetch the current day and time
-  scheduler_weekday_t day;
-  scheduler_time_t time;
-  scheduler->dt_provider(&day, &time);
-
-  // Skip duplicate ticks
-  if (
-    scheduler_time_compare(time, scheduler->last_tick_time) == 0  // Same time as last tick
-    && day == scheduler->last_tick_day                            // And same day as last tick
-  )
-    return;
-
   // Loop all intervals of the day
   scheduler_day_t curr_day = scheduler->daily_schedules[day];
   for (size_t i = 0; i < SCHEDULER_MAX_INTERVALS_PER_DAY; i++)
@@ -380,6 +282,58 @@ void scheduler_tick(scheduler_t *scheduler)
       continue;
     }
   }
+}
+
+/**
+ * @brief Tick all available valves and their corresponding timer fields
+ */
+INLINED static void scheduler_tick_valve_timers(valve_control_t *valve_ctl, scheduler_weekday_t day, scheduler_time_t time)
+{
+  for (size_t i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
+  {
+    valve_t *targ_valve = &(valve_ctl->valves[i]);
+
+    // This valve has no timer
+    if (!targ_valve->has_timer)
+      continue;  
+
+    int time_comparison = scheduler_time_compare(targ_valve->timer, SCHEDULER_TIME_MIDNIGHT);
+
+    // Timer just ended
+    if (time_comparison == 0)
+    {
+      valve_control_toggle(valve_ctl, i, false);
+      targ_valve->has_timer = false;
+    }
+
+    // Timer still active, decrement
+    else if (time_comparison > 0)
+    {
+      scheduler_time_decrement_bound(&(targ_valve->timer), 1);
+    }
+
+    scptr char *time_strval = scheduler_time_stringify(&(targ_valve->timer));
+    scptr char *ev_args = strfmt_direct("%lu;%s", i, time_strval);
+    web_socket_broadcast_event(WSE_VALVE_TIMER_UPDATED, ev_args);
+  }
+}
+
+void scheduler_tick(scheduler_t *scheduler, valve_control_t *valve_ctl)
+{
+  // Fetch the current day and time
+  scheduler_weekday_t day;
+  scheduler_time_t time;
+  scheduler->dt_provider(&day, &time);
+
+  // Skip duplicate ticks
+  if (
+    scheduler_time_compare(time, scheduler->last_tick_time) == 0  // Same time as last tick
+    && day == scheduler->last_tick_day                            // And same day as last tick
+  )
+    return;
+
+  scheduler_tick_valve_timers(valve_ctl, day, time);
+  scheduler_tick_intervals(scheduler, day, time);
 
   // Update last tick day and time
   scheduler->last_tick_day = day;
@@ -492,36 +446,4 @@ void scheduler_eeprom_load(scheduler_t *scheduler)
   uint8_t day_disableb = EEPROM.read(addr_ind++);
   for (int i = 0; i < 7; i++)
     scheduler->daily_schedules[i].disabled = (day_disableb >> i) & 0x01;
-}
-
-void scheduler_schedule_print(scheduler_t *scheduler)
-{
-  Serial.println("====================< Schedule >====================");
-  // Loop all days
-  for (int i = 0; i < 7; i++)
-  {
-    // Print name of the day
-    Serial.printf("%s:\n", scheduler_weekday_name((scheduler_weekday_t) i));
-
-    // Loop all their slots
-    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
-    {
-      scheduler_interval_t slot = scheduler->daily_schedules[i].intervals[j];
-
-      // Print this slot with all it's properties
-      Serial.printf(
-        "[%d] start=%02u:%02u:%02u, end=%02u:%02u:%02u, id=%03u, active=%s\n",
-        j,
-        slot.start.hours, slot.start.minutes, slot.start.seconds,
-        slot.end.hours, slot.end.minutes, slot.end.seconds,
-        slot.identifier,
-        slot.active ? "yes" : "no"
-      );
-    }
-
-    // Keep an empty line between days
-    if (i != 6)
-      Serial.println();
-  }
-  Serial.println("====================< Schedule >====================");
 }
