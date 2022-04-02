@@ -17,6 +17,7 @@ export class OverlayValveTimerComponent implements OnInit {
   get timerParts(): number[] {
     if (!this.valve)
       return [0, 0, 0];
+
     return parseIntervalTime(this.valve.timer);
   }
 
@@ -38,7 +39,9 @@ export class OverlayValveTimerComponent implements OnInit {
     if (!this.isTimerActive() || !this.valve)
       return;
 
-    this.valvesService.clearValveTimer(this.valve.identifier).subscribe();
+    this.valvesService.clearValveTimer(this.valve.identifier).subscribe(
+      () => this.timeSelection = [0, 0, 0]
+    );
   }
 
   startTimer() {

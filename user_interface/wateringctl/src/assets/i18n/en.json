@@ -22,6 +22,7 @@
     "VALVE_TIMER_ALREADY_ACTIVE": "This valve already has an active timer",
     "VALVE_TIMER_NOT_ACTIVE": "This valve has no active timer",
     "VALVE_TIMER_IN_CONTROL": "There is an active timer in control of this valve",
+    "VALVE_TIMER_ZERO": "The valve timer cannot be zero",
     "default": "An internal error occurred",
     "headline": "Unsuccessful"
   },

@@ -22,6 +22,7 @@
     "VALVE_TIMER_ALREADY_ACTIVE": "Dieses Ventil besitzt bereits einen aktiven Timer",
     "VALVE_TIMER_NOT_ACTIVE": "Dieses Ventil besitzt keinen aktiven Timer",
     "VALVE_TIMER_IN_CONTROL": "Ein aktiver Timer besitzt bereits die Kontrolle über dieses Ventil",
+    "VALVE_TIMER_ZERO": "Der Ventil-Timer darf nicht Null betragen",
     "default": "Es trat ein interner Fehler auf",
     "headline": "Erfolglos"
   },
