@@ -28,7 +28,7 @@ export class VertRangeComponent implements AfterViewInit, OnInit {
 
   values: string[] = [];
   private deltaScalerDesktop = 1 / 20;
-  private deltaScalerMobile = 1 / 15;
+  private deltaScalerMobile = 1 / 30;
 
   private currNum = this.from;
 
