@@ -159,10 +159,29 @@ paths:
         "400":
           description: "Malformed request"
 
-    put:
+  /valves/{id}/timer:
+    delete:
       tags:
       - "valves"
-      summary: "Change a valve's properties by id"
+      summary: "Clear out an active timer"
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: number
+          required: true
+      responses:
+        "204":
+          description: "Timer cleared successfully"
+        "409":
+          description: "Timer not active"
+        "400":
+          description: "Malformed request"
+
+    post:
+      tags:
+      - "valves"
+      summary: "Activate the valves timer"
       parameters:
         - name: id
           in: path
@@ -170,17 +189,12 @@ paths:
             type: number
           required: true
       requestBody:
-        $ref: "#/components/requestBodies/ValveRequest"
+        $ref: "#/components/requestBodies/TimerRequest"
       responses:
-        "200":
-          description: "Update successful"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    $ref: "#/components/schemas/Valve"
+        "204":
+          description: "Timer activated successfully"
+        "409":
+          description: "Timer already active"
         "400":
           description: "Malformed request"
 
@@ -206,6 +220,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ScheduledDay'
+
+    TimerRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Timer'
   schemas:
     Interval:
       type: object
@@ -222,6 +243,11 @@ components:
         active:
           readOnly: true
           type: boolean
+    Timer:
+      type: object
+      properties:
+        duration:
+          type: string
     ScheduledDay:
       type: object
       properties:
@@ -286,3 +312,5 @@ components:
         identifier:
           type: number
           readOnly: true
+        timer:
+          type: string
