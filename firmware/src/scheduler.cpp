@@ -14,7 +14,7 @@ scheduler_t scheduler_make(scheduler_callback_t callback, scheduler_day_and_time
   };
 }
 
-char *scheduler_time_stringify(scheduler_time_t *time)
+char *scheduler_time_stringify(const scheduler_time_t *time)
 {
   return strfmt_direct("%02d:%02d:%02d", time->hours, time->minutes, time->seconds);
 }

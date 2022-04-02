@@ -74,7 +74,7 @@ const scheduler_time_t SCHEDULER_TIME_MIDNIGHT = { 00, 00, 00 };
  * @param time Time to stringify
  * @return char* Stringified time, mman-alloced
  */
-char *scheduler_time_stringify(scheduler_time_t *time);
+char *scheduler_time_stringify(const scheduler_time_t *time);
 
 /**
  * @brief Parse a scheduler time from a given string using the

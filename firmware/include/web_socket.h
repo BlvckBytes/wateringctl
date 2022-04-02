@@ -25,8 +25,7 @@
   FUN(WSE_INTERVAL_END_CHANGE,             12) /* <day><index><end> */        \
   FUN(WSE_INTERVAL_IDENTIFIER_CHANGE,      13) /* <day><index><identifier> */ \
   FUN(WSE_INTERVAL_DELETED,                14) /* <day><index> */             \
-  FUN(WSE_VALVE_TIMER_CLEARED,             15) /* <valve_id> */               \
-  FUN(WSE_VALVE_TIMER_SET,                 16) /* <valve_id><timer> */
+  FUN(WSE_VALVE_TIMER_UPDATED,             15) /* <valve_id><timer> */
 
 ENUM_TYPEDEF_FULL_IMPL(web_socket_event, _EVALS_WEB_SOCKET_EVENT);
 

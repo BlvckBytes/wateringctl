@@ -638,8 +638,9 @@ void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
   targ_valve->timer = timer;
   valve_control_toggle(valvectl, valve_id, true);
 
-  scptr char *ev_args_timer = strfmt_direct("%lu;%s", valve_id, scheduler_time_stringify(&timer));
-  web_socket_broadcast_event(WSE_VALVE_TIMER_SET, ev_args_timer);
+  scptr char *timer_strval = scheduler_time_stringify(&timer);
+  scptr char *ev_args_timer = strfmt_direct("%lu;%s", valve_id, timer_strval);
+  web_socket_broadcast_event(WSE_VALVE_TIMER_UPDATED, ev_args_timer);
 
   scptr char *ev_args_off = strfmt_direct("%lu", valve_id);
   web_socket_broadcast_event(WSE_VALVE_ON, ev_args_off);
@@ -672,8 +673,9 @@ void web_server_route_valves_timer_clear(AsyncWebServerRequest *request)
   targ_valve->timer = SCHEDULER_TIME_MIDNIGHT;
   valve_control_toggle(valvectl, valve_id, false);
 
-  scptr char *ev_args = strfmt_direct("%lu", valve_id);
-  web_socket_broadcast_event(WSE_VALVE_TIMER_CLEARED, ev_args);
+  scptr char *timer_strval = scheduler_time_stringify(&SCHEDULER_TIME_MIDNIGHT);
+  scptr char *ev_args = strfmt_direct("%lu;%s", valve_id, timer_strval);
+  web_socket_broadcast_event(WSE_VALVE_TIMER_UPDATED, ev_args);
   web_socket_broadcast_event(WSE_VALVE_OFF, ev_args);
 
   web_server_empty_ok(request);
