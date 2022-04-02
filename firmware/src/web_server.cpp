@@ -611,9 +611,9 @@ void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
   // Get timer value from json
   jsonh_opres_t jopr;
   char *timer_str = NULL;
-  if ((jopr = jsonh_get_str(body, "timer", &timer_str)) != JOPRES_SUCCESS)
+  if ((jopr = jsonh_get_str(body, "duration", &timer_str)) != JOPRES_SUCCESS)
   {
-    scptr char *err = jsonh_getter_errstr("timer", jopr);
+    scptr char *err = jsonh_getter_errstr("duration", jopr);
     web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: %s", err);
     return;
   }
@@ -630,7 +630,7 @@ void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
   // Ensure the timer is not empty
   if (scheduler_time_compare(timer, SCHEDULER_TIME_MIDNIGHT) == 0)
   {
-    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: \"timer\" cannot be zero");
+    web_server_error_resp(request, 400, BODY_MALFORMED, "Body data malformed: \"duration\" cannot be zero");
     return;
   }
 
