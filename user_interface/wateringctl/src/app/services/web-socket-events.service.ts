@@ -60,8 +60,6 @@ export class WebSocketEventsService {
   }
 
   private disconnect() {
-    console.log('disconnect()');
-
     // Clear out callback bindings
     if (this._ws)
     {
@@ -77,8 +75,6 @@ export class WebSocketEventsService {
   }
 
   private connect() {
-    console.log('connect()');
-
     // Stop polling while trying to connect
     if (this._connectionPoller)
       clearTimeout(this._connectionPoller);

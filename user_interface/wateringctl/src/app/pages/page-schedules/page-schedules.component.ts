@@ -144,6 +144,13 @@ export class PageSchedulesComponent implements IStatePersistable, OnDestroy {
 
     if (wse.type === EWebSocketEventType.WSE_INTERVAL_DELETED)
       this.findInterval(wse, i => setIntervalEmpty(i));
+
+    if (wse.type === EWebSocketEventType.WSE_VALVE_RENAME)
+    {
+      const valve_id = Number.parseInt(wse.args[0]);
+      const valve = this.valveService.allValves.value?.find(it => it.identifier === valve_id);
+      if (valve) valve.alias = wse.args[1];
+    }
   }
 
   ngOnDestroy(): void {
