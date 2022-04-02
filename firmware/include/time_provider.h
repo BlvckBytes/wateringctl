@@ -6,8 +6,8 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-#define TIME_PROVIDER_POOL          "pool.ntp.org"
-#define TIME_PROVIDER_UTC_OFFS_S    3600
+#define TIME_PROVIDER_POOL          "at.pool.ntp.org"
+#define TIME_PROVIDER_UTC_OFFS_S    (60 * 60 * 2)
 
 /**
  * @brief Initialize the time provider's internal NTP client

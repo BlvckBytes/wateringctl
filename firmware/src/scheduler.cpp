@@ -239,10 +239,10 @@ bool scheduler_change_interval(scheduler_t *scheduler, scheduler_weekday_t day, 
 INLINED static void scheduler_tick_intervals(scheduler_t *scheduler, scheduler_weekday_t day, scheduler_time_t time)
 {
   // Loop all intervals of the day
-  scheduler_day_t curr_day = scheduler->daily_schedules[day];
+  scheduler_day_t *curr_day = &(scheduler->daily_schedules[day]);
   for (size_t i = 0; i < SCHEDULER_MAX_INTERVALS_PER_DAY; i++)
   {
-    scheduler_interval_t *interval = &(curr_day.intervals[i]);
+    scheduler_interval_t *interval = &(curr_day->intervals[i]);
 
     // Skip empty slots
     if (scheduler_interval_empty(*interval)) continue;
@@ -253,7 +253,7 @@ INLINED static void scheduler_tick_intervals(scheduler_t *scheduler, scheduler_w
       && scheduler_time_compare(time, interval->end) == -1    // And time is before end
       && !interval->active                                    // And interval is not already active
       && !interval->disabled                                  // And interval is not disabled
-      && !curr_day.disabled                                   // And current day is not disabled
+      && !curr_day->disabled                                   // And current day is not disabled
     )
     {
       interval->active = true;
