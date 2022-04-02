@@ -45,7 +45,7 @@
         ></app-button>
         <app-button
           icon="stopwatch.svg"
-          color="beige"
+          [color]="valve.timer == '00:00:00' ? 'beige' : 'success'"
           (click)="editTimer(valve)"
         ></app-button>
       </div>

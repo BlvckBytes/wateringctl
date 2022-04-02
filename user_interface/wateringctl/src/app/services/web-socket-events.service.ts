@@ -31,8 +31,6 @@ export class WebSocketEventsService {
 
     this._path = `${url}/wse`;
     this.connect();
-
-    this._events.subscribe(v => console.log(v));
   }
 
   private async parseMessage(ev: MessageEvent) {

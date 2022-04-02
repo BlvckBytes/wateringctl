@@ -3,6 +3,7 @@ export interface IValve {
   disabled: boolean;
   state: boolean;
   identifier: number;
+  timer: string;
 }
 
 export const compareValveIds = (a: IValve, b: IValve): number => {

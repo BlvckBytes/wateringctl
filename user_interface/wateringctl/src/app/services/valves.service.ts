@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { IInterval } from '../models/interval.interface';
+import { ITimerRequest } from '../models/request/timer-request.interface';
 import { IValveRequest } from '../models/request/valve-request.interface';
 import { IValve } from '../models/valve.interface';
 import { HttpService } from './http.service';
@@ -48,5 +49,18 @@ export class ValvesService {
     return this.allValves.value
       ?.find(it => it.identifier === interval?.identifier)
       ?.alias || '?';
+  }
+
+  setValveTimer(
+    id: number,
+    timer: ITimerRequest
+  ): Observable<void> {
+    return this.httpService.post(`/valves/${id}`, timer);
+  }
+
+  clearValveTimer(
+    id: number
+  ): Observable<void> {
+    return this.httpService.delete(`/valves/${id}`);
   }
 }

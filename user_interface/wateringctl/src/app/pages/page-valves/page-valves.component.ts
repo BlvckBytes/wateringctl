@@ -102,6 +102,9 @@ export class PageValvesComponent implements IStatePersistable, OnDestroy {
 
     if (wse.type === EWebSocketEventType.WSE_VALVE_RENAME)
       this.findValve(wse, (valve, args) => valve.alias = args[0]);
+
+    if (wse.type === EWebSocketEventType.WSE_VALVE_TIMER_UPDATED)
+      this.findValve(wse, (valve, args) => valve.timer = args[0]);
   }
 
   private loadValves() {

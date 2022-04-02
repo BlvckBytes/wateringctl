@@ -19,6 +19,8 @@
     "VALVE_ALREADY_ACTIVE": "Dieses Ventil ist bereits aktiv",
     "VALVE_NOT_ACTIVE": "Dieses Ventil ist nicht aktiv",
     "NO_INT_SLOTS": "Es gibt keine freien Intervalplätze mehr",
+    "VALVE_TIMER_ALREADY_ACTIVE": "Dieses Ventil besitzt bereits einen aktiven Timer",
+    "VALVE_TIMER_NOT_ACTIVE": "Dieses Ventil besitzt keinen aktiven Timer",
     "default": "Es trat ein interner Fehler auf",
     "headline": "Erfolglos"
   },

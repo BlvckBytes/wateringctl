@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { parseIntervalTime } from 'src/app/models/interval.interface';
 import { IValve } from 'src/app/models/valve.interface';
 
 @Component({
@@ -9,6 +10,12 @@ import { IValve } from 'src/app/models/valve.interface';
 export class OverlayValveTimerComponent implements OnInit {
 
   @Input() valve?: IValve = undefined;
+
+  get timerParts(): number[] {
+    if (!this.valve)
+      return [0, 0, 0];
+    return parseIntervalTime(this.valve.timer);
+  }
 
   constructor() { }
 

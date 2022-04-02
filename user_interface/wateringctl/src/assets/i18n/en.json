@@ -19,6 +19,8 @@
     "VALVE_ALREADY_ACTIVE": "This valve is already active",
     "VALVE_NOT_ACTIVE": "This valve is not active",
     "NO_INT_SLOTS": "There are no more vacant interval slots",
+    "VALVE_TIMER_ALREADY_ACTIVE": "This valve already has an active timer",
+    "VALVE_TIMER_NOT_ACTIVE": "This valve has no active timer",
     "default": "An internal error occurred",
     "headline": "Unsuccessful"
   },
