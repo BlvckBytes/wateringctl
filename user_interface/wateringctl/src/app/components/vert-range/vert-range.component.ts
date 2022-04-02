@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, OnInit, Output, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-vert-range',
@@ -12,6 +12,10 @@ export class VertRangeComponent implements AfterViewInit, OnInit {
   @Input() from: number = 0;
   @Input() to: number = 59;
   @Input() padTo: number = 2;
+
+  @Input()
+  @HostBinding('class.--disabled')
+  disabled: boolean = false;
 
   @Output() selected = new EventEmitter<number>();
 
@@ -52,6 +56,9 @@ export class VertRangeComponent implements AfterViewInit, OnInit {
   }
 
   private applyDeltaY(delta: number) {
+    if (this.disabled)
+      return;
+
     this.currNum = (this.currNum + delta) % (this.to + 1);
     if (this.currNum < 0)
       this.currNum = this.to;

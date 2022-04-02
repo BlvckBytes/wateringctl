@@ -21,6 +21,7 @@
     "NO_INT_SLOTS": "There are no more vacant interval slots",
     "VALVE_TIMER_ALREADY_ACTIVE": "This valve already has an active timer",
     "VALVE_TIMER_NOT_ACTIVE": "This valve has no active timer",
+    "VALVE_TIMER_IN_CONTROL": "There is an active timer in control of this valve",
     "default": "An internal error occurred",
     "headline": "Unsuccessful"
   },

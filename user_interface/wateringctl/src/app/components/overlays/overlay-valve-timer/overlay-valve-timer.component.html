@@ -14,7 +14,9 @@
     <app-vert-range
       [from]="0"
       [to]="23"
+      [disabled]="isTimerActive()"
       [currentValue]="timerParts[0]"
+      (selected)="timeSelection[0] = $event"
     ></app-vert-range>
 
     <p>:</p>
@@ -22,7 +24,9 @@
     <app-vert-range
       [from]="0"
       [to]="59"
+      [disabled]="isTimerActive()"
       [currentValue]="timerParts[1]"
+      (selected)="timeSelection[1] = $event"
     ></app-vert-range>
 
     <p>:</p>
@@ -30,17 +34,21 @@
     <app-vert-range
       [from]="0"
       [to]="59"
+      [disabled]="isTimerActive()"
       [currentValue]="timerParts[2]"
+      (selected)="timeSelection[2] = $event"
     ></app-vert-range>
   </div>
 
   <div class="modal__buttons">
     <app-button
-      color="beige"
+      (click)="startTimer()"
+      [color]="isTimerActive() ? 'beige' : 'success'"
       text="{{ 'valves.valves.start' | translate }}"
     ></app-button>
     <app-button
-      color="beige"
+      (click)="stopTimer()"
+      [color]="isTimerActive() ? 'warning' : 'beige'"
       text="{{ 'valves.valves.stop' | translate }}"
     ></app-button>
   </div>

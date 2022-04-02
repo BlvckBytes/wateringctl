@@ -55,12 +55,12 @@ export class ValvesService {
     id: number,
     timer: ITimerRequest
   ): Observable<void> {
-    return this.httpService.post(`/valves/${id}`, timer);
+    return this.httpService.post(`/valves/${id}/timer`, timer);
   }
 
   clearValveTimer(
     id: number
   ): Observable<void> {
-    return this.httpService.delete(`/valves/${id}`);
+    return this.httpService.delete(`/valves/${id}/timer`);
   }
 }
