@@ -300,7 +300,16 @@ void web_server_route_scheduler_day_edit(AsyncWebServerRequest *request)
 
   // Update the day and save it persistently
   scheduler_day_t *targ_day = &(sched->daily_schedules[day]);
-  targ_day->disabled = sched_day.disabled;       // Patch disabled state
+
+  // Check for deltas and disabled state
+  if (targ_day->disabled != sched_day.disabled)
+  {
+    targ_day->disabled = sched_day.disabled;
+
+    scptr char *ev_args = strfmt_direct("%s", scheduler_weekday_name(day));
+    web_socket_broadcast_event(sched_day.disabled ? WSE_DAY_DISABLE_ON : WSE_DAY_DISABLE_OFF, ev_args);
+  }
+
   scheduler_eeprom_save(sched);
 
   // Respond with the updated day
@@ -355,10 +364,42 @@ void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *request)
 
   // Update the entry and save it persistently
   scheduler_interval_t *targ_interval = &(sched->daily_schedules[day].intervals[index]);
-  targ_interval->disabled = interval.disabled;      // Patch disabled
-  targ_interval->end = interval.end;                // Patch end
-  targ_interval->start = interval.start;            // Patch start
-  targ_interval->identifier = interval.identifier;  // Patch identifier
+
+  // Check for deltas and patch disabled
+  if (targ_interval->disabled != interval.disabled)
+  {
+    targ_interval->disabled = interval.disabled;
+
+    scptr char *ev_args = strfmt_direct("%s;%ld", scheduler_weekday_name(day), index);
+    web_socket_broadcast_event(interval.disabled ? WSE_INTERVAL_DISABLE_ON : WSE_INTERVAL_DISABLE_OFF, ev_args);
+  }
+
+  // Check for deltas and patch end
+  if (scheduler_time_compare(targ_interval->end, interval.end) != 0)
+  {
+    targ_interval->end = interval.end;
+
+    scptr char *ev_args = strfmt_direct("%s;%ld;%s", scheduler_weekday_name(day), index, scheduler_time_stringify(&(interval.end)));
+    web_socket_broadcast_event(WSE_INTERVAL_END_CHANGE, ev_args);
+  }
+
+  // Check for deltas and patch start
+  if (scheduler_time_compare(targ_interval->start, interval.start) != 0)
+  {
+    targ_interval->start = interval.start;
+
+    scptr char *ev_args = strfmt_direct("%s;%ld;%s", scheduler_weekday_name(day), index, scheduler_time_stringify(&(interval.start)));
+    web_socket_broadcast_event(WSE_INTERVAL_START_CHANGE, ev_args);
+  }
+
+  // Check for deltas and patch identifier
+  if (targ_interval->identifier != interval.identifier)
+  {
+    targ_interval->identifier = interval.identifier;
+    scptr char *ev_args = strfmt_direct("%s;%ld;%u", scheduler_weekday_name(day), index, interval.identifier);
+    web_socket_broadcast_event(WSE_INTERVAL_IDENTIFIER_CHANGE, ev_args);
+  }
+
   scheduler_eeprom_save(sched);
 
   // Respond with the updated entry
@@ -392,6 +433,10 @@ void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *request)
   // Clear slot and save persistently
   *targ = SCHEDULER_INTERVAL_EMPTY;
   scheduler_eeprom_save(sched);
+
+  scptr char *ev_args = strfmt_direct("%s;%ld", scheduler_weekday_name(day), index);
+  web_socket_broadcast_event(WSE_INTERVAL_DELETED, ev_args);
+
   web_server_empty_ok(request);
 }
 
@@ -464,8 +509,25 @@ void web_server_route_valves_edit(AsyncWebServerRequest *request)
 
   // Get the target valve and patch it, then save
   valve_t *targ_valve = &(valvectl->valves[valve_id]);
-  strncpy(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);  // Patch name
-  targ_valve->disabled = valve.disabled;                                // Patch disabled state
+
+  // Check for deltas and patch name
+  if (strncmp(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN) != 0)
+  {
+    strncpy(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);
+
+    scptr char *ev_arg = strfmt_direct("%d;%s", valve_id, valve.alias);
+    web_socket_broadcast_event(WSE_VALVE_RENAME, ev_arg);
+  }
+
+  // Check for deltas and patch disabled state
+  if (targ_valve->disabled != valve.disabled)
+  {
+    targ_valve->disabled = valve.disabled;
+
+    scptr char *ev_arg = strfmt_direct("%d", valve_id);
+    web_socket_broadcast_event(valve.disabled ? WSE_VALVE_DISABLE_ON : WSE_VALVE_DISABLE_OFF, ev_arg);
+  }
+
   valve_control_eeprom_save(valvectl);
 
   // Respond with the updated valve

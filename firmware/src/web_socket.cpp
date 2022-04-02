@@ -13,18 +13,16 @@ static void onEvent(
   size_t len
 ) {
   switch (type) {
-    // Client connected, debug
-    case WS_EVT_CONNECT:
-      dbginf("WebSocket client #%u connected from %s", client->id(), client->remoteIP().toString().c_str());
-      break;
-
-    // Client disconnected, debug
-    case WS_EVT_DISCONNECT:
-      dbginf("WebSocket client #%u disconnected", client->id());
-      break;
-
     // No data will ever be received, this is transmission-only
+    // Thus, just echo back what has been received - used for connection probing
     case WS_EVT_DATA:
+    {
+      client->binary(data, len);
+      break;
+    }
+
+    case WS_EVT_CONNECT:
+    case WS_EVT_DISCONNECT:
     case WS_EVT_PONG:
     case WS_EVT_ERROR:
       break;
