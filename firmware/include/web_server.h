@@ -34,7 +34,8 @@
   FUN(VALVE_NOT_ACTIVE,                11)       \
   FUN(VALVE_ALIAS_DUP,                 12)       \
   FUN(VALVE_TIMER_ALREADY_ACTIVE,      13)       \
-  FUN(VALVE_TIMER_NOT_ACTIVE,          14)
+  FUN(VALVE_TIMER_NOT_ACTIVE,          14)       \
+  FUN(VALVE_TIMER_IN_CONTROL,          15)
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_error, _EVALS_WEB_SERVER_ERROR);
 

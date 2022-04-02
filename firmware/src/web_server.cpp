@@ -571,10 +571,19 @@ void web_server_route_valves_deactivate(AsyncWebServerRequest *request)
   if (!valves_parse_id(request, &valve_id))
     return;
 
+  valve_t *targ_valve = &(valvectl->valves[valve_id]);
+
   // Check the target valve
-  if(!valvectl->valves[valve_id].state)
+  if (!targ_valve->state)
   {
     web_server_error_resp(request, 409, VALVE_NOT_ACTIVE, "This valve is not active");
+    return;
+  }
+
+  // There's a timer active, forbid action
+  if (scheduler_time_compare(targ_valve->timer, SCHEDULER_TIME_MIDNIGHT) != 0)
+  {
+    web_server_error_resp(request, 409, VALVE_TIMER_IN_CONTROL, "There is an active timer in control of this valve");
     return;
   }
 
