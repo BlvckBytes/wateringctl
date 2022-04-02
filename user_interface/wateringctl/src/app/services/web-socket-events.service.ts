@@ -16,7 +16,8 @@ export class WebSocketEventsService {
   private _connTestStr = '<conn_test>';
   private _connTestTimeout?: number | undefined;
   private _connectionPoller?: number | undefined;
-  private _connTimeout = 1500;
+  private _heartbeatDelay = 1500;
+  private _heartbeatTimeout = 1500;
 
   get events() {
     return this._events.asObservable();
@@ -44,7 +45,7 @@ export class WebSocketEventsService {
       clearInterval(this._connTestTimeout);
 
       // Re-test again
-      this._connectionPoller = setTimeout(<TimerHandler>(() => this.ensureConnection()), this._connTimeout);
+      this._connectionPoller = setTimeout(<TimerHandler>(() => this.ensureConnection()), this._heartbeatDelay);
       return;
     }
 
@@ -58,37 +59,48 @@ export class WebSocketEventsService {
     });
   }
 
+  private disconnect() {
+    console.log('disconnect()');
+
+    // Clear out callback bindings
+    if (this._ws)
+    {
+      this._ws.onclose = null;
+      this._ws.onopen = null;
+      this._ws.onmessage = null;
+      this._ws.onerror = null;
+    }
+
+    // Clear socket handle
+    this._ws?.close();
+    this._ws = undefined;
+  }
+
   private connect() {
+    console.log('connect()');
+
     // Stop polling while trying to connect
     if (this._connectionPoller)
       clearTimeout(this._connectionPoller);
-
-    // Close previous connection, if applicable
-    if (this._ws)
-      this._ws.close();
-
-    // Connection timeout
-    const retry = setTimeout(() => this.connect(), this._connTimeout);
 
     // Create a new websocket that directly feeds into the local subject
     this._ws = new WebSocket(this._path);
     this._ws.onmessage = (e: MessageEvent) => this.parseMessage(e);
 
-    this._ws.onopen = () => {
-      clearTimeout(retry);
-      this.ensureConnection();
-    };
+    // Connection closed
+    this._ws.onclose = () => {
+      this.disconnect();
+      this.connect();
+    }
+
+    this._ws.onopen = () => this.ensureConnection();
   }
 
   private ensureConnection() {
-    // Reconnect if there is no active connection
-    if (!this._ws || this._ws.readyState !== WebSocket.OPEN)
-    {
+    this._ws?.send(this._connTestStr);
+    this._connTestTimeout = setTimeout(<TimerHandler>(() => {
+      this.disconnect();
       this.connect();
-      return;
-    }
-
-    this._ws.send(this._connTestStr);
-    this._connTestTimeout = setTimeout(<TimerHandler>(() => this.connect()), this._connTimeout);
+    }), this._heartbeatTimeout);
   }
 }
