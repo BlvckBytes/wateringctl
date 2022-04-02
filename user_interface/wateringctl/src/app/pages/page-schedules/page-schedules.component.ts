@@ -1,24 +1,30 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, map, Observable, Observer } from 'rxjs';
 import { OverlayIntervalTargetEditComponent } from 'src/app/components/overlays/overlay-interval-target-edit/overlay-interval-target-edit.component';
 import { OverlayIntervalTimestampsEditComponent } from 'src/app/components/overlays/overlay-interval-timestamps-edit/overlay-interval-timestamps-edit.component';
-import { compareIntervalStarts, IInterval, isIntervalEmpty } from 'src/app/models/interval.interface';
+import { compareIntervalStarts, IInterval, isIntervalEmpty, setIntervalEmpty } from 'src/app/models/interval.interface';
 import { IScheduledDay } from 'src/app/models/scheduled-day.interface';
 import { ESchedulerWeekday } from 'src/app/models/scheduler-weekday.enum';
 import { IStatePersistable } from 'src/app/models/state-persistable.interface';
+import { EWebSocketEventType } from 'src/app/models/web-socket-event-type.enum';
+import { IWebSocketEvent } from 'src/app/models/web-socket-event.interface';
 import { ComponentStateService } from 'src/app/services/component-state.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { SchedulerService } from 'src/app/services/scheduler.service';
 import { ValvesService } from 'src/app/services/valves.service';
+import { WebSocketEventsService } from 'src/app/services/web-socket-events.service';
+import { SubSink } from 'subsink';
 
 @Component({
   selector: 'app-page-schedules',
   templateUrl: './page-schedules.component.html',
   styleUrls: ['./page-schedules.component.scss']
 })
-export class PageSchedulesComponent implements IStatePersistable {
+export class PageSchedulesComponent implements IStatePersistable, OnDestroy {
+
+  private _subs = new SubSink();
 
   // #region State persisting
 
@@ -82,9 +88,66 @@ export class PageSchedulesComponent implements IStatePersistable {
     private stateService: ComponentStateService,
     private overlayService: OverlaysService,
     private notificationsService: NotificationsService,
-    private tranService: TranslateService
+    private tranService: TranslateService,
+    eventService: WebSocketEventsService,
   ) {
     this.stateService.load(this);
+    this._subs.sink = eventService.events.subscribe(e => this.handleWSE(e));
+  }
+
+  private findInterval(wse: IWebSocketEvent, action: (interval: IInterval, args: string[]) => void) {
+    const day = wse.args[0] as ESchedulerWeekday;
+    const sched = this._currentSchedule.value;
+
+    // Do nothing for non-selected days
+    if (day !== this._currentDay || !sched)
+      return;
+
+    // Index not yet known, out of sync, refresh
+    const index = Number.parseInt(wse.args[1]);
+    const targ = sched.intervals.find(it => it.index === index);
+
+    if (!targ) {
+      this.loadSchedule(false);
+      return;
+    }
+
+    action(targ, wse.args.slice(2));
+  }
+
+  private handleWSE(wse: IWebSocketEvent) {
+    if (
+      wse.type === EWebSocketEventType.WSE_DAY_DISABLE_ON ||
+      wse.type === EWebSocketEventType.WSE_DAY_DISABLE_OFF
+    ) {
+      const day = wse.args[0] as ESchedulerWeekday;
+      if (day !== this._currentDay || !this._currentSchedule.value)
+        return;
+
+      this._currentSchedule.value.disabled = wse.type === EWebSocketEventType.WSE_DAY_DISABLE_ON;
+    }
+
+    if (
+      wse.type === EWebSocketEventType.WSE_INTERVAL_DISABLE_ON ||
+      wse.type === EWebSocketEventType.WSE_INTERVAL_DISABLE_OFF
+    )
+      this.findInterval(wse, i => i.disabled = wse.type === EWebSocketEventType.WSE_INTERVAL_DISABLE_ON);
+
+    if (wse.type === EWebSocketEventType.WSE_INTERVAL_START_CHANGE)
+      this.findInterval(wse, (i, a) => i.start = a[0]);
+
+    if (wse.type === EWebSocketEventType.WSE_INTERVAL_END_CHANGE)
+      this.findInterval(wse, (i, a) => i.end = a[0]);
+
+    if (wse.type === EWebSocketEventType.WSE_INTERVAL_IDENTIFIER_CHANGE)
+      this.findInterval(wse, (i, a) => i.identifier = Number.parseInt(a[0]));
+
+    if (wse.type === EWebSocketEventType.WSE_INTERVAL_DELETED)
+      this.findInterval(wse, i => setIntervalEmpty(i));
+  }
+
+  ngOnDestroy(): void {
+    this._subs.unsubscribe();
   }
 
   private loadSchedule(clear: boolean = true) {

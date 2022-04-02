@@ -81,15 +81,27 @@ export class PageValvesComponent implements IStatePersistable, OnDestroy {
     this._subs.unsubscribe();
   }
 
+  private findValve(wse: IWebSocketEvent, action: (valve: IValve, args: string[]) => void) {
+    const id = Number.parseInt(wse.args[0]);
+    const targ = this.valvesService.allValves.value?.find(it => it.identifier === id);
+    if (targ) action(targ, wse.args.slice(1));
+  }
+
   private handleWSE(wse: IWebSocketEvent) {
     if (
       wse.type === EWebSocketEventType.WSE_VALVE_ON ||
       wse.type === EWebSocketEventType.WSE_VALVE_OFF
-    ) {
-      const id = Number.parseInt(wse.arg);
-      const targ = this.valvesService.allValves.value?.find(it => it.identifier === id);
-      if (targ) targ.state = wse.type === EWebSocketEventType.WSE_VALVE_ON;
-    }
+    )
+      this.findValve(wse, valve => valve.state = wse.type === EWebSocketEventType.WSE_VALVE_ON);
+
+    if (
+      wse.type === EWebSocketEventType.WSE_VALVE_DISABLE_ON ||
+      wse.type === EWebSocketEventType.WSE_VALVE_DISABLE_OFF
+    )
+      this.findValve(wse, valve => valve.disabled = wse.type === EWebSocketEventType.WSE_VALVE_DISABLE_ON);
+
+    if (wse.type === EWebSocketEventType.WSE_VALVE_RENAME)
+      this.findValve(wse, (valve, args) => valve.alias = args[0]);
   }
 
   private loadValves() {
