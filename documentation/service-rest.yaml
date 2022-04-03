@@ -198,6 +198,93 @@ paths:
         "400":
           description: "Malformed request"
 
+  /fs:
+    get:
+      tags:
+      - "fs"
+      summary: "List a directory or get a file's contents"
+      parameters:
+        - in: query
+          name: path
+          schema:
+            type: string
+          description: "The path to list all files from"
+          required: true
+        - in: query
+          name: isDirectory
+          schema:
+            type: boolean
+          description: "Whether or not a directory is expected (listing files vs. printing content)"
+          required: false
+      responses:
+        "200":
+          description: "Directory listed successful"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/File"
+        "404":
+          description: "Requested directory at path not existing"
+
+    post:
+      tags:
+      - "fs"
+      summary: "Upload a new file or make a new directory"
+      parameters:
+        - in: query
+          name: path
+          schema:
+            type: string
+          description: "The path to create at"
+          required: true
+        - in: query
+          name: isDirectory
+          schema:
+            type: boolean
+          description: "Whether or not to create a directory at the path"
+          required: false
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: "File or directory created"
+        "204":
+          description: "Directory already existed"
+        "404":
+          description: "Requested path does not exist"
+
+    delete:
+      tags:
+      - "fs"
+      summary: "Delete a file or a directory"
+      parameters:
+        - in: query
+          name: path
+          schema:
+            type: string
+          description: "The path to list all files from"
+          required: true
+        - in: query
+          name: recursively
+          schema:
+            type: boolean
+          description: "Whether or not to delete recursively (only applies for directories)"
+          required: false
+      responses:
+        "204":
+          description: "Target deleted successfully"
+        "404":
+          description: "Requested path does not exist"
+
 components:
   requestBodies:
     IntervalRequest:
@@ -314,3 +401,12 @@ components:
           readOnly: true
         timer:
           type: string
+    File:
+      type: object
+      properties:
+        isDirectory:
+          type: boolean
+        name:
+          type: string
+        size:
+          type: number
