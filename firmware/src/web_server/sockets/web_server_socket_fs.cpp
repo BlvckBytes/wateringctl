@@ -80,6 +80,42 @@ INLINED static bool web_server_socket_fs_preproc_existing_file_request(
 ============================================================================
 */
 
+typedef struct file_fetch_req
+{
+  AsyncWebSocketClient *client;
+  char *path;
+} file_fetch_req_t;
+
+static void web_server_socket_fs_proc_fetch_task(void *arg)
+{
+  scptr file_fetch_req_t *req = (file_fetch_req_t *) arg;
+  File target = SD.open(req->path);
+  mman_dealloc(req->path);
+
+  // transmit 4 byte file size first
+  size_t f_sz = target.size();
+  req->client->binary((uint8_t *) &f_sz, 4);
+
+  // Now transmit file in chunks
+  uint8_t read_buf[4096];
+
+  // Delay between read/send iterations
+  const TickType_t xDelay = 2 / portTICK_PERIOD_MS;
+
+  size_t read;
+  while ((read = target.read(read_buf, sizeof(read_buf))) > 0)
+  {
+    // Wait for queue to empty out before an overflow occurs
+    while (req->client->queueIsFull());
+    req->client->binary(read_buf, read);
+    vTaskDelay(xDelay);
+  }
+
+  // Done transmitting
+  target.close();
+  vTaskDelete(NULL);
+}
+
 static void web_server_socket_fs_proc_fetch(
   AsyncWebSocketClient *client,
   char *path,
@@ -113,9 +149,23 @@ static void web_server_socket_fs_proc_fetch(
     return;
   }
 
-  // Requested a file, send file contents
-  client->binary(target.readString());
-  target.close();
+  // Requested a file, send file contents in another task
+
+  // Create task arg struct
+  scptr file_fetch_req_t *req = (file_fetch_req_t *) mman_alloc(sizeof(file_fetch_req_t), 1, NULL);
+  req->client = client;
+  req->path = strclone(path);
+
+  // Invoke the task on core 1 (since 0 handles the kernel-protocol)
+  xTaskCreatePinnedToCore(
+    web_server_socket_fs_proc_fetch_task,         // Task entry point
+    "rec_fdel",                                   // Task name
+    16384,                                        // Stack size (should be sufficient, I hope)
+    mman_ref(req),                                // Parameter to the entry point
+    0,                                            // Priority, keep it low
+    NULL,                                         // Task handle output, don't care
+    1                                             // On core 1 (main loop)
+  );
 }
 
 /*
@@ -239,13 +289,74 @@ static void web_server_socket_fs_proc_delete(
 ============================================================================
 */
 
-static void web_server_socket_fs_proc_write(
+/**
+ * @brief Process a WRITE command
+ * 
+ * @return NULL if command is done, a file to be used to write remaining frames and segments otherwise
+ */
+static File web_server_socket_fs_proc_write(
   AsyncWebSocketClient *client,
   char *path,
-  bool is_directory
+  bool is_directory,
+  uint8_t *file_data,
+  size_t file_data_len,
+  bool is_full_data
 )
 {
-  // TODO: Implement
+  // Already exists
+  File target = SD.open(path);
+  if (target)
+  {
+    web_server_socket_fs_respond_code(
+      client,
+      target.isDirectory() ? WSFS_DIR_EXISTS : WSFS_FILE_EXISTS
+    );
+    return File(NULL);
+  }
+
+  // Create directory if not exists
+  if (is_directory)
+  {
+    // Could not create directory
+    if (!SD.mkdir(path))
+    {
+      web_server_socket_fs_respond_code(client, WSFS_COULD_NOT_CREATE_DIR);
+      return File(NULL);
+    }
+
+    // Created directory
+    web_server_socket_fs_respond_code(client, WSFS_DIR_CREATED);
+    return File(NULL);
+  }
+
+  // No file parameter
+  if (file_data_len == 0)
+  {
+    web_server_socket_fs_respond_code(client, WSFS_PARAM_MISSING);
+    return File(NULL);
+  }
+
+  // Create new file
+  target = SD.open(path, "w");
+  if (!target)
+  {
+    web_server_socket_fs_respond_code(client, WSFS_COULD_NOT_CREATE_FILE);
+    return File(NULL);
+  }
+
+  // Write as much into the file as is available now
+  target.write(file_data, file_data_len);
+
+  // That's it
+  if (is_full_data)
+  {
+    target.close();
+    web_server_socket_fs_respond_code(client, WSFS_FILE_CREATED);
+    return File(NULL);
+  }
+
+  // Return file for further write calls
+  return target;
 }
 
 /*
@@ -261,8 +372,14 @@ static void web_server_socket_fs_handle_data(
   size_t len
 )
 {
+  // "Further writes"-file, used when a message is partitioned
+  static File w_f = File(NULL);
+
   // Never accept non-binary data
-  if (finf->opcode != WS_BINARY)
+  if (!(
+    finf->opcode == WS_BINARY ||
+    finf->opcode == WS_CONTINUATION
+  ))
   {
     web_server_socket_fs_respond_code(client, WSFS_NON_BINARY_DATA);
     return;
@@ -275,8 +392,8 @@ static void web_server_socket_fs_handle_data(
     return;
   }
 
-  // First packet, this contains all parameters that decide processing
-  if (finf->index == 0)
+  // First pice of data, this contains all parameters that decide further processing
+  if (finf->index == 0 && finf->opcode != WS_CONTINUATION)
   {
     // Parse ASCII parameters from binary data
     size_t data_offs = 0;
@@ -300,7 +417,6 @@ static void web_server_socket_fs_handle_data(
       return;
     }
 
-
     if (strncasecmp("delete", cmd, strlen("delete")) == 0)
     {
       web_server_socket_fs_proc_delete(client, path, is_directory_bool);
@@ -309,11 +425,36 @@ static void web_server_socket_fs_handle_data(
 
     if (strncasecmp("write", cmd, strlen("write")) == 0)
     {
-      web_server_socket_fs_proc_write(client, path, is_directory_bool);
+      w_f = web_server_socket_fs_proc_write(
+        client,
+        path,
+        is_directory_bool,
+        &(data[data_offs]),
+        data_offs >= len ? 0 : len - data_offs,
+        finf->index + len == finf->len
+      );
       return;
     }
   
     web_server_socket_fs_respond_code(client, WSFS_COMMAND_UNKNOWN);
+    return;
+  }
+
+  // No active write, cannot do anything else
+  if (!w_f)
+    return;
+
+  // Write full data
+  w_f.write(data, len);
+
+  // Check if done
+  if (
+    finf->index + len == finf->len    // End of frame
+    && finf->final                    // Last segment
+  )
+  {
+    w_f.close();
+    web_server_socket_fs_respond_code(client, WSFS_FILE_CREATED);
   }
 }
 
@@ -332,21 +473,6 @@ static void onEvent(
   size_t len
 ) {
   switch (type) {
-
-    /*
-      Command protocol:
-
-      req: FETCH;<path>;<is_directory>
-      res: json file listing | file content
-
-      req: DELETE;<path>;<is_directory>
-      res: ERROR_NOT_FOUND | SUCCESS_DELETED
-
-      req: WRITE;<path>;<is_directory>;[file_bytes]
-      res: ERROR_NOT_FOUND | SUCCESS_WRITTEN
-
-      NOTE: writing should maybe be cut-through to also make huge files handleable
-    */
     case WS_EVT_DATA:
     {
       web_server_socket_fs_handle_data(client, (AwsFrameInfo*) arg, data, len);

@@ -20,7 +20,13 @@
   FUN(WSFS_IS_A_DIR,                6)            \
   FUN(WSFS_COULD_NOT_DELETE_FILE,   7)            \
   FUN(WSFS_COULD_NOT_DELETE_DIR,    8)            \
-  FUN(WSFS_DELETED,                 9)            
+  FUN(WSFS_DELETED,                 9)            \
+  FUN(WSFS_DIR_EXISTS,             10)            \
+  FUN(WSFS_FILE_EXISTS,            11)            \
+  FUN(WSFS_DIR_CREATED,            12)            \
+  FUN(WSFS_FILE_CREATED,           13)            \
+  FUN(WSFS_COULD_NOT_CREATE_FILE,  14)            \
+  FUN(WSFS_COULD_NOT_CREATE_DIR,   15)            
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 
