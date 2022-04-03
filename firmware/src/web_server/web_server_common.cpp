@@ -65,27 +65,19 @@ void web_server_error_resp(AsyncWebServerRequest *request, int status, web_serve
 
 void web_server_str_body_handler(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
-  uint8_t **body = (uint8_t **) request->_tempObject;
+  uint8_t *body = (uint8_t *) request->_tempObject;
 
   // Create buffer on the first segment of the message
   if(index == 0)
   {
     // Allocate using malloc since the API will automatically call free after the request's lifetime
-    request->_tempObject = malloc(sizeof(uint8_t **));
-    body = (uint8_t **) request->_tempObject;
+    request->_tempObject = malloc(sizeof(uint8_t) * total);
+    body = (uint8_t *) request->_tempObject;
 
-    // Not enough space available
+    // Not enough space available for the whole body
     if (!body)
       return;
-
-    // Allocate as much memory as the whole body will require
-    *body = (uint8_t *) mman_alloc(sizeof(uint8_t), total, NULL);
-    request->_tempObject = body;
   }
-
-  // Not enough space for the whole body
-  if (!*body)
-    return;
 
   // Write the segment into the buffer
   memcpy(&(body[index]), data, len);
@@ -96,16 +88,16 @@ INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, c
   // Body segment collector has been called at least once
   if (request->_tempObject)
   {
-    uint8_t **body = (uint8_t **) request->_tempObject;
+    uint8_t *body = (uint8_t *) request->_tempObject;
 
     // Check if we had enough space
-    if (!*body)
+    if (!body)
     {
       web_server_error_resp(request, 500, BODY_TOO_LONG, "Body too long, not enough space!");
       return false;
     }
 
-    *output = (char *) *body;
+    *output = (char *) body;
     return true;
   }
 
@@ -117,7 +109,7 @@ INLINED static bool web_server_ensure_str_body(AsyncWebServerRequest *request, c
 bool web_server_ensure_json_body(AsyncWebServerRequest *request, htable_t **output)
 {
   // Get the string body
-  scptr char *body = NULL;
+  char *body = NULL;
   if (!web_server_ensure_str_body(request, &body))
     return false;
 
