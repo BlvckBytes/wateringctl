@@ -1,20 +1,7 @@
-#ifndef web_server_h
-#define web_server_h
+#ifndef web_server_error_h
+#define web_server_error_h
 
-#include <ESPAsyncWebServer.h>
-#include <stdarg.h>
-#include <SD.h>
-
-#include "scheduler.h"
-#include "valve_control.h"
-#include <blvckstd/mman.h>
-#include <blvckstd/longp.h>
-#include <blvckstd/strfmt.h>
-#include <blvckstd/jsonh.h>
 #include <blvckstd/enumlut.h>
-
-#define WEB_SERVER_PORT 80
-#define WEB_SERVER_SD_ROOT "/"
 
 #define _EVALS_WEB_SERVER_ERROR(FUN)             \
   FUN(RESOURCE_NOT_FOUND,               0)       \
@@ -41,15 +28,5 @@
   FUN(VALVE_TIMER_ZERO,                16)
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_error, _EVALS_WEB_SERVER_ERROR);
-
-typedef struct web_server_request_body
-{
-  uint8_t *content;             // Body content bytes
-} web_server_request_body_t;
-
-/**
- * @brief Define all routes and start the webserver
- */
-void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control);
 
 #endif

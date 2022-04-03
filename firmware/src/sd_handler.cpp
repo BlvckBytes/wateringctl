@@ -10,12 +10,18 @@
 
 static bool sdh_avail = false;
 
+INLINED static void sdh_check_file_existence()
+{
+  // TODO: Implement creating std-files like www/index.html or data as well as log files
+}
+
 bool sdh_init()
 {
   pinMode(SDH_PIN_INSERTED, INPUT);
 
   // Begin SD library using known pin layout
   if (SD.begin(SDH_PIN_CS, SPI, SDH_SPI_FREQ)) {
+    sdh_check_file_existence();
     dbginf("SD card slot initialized (type=%" PRIu8 ")", SD.cardType());
     sdh_avail = true;
   } else {

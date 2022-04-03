@@ -2,7 +2,7 @@
 #include <EEPROM.h>
 
 #include "scheduler.h"
-#include "web_server.h"
+#include "web_server/web_server.h"
 #include "shift_register.h"
 #include "web_socket.h"
 #include "time_provider.h"
