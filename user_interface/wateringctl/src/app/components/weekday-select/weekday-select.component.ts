@@ -16,7 +16,10 @@ export class WeekdaySelectComponent implements OnInit {
   constructor() {
     this.selection = new EventEmitter();
     this.days = Object.values<string>(ESchedulerWeekday).filter(value => typeof value === 'string');
-    this.selectedDay = this.days[new Date().getDay() - 1];
+
+    // Sunday - Saturday : 0 - 6
+    const today = new Date().getDay();
+    this.selectedDay = this.days[today - 1 < 0 ? 6 : today - 1];
   }
 
   selectDay(day: string): void {

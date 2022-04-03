@@ -26,11 +26,7 @@ export class WebSocketEventsService {
   constructor(
     private httpService: HttpService,
   ) {
-    const url = this.httpService.baseURL
-      .replace('https', 'ws')
-      .replace('http', 'ws');
-
-    this._path = `${url}/wse`;
+    this._path = this.httpService.wsURL;
     this.connect();
   }
 
