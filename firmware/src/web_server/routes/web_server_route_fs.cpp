@@ -200,15 +200,23 @@ static void web_server_rec_fdel_req_cleanup(mman_meta_t *meta)
 static void web_server_recursive_delete_task(void *arg)
 {
   rec_fdel_req_t *req = (rec_fdel_req_t *) arg;
+  bool has_disconnected = false;
+
+  // TODO: If the recursive deletion takes too long, the response socket collapses...
+  req->request->onDisconnect([&has_disconnected](void) -> void {
+    has_disconnected = true;
+  });
 
   bool success = true;
   web_server_recursive_delete(req->path, &success);
 
-  // TODO: If the recursive deletion takes too long, the response socket collapses...
-  if (!success)
-    web_server_error_resp(req->request, 500, COULD_NOT_DELETE_DIR, "An error ocurred while deleting " QUOTSTR, req->path);
-  else
-    web_server_empty_ok(req->request);
+  if (!has_disconnected)
+  {
+    if (!success)
+      web_server_error_resp(req->request, 500, COULD_NOT_DELETE_DIR, "An error ocurred while deleting " QUOTSTR, req->path);
+    else
+      web_server_empty_ok(req->request);
+  }
 
   mman_dealloc(req);
   vTaskDelete(NULL);
