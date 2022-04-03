@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class HttpService {
 
   private _baseURL = 'http://192.168.1.38:80/api';
-  private _wsURL = 'ws://192.168.1.38:80/wse';
+  private _wsURL = 'ws://192.168.1.38:80/api/events';
 
   get baseURL(): string {
     return this._baseURL;
@@ -25,7 +25,7 @@ export class HttpService {
     {
       const ep = `${window.location.hostname}:${window.location.port}`;
       this._baseURL = `http://${ep}/api`;
-      this._wsURL = `ws://${ep}/wse`;
+      this._wsURL = `ws://${ep}/api/events`;
     }
   }
 
