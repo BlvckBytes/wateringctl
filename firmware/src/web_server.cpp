@@ -72,13 +72,23 @@ static void web_server_error_resp(AsyncWebServerRequest *request, int status, we
 
 void web_server_route_not_found(AsyncWebServerRequest *request)
 {
-  web_server_error_resp(
-    request,
-    404, RESOURCE_NOT_FOUND,
-    "The requested resource was not found (%s " QUOTSTR ")!",
-    request->methodToString(),
-    request->url().c_str()
-  );
+  // API route requested, show 404 json errors
+  if (request->url().startsWith("/api"))
+  {
+    web_server_error_resp(
+      request,
+      404, RESOURCE_NOT_FOUND,
+      "The requested resource was not found (%s " QUOTSTR ")!",
+      request->methodToString(),
+      request->url().c_str()
+    );
+    return;
+  }
+
+  // File requested, fall back to index.html (used for Angular)
+  File index = SD.open("/index.html");
+  request->send(200, "text/html", index.readString());
+  index.close();
 }
 
 /*
@@ -727,44 +737,47 @@ void web_server_route_any_options(AsyncWebServerRequest *request)
 void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
 {
   // /memstat, Memory statistics for debugging purposes
-  wsrv.on("/memstat", HTTP_GET, web_server_route_memstat);
-  wsrv.on("/memstat", HTTP_OPTIONS, web_server_route_any_options);
+  wsrv.on("/api/memstat", HTTP_GET, web_server_route_memstat);
+  wsrv.on("/api/memstat", HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler
-  const char *p_sched = "^\\/scheduler$";
+  const char *p_sched = "^\\/api\\/scheduler$";
   wsrv.on(p_sched, HTTP_GET, web_server_route_scheduler);
   wsrv.on(p_sched, HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler/{day}
-  const char *p_sched_day = "^\\/scheduler\\/([A-Za-z0-9_]+)$";
+  const char *p_sched_day = "^\\/api\\/scheduler\\/([A-Za-z0-9_]+)$";
   wsrv.on(p_sched_day, HTTP_GET, web_server_route_scheduler_day);
   wsrv.on(p_sched_day, HTTP_PUT, web_server_route_scheduler_day_edit, NULL, web_server_str_body_handler);
   wsrv.on(p_sched_day, HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler/{day}/index
-  const char *p_sched_day_index = "^\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$";
+  const char *p_sched_day_index = "^\\/api\\/scheduler\\/([A-Za-z0-9_]+)\\/([0-9]+)$";
   wsrv.on(p_sched_day_index, HTTP_GET, web_server_route_scheduler_day_index);
   wsrv.on(p_sched_day_index, HTTP_PUT, web_server_route_scheduler_day_index_edit, NULL, web_server_str_body_handler);
   wsrv.on(p_sched_day_index, HTTP_DELETE, web_server_route_scheduler_day_index_delete);
   wsrv.on(p_sched_day_index, HTTP_OPTIONS, web_server_route_any_options);
 
   // /valves
-  const char *p_valves = "^\\/valves$";
+  const char *p_valves = "^\\/api\\/valves$";
   wsrv.on(p_valves, HTTP_GET, web_server_route_valves);
   wsrv.on(p_valves, HTTP_OPTIONS, web_server_route_any_options);
 
   // /valves/{id}
-  const char *p_valves_id = "^\\/valves\\/([0-9]+)$";
+  const char *p_valves_id = "^\\/api\\/valves\\/([0-9]+)$";
   wsrv.on(p_valves_id, HTTP_PUT, web_server_route_valves_edit, NULL, web_server_str_body_handler);
   wsrv.on(p_valves_id, HTTP_POST, web_server_route_valves_activate);
   wsrv.on(p_valves_id, HTTP_DELETE, web_server_route_valves_deactivate);
   wsrv.on(p_valves_id, HTTP_OPTIONS, web_server_route_any_options);
 
   // /valves/id/timer
-  const char *p_valves_id_timer = "^\\/valves\\/([0-9]+)\\/timer$";
+  const char *p_valves_id_timer = "^\\/api\\/valves\\/([0-9]+)\\/timer$";
   wsrv.on(p_valves_id_timer, HTTP_POST, web_server_route_valves_timer_set, NULL, web_server_str_body_handler);
   wsrv.on(p_valves_id_timer, HTTP_DELETE, web_server_route_valves_timer_clear);
   wsrv.on(p_valves_id_timer, HTTP_OPTIONS, web_server_route_any_options);
+
+  // Serve static files from SD, using index.html as a default file for / requests
+  wsrv.serveStatic("/", SD, WEB_SERVER_SD_ROOT).setDefaultFile("index.html");
 
   // All remaining paths
   wsrv.onNotFound(web_server_route_not_found);

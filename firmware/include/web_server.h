@@ -3,6 +3,7 @@
 
 #include <ESPAsyncWebServer.h>
 #include <stdarg.h>
+#include <SD.h>
 
 #include "scheduler.h"
 #include "valve_control.h"
@@ -13,6 +14,7 @@
 #include <blvckstd/enumlut.h>
 
 #define WEB_SERVER_PORT 80
+#define WEB_SERVER_SD_ROOT "/"
 
 #define _EVALS_WEB_SERVER_ERROR(FUN)             \
   FUN(RESOURCE_NOT_FOUND,               0)       \

@@ -9,6 +9,7 @@
 #include "wifi_handler.h"
 #include "valve_control.h"
 #include "status_led.h"
+#include "sd_handler.h"
 
 scheduler_t scheduler;
 valve_control_t valvectl;
@@ -60,6 +61,8 @@ void setup()
   status_led_init();
   dbginf("Initialized status-led!");
 
+  sdh_init();
+
   // Nothing will work without an active WIFi connection
   // Block until connection succeeds
   while (!wfh_sta_connect_dhcp());
@@ -97,7 +100,12 @@ void setup()
 
 void loop()
 {
+  delay(2000);
+  // Update status led blinking cycle
   status_led_update();
+
+  // Watch for SD card remove/insert
+  sdh_watch_hotplug();
 
   if (
     !wfh_sta_ensure_connected()   // WiFi not connected
