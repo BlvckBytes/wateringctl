@@ -34,6 +34,9 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * [x] Disableable intervals, days and valves
 * [x] Manually activate valves for a certain duration
 * [x] Mobile-friendly web-UI
+* [x] Serve the UI from an SD-card
+* [ ] Manage all files on the SD-card remotely
+* [ ] Store configurations on the SD-card
 
 ## Hardware
 
