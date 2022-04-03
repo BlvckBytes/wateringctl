@@ -19,6 +19,7 @@
     "streambuf": "cpp",
     "system_error": "cpp",
     "regex": "cpp",
-    "tuple": "cpp"
+    "tuple": "cpp",
+    "ctime": "cpp"
   }
 }
