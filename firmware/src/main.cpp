@@ -4,7 +4,8 @@
 #include "scheduler.h"
 #include "web_server/web_server.h"
 #include "shift_register.h"
-#include "web_socket.h"
+#include "web_server/sockets/web_server_socket_events.h"
+#include "web_server/sockets/web_server_socket_fs.h"
 #include "time_provider.h"
 #include "wifi_handler.h"
 #include "valve_control.h"
@@ -116,7 +117,9 @@ void loop()
     return;
   }
 
-  web_socket_cleanup();
+  web_server_socket_events_cleanup();
+  web_server_socket_fs_cleanup();
+
   scheduler_tick(&scheduler, &valvectl);
   status_led_set(STATLED_CONNECTED);
 }

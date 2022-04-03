@@ -12,7 +12,7 @@
 #include <blvckstd/partial_strdup.h>
 #include <blvckstd/longp.h>
 
-#include "web_socket.h"
+#include "web_server/sockets/web_server_socket_events.h"
 #include "valve_control.h"
 #include "scheduler_time.h"
 #include "scheduler_macros.h"

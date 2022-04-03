@@ -1,8 +1,8 @@
-#include "web_socket.h"
+#include "web_server/sockets/web_server_socket_events.h"
 
-ENUM_LUT_FULL_IMPL(web_socket_event, _EVALS_WEB_SOCKET_EVENT);
+ENUM_LUT_FULL_IMPL(web_socket_event, _EVALS_WEB_SERVER_SOCKET_EVENT);
 
-AsyncWebSocket ws(WEB_SOCKET_PATH);
+static AsyncWebSocket ws(WEB_SERVER_SOCKET_EVENT_PATH);
 
 static void onEvent(
   AsyncWebSocket *server,
@@ -29,26 +29,21 @@ static void onEvent(
   }
 }
 
-void web_socket_init(AsyncWebServer *wsrv)
+void web_server_socket_events_init(AsyncWebServer *wsrv)
 {
   ws.onEvent(onEvent);
   wsrv->addHandler(&ws);
-  dbginf("Started the websocket server!");
+  dbginf("Started the websocket server for " WEB_SERVER_SOCKET_EVENT_PATH "!");
 }
 
-void web_socket_cleanup()
+void web_server_socket_events_cleanup()
 {
   ws.cleanupClients();
 }
 
-void web_socket_broadcast(uint8_t *message, size_t length)
-{
-  ws.binaryAll(message, length);
-}
-
-void web_socket_broadcast_event(web_socket_event_t event, char *arg)
+void web_server_socket_events_broadcast(web_socket_event_t event, char *arg)
 {
   const char *event_str = web_socket_event_name(event);
   scptr char *msg = strfmt_direct("%s;%s", event_str, arg == NULL ? "" : arg);
-  web_socket_broadcast((uint8_t *) msg, strlen(msg));
+  ws.binaryAll(msg);
 }

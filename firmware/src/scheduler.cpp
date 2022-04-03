@@ -261,7 +261,7 @@ INLINED static void scheduler_tick_intervals(scheduler_t *scheduler, scheduler_w
 
       // Broadcast scheduler on event
       scptr char *ev_arg = strfmt_direct("%d", i);
-      web_socket_broadcast_event(WSE_INTERVAL_SCHED_ON, ev_arg);
+      web_server_socket_events_broadcast(WSE_INTERVAL_SCHED_ON, ev_arg);
 
       continue;
     }
@@ -282,7 +282,7 @@ INLINED static void scheduler_tick_intervals(scheduler_t *scheduler, scheduler_w
 
       // Broadcast scheduler off event
       scptr char *ev_arg = strfmt_direct("%d", i);
-      web_socket_broadcast_event(WSE_INTERVAL_SCHED_OFF, ev_arg);
+      web_server_socket_events_broadcast(WSE_INTERVAL_SCHED_OFF, ev_arg);
 
       continue;
     }
@@ -319,7 +319,7 @@ INLINED static void scheduler_tick_valve_timers(valve_control_t *valve_ctl, sche
 
     scptr char *time_strval = scheduler_time_stringify(&(targ_valve->timer));
     scptr char *ev_args = strfmt_direct("%lu;%s", i, time_strval);
-    web_socket_broadcast_event(WSE_VALVE_TIMER_UPDATED, ev_args);
+    web_server_socket_events_broadcast(WSE_VALVE_TIMER_UPDATED, ev_args);
   }
 }
 

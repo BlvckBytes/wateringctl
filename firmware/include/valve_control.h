@@ -5,7 +5,7 @@
 
 #include "shift_register.h"
 #include "scheduler_time.h"
-#include "web_socket.h"
+#include "web_server/sockets/web_server_socket_events.h"
 #include "scheduler_macros.h"
 
 // Maximum number of valves that can be attached to the system

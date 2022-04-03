@@ -122,7 +122,7 @@ static void web_server_route_scheduler_day_edit(AsyncWebServerRequest *request)
     targ_day->disabled = sched_day.disabled;
 
     scptr char *ev_args = strfmt_direct("%s", scheduler_weekday_name(day));
-    web_socket_broadcast_event(sched_day.disabled ? WSE_DAY_DISABLE_ON : WSE_DAY_DISABLE_OFF, ev_args);
+    web_server_socket_events_broadcast(sched_day.disabled ? WSE_DAY_DISABLE_ON : WSE_DAY_DISABLE_OFF, ev_args);
   }
 
   scheduler_eeprom_save(sched);
@@ -186,7 +186,7 @@ static void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *req
     targ_interval->disabled = interval.disabled;
 
     scptr char *ev_args = strfmt_direct("%s;%ld", scheduler_weekday_name(day), index);
-    web_socket_broadcast_event(interval.disabled ? WSE_INTERVAL_DISABLE_ON : WSE_INTERVAL_DISABLE_OFF, ev_args);
+    web_server_socket_events_broadcast(interval.disabled ? WSE_INTERVAL_DISABLE_ON : WSE_INTERVAL_DISABLE_OFF, ev_args);
   }
 
   // Check for deltas and patch end
@@ -195,7 +195,7 @@ static void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *req
     targ_interval->end = interval.end;
 
     scptr char *ev_args = strfmt_direct("%s;%ld;%s", scheduler_weekday_name(day), index, scheduler_time_stringify(&(interval.end)));
-    web_socket_broadcast_event(WSE_INTERVAL_END_CHANGE, ev_args);
+    web_server_socket_events_broadcast(WSE_INTERVAL_END_CHANGE, ev_args);
   }
 
   // Check for deltas and patch start
@@ -204,7 +204,7 @@ static void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *req
     targ_interval->start = interval.start;
 
     scptr char *ev_args = strfmt_direct("%s;%ld;%s", scheduler_weekday_name(day), index, scheduler_time_stringify(&(interval.start)));
-    web_socket_broadcast_event(WSE_INTERVAL_START_CHANGE, ev_args);
+    web_server_socket_events_broadcast(WSE_INTERVAL_START_CHANGE, ev_args);
   }
 
   // Check for deltas and patch identifier
@@ -212,7 +212,7 @@ static void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *req
   {
     targ_interval->identifier = interval.identifier;
     scptr char *ev_args = strfmt_direct("%s;%ld;%u", scheduler_weekday_name(day), index, interval.identifier);
-    web_socket_broadcast_event(WSE_INTERVAL_IDENTIFIER_CHANGE, ev_args);
+    web_server_socket_events_broadcast(WSE_INTERVAL_IDENTIFIER_CHANGE, ev_args);
   }
 
   scheduler_eeprom_save(sched);
@@ -250,7 +250,7 @@ static void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *r
   scheduler_eeprom_save(sched);
 
   scptr char *ev_args = strfmt_direct("%s;%ld", scheduler_weekday_name(day), index);
-  web_socket_broadcast_event(WSE_INTERVAL_DELETED, ev_args);
+  web_server_socket_events_broadcast(WSE_INTERVAL_DELETED, ev_args);
 
   web_server_empty_ok(request);
 }

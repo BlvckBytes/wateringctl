@@ -8,7 +8,8 @@
 #include "web_server/routes/web_server_route_valves.h"
 #include "web_server/routes/web_server_route_any_options.h"
 #include "web_server/routes/web_server_route_memstat.h"
-#include "web_server/routes/web_server_route_fs.h"
+#include "web_server/sockets/web_server_socket_events.h"
+#include "web_server/sockets/web_server_socket_fs.h"
 
 #define WEB_SERVER_PORT 80
 

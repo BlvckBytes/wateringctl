@@ -106,7 +106,7 @@ static void web_server_route_valves_edit(AsyncWebServerRequest *request)
     strncpy(targ_valve->alias, valve.alias, VALVE_CONTROL_ALIAS_MAXLEN);
 
     scptr char *ev_arg = strfmt_direct("%d;%s", valve_id, valve.alias);
-    web_socket_broadcast_event(WSE_VALVE_RENAME, ev_arg);
+    web_server_socket_events_broadcast(WSE_VALVE_RENAME, ev_arg);
   }
 
   // Check for deltas and patch disabled state
@@ -115,7 +115,7 @@ static void web_server_route_valves_edit(AsyncWebServerRequest *request)
     targ_valve->disabled = valve.disabled;
 
     scptr char *ev_arg = strfmt_direct("%d", valve_id);
-    web_socket_broadcast_event(valve.disabled ? WSE_VALVE_DISABLE_ON : WSE_VALVE_DISABLE_OFF, ev_arg);
+    web_server_socket_events_broadcast(valve.disabled ? WSE_VALVE_DISABLE_ON : WSE_VALVE_DISABLE_OFF, ev_arg);
   }
 
   valve_control_eeprom_save(valvectl);
@@ -240,10 +240,10 @@ static void web_server_route_valves_timer_set(AsyncWebServerRequest *request)
 
   scptr char *timer_strval = scheduler_time_stringify(&timer);
   scptr char *ev_args_timer = strfmt_direct("%lu;%s", valve_id, timer_strval);
-  web_socket_broadcast_event(WSE_VALVE_TIMER_UPDATED, ev_args_timer);
+  web_server_socket_events_broadcast(WSE_VALVE_TIMER_UPDATED, ev_args_timer);
 
   scptr char *ev_args_off = strfmt_direct("%lu", valve_id);
-  web_socket_broadcast_event(WSE_VALVE_ON, ev_args_off);
+  web_server_socket_events_broadcast(WSE_VALVE_ON, ev_args_off);
 
   web_server_empty_ok(request);
 }
@@ -276,8 +276,8 @@ static void web_server_route_valves_timer_clear(AsyncWebServerRequest *request)
 
   scptr char *timer_strval = scheduler_time_stringify(&SCHEDULER_TIME_MIDNIGHT);
   scptr char *ev_args = strfmt_direct("%lu;%s", valve_id, timer_strval);
-  web_socket_broadcast_event(WSE_VALVE_TIMER_UPDATED, ev_args);
-  web_socket_broadcast_event(WSE_VALVE_OFF, ev_args);
+  web_server_socket_events_broadcast(WSE_VALVE_TIMER_UPDATED, ev_args);
+  web_server_socket_events_broadcast(WSE_VALVE_OFF, ev_args);
 
   web_server_empty_ok(request);
 }

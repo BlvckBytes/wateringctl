@@ -18,10 +18,10 @@ void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
   web_server_route_valves_init(valve_control, &wsrv);
   web_server_route_not_found_init(&wsrv);
   web_server_route_memstat_init(&wsrv);
-  web_server_route_fs_init(&wsrv);
 
   // Initialize the websocket
-  web_socket_init(&wsrv);
+  web_server_socket_events_init(&wsrv);
+  web_server_socket_fs_init(&wsrv);
 
   // Start listening
   wsrv.begin();

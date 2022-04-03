@@ -1,14 +1,14 @@
-#ifndef web_socket_h
-#define web_socket_h
+#ifndef web_server_socket_events_h
+#define web_server_socket_events_h
 
 #include <AsyncWebSocket.h>
 #include <blvckstd/dbglog.h>
 #include <blvckstd/enumlut.h>
 #include <blvckstd/mman.h>
 
-#define WEB_SOCKET_PATH "/wse"
+#define WEB_SERVER_SOCKET_EVENT_PATH "/api/events"
 
-#define _EVALS_WEB_SOCKET_EVENT(FUN)                                          \
+#define _EVALS_WEB_SERVER_SOCKET_EVENT(FUN)                                   \
   /*  Event name and id     |  Event parameters       */                      \
   FUN(WSE_INTERVAL_SCHED_ON,                0) /* <interval_index> */         \
   FUN(WSE_INTERVAL_SCHED_OFF,               1) /* <interval_index> */         \
@@ -27,27 +27,19 @@
   FUN(WSE_INTERVAL_DELETED,                14) /* <day><index> */             \
   FUN(WSE_VALVE_TIMER_UPDATED,             15) /* <valve_id><timer> */
 
-ENUM_TYPEDEF_FULL_IMPL(web_socket_event, _EVALS_WEB_SOCKET_EVENT);
+ENUM_TYPEDEF_FULL_IMPL(web_socket_event, _EVALS_WEB_SERVER_SOCKET_EVENT);
 
 /**
  * @brief Initialize the websocket in conjunction with a webserver
  * 
  * @param wsrv Webserver to host the endpoint on
  */
-void web_socket_init(AsyncWebServer *wsrv);
+void web_server_socket_events_init(AsyncWebServer *wsrv);
 
 /**
  * @brief Clean up websocket-related resources, call this periodically inside the main loop
  */
-void web_socket_cleanup();
-
-/**
- * @brief Broadcast a message to all connected clients
- * 
- * @param message Message to broadcast
- * @param length Length of message bytes
- */
-void web_socket_broadcast(uint8_t *message, size_t length);
+void web_server_socket_events_cleanup();
 
 /**
  * @brief Broadcast an event to all connected clients
@@ -58,6 +50,6 @@ void web_socket_broadcast(uint8_t *message, size_t length);
  * @param event Event to broadcast
  * @param arg Event argument, leave NULL if not required by the event
  */
-void web_socket_broadcast_event(web_socket_event_t event, char *arg);
+void web_server_socket_events_broadcast(web_socket_event_t event, char *arg);
 
 #endif
