@@ -1,0 +1,31 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spc-sm) var(--spc-md);
+  border-bottom: 1px solid var(--white);
+  gap: var(--spc-lg);
+  user-select: none;
+
+  &.--disabled {
+    filter: grayscale(1);
+  }
+}
+
+.buttons {
+  gap: var(--spc-sm);
+}
+
+.path-parts {
+  gap: var(--spc-sm);
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.path-part {
+  gap: var(--spc-sm);
+
+  &__arrow {
+    transform: rotate(-90deg);
+  }
+}

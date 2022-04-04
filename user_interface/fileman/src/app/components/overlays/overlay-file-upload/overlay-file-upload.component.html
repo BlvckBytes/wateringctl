@@ -1,0 +1,43 @@
+<div class="modal">
+  <ngx-dropzone
+    (change)="onSelect($event)"
+    [disabled]="locked"
+  >
+    <ngx-dropzone-label>
+      <p class="text__guide">Drop files or click to upload</p>
+    </ngx-dropzone-label>
+
+    <!-- File preview -->
+    <ngx-dropzone-preview
+      *ngFor="let f of files"
+      [removable]="true"
+      (removed)="onRemove(f)"
+    >
+      <ngx-dropzone-label>
+        <h3 class="text__file__name">{{ f.file.name }}</h3>
+        <p class="text__file__type">({{ f.file.type }})</p>
+        <p
+          *ngIf="f.state !== 'pending'"
+          [class]="'text__file__state text__file__state--' + f.state"
+        >{{f.state}}</p>
+      </ngx-dropzone-label>
+    </ngx-dropzone-preview>
+
+  </ngx-dropzone>
+
+  <div class="hv-c hv-c--spc-md">
+    <app-button
+      text="Upload"
+      [color]="valid ? 'success' : 'beige'"
+      icon="upload.svg"
+      (click)="uploadFiles()"
+    ></app-button>
+
+    <app-button
+      text="Cancel"
+      color="warning"
+      icon="block.svg"
+      (click)="cancelUpload()"
+    ></app-button>
+  </div>
+</div>

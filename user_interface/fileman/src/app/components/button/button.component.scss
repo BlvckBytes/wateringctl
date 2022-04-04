@@ -1,0 +1,21 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--br-sm);
+  padding: var(--spc-xs) var(--spc-md);
+  color: var(--white);
+  user-select: none;
+
+  &.--icon-only {
+    padding: var(--spc-sm);
+    border-radius: var(--br-md);
+    .icon {
+      margin: 0;
+    }
+  }
+}
+
+.icon {
+  margin-right: var(--spc-sm);
+}

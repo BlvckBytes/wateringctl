@@ -1,0 +1,48 @@
+.modal {
+  gap: var(--spc-lg);
+
+  ngx-dropzone {
+    width: 100%;
+  }
+}
+
+.text {
+  &__guide, &__file__type, &__file__state {
+    padding: var(--spc-sm) var(--spc-md);
+    background: var(--primary);
+    color: var(--white);
+    border-radius: var(--br-sm);
+  }
+
+  &__file {
+    &__name {
+      color: var(--primary);
+      font-weight: lighter;
+      margin-bottom: var(--spc-sm);
+    }
+
+    &__type, &__state {
+      font-size: var(--fs-p0);
+      padding: var(--spc-xs);
+    }
+
+    &__state {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      &--uploading {
+        background: var(--orange);
+      }
+
+      &--uploaded {
+        background: var(--success);
+      }
+
+      &--queued {
+        background: var(--primary);
+      }
+    }
+  }
+}

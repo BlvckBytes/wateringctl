@@ -1,0 +1,179 @@
+:host {
+  width: 100%;
+  transition: margin var(--ad-md) ease;
+  display: block;
+  position: relative;
+  isolation: isolate;
+  z-index: 2;
+
+  &, .textbox {
+    border-radius: var(--br-md);
+  }
+
+  &, .textbox__input {
+    color: var(--white);
+  }
+
+  // Has content in textbox
+  &.--has-content {
+    margin-top: calc(var(--line-height) * 1rem);
+
+    // Shift placeholder if input has a value
+    .textbox__placeholder {
+      transform: translateY(calc(-100% - 1rem * var(--line-height)));
+    }
+  }
+
+  // Dark themed textbox
+  &.--dark {
+
+    &, .textbox__input {
+      color: var(--black);
+    }
+
+    .textbox {
+      border: var(--bw-md) solid var(--primary);
+    }
+  }
+
+  // Placeholder isn't moved but hidden
+  &.--volatile-placeholder {
+    // Don't shift down
+    &.--has-content {
+      margin-top: 0;
+
+      // Hide placeholder
+      .textbox__placeholder {
+        display: none;
+      }
+    }
+  }
+
+  // Gray filter to mark it as "disabled"
+  &.--grayed {
+    background: var(--beige--l--o);
+
+    .textbox {
+      &__input, &__placeholder {
+        color: var(--beige--d);
+      }
+    }
+  }
+
+  // Content not changable
+  &.--locked .textbox__input {
+    user-select: none;
+  }
+}
+
+.textbox {
+  $r: &;
+
+  display: flex;
+  align-items: center;
+  gap: var(--spc-sm);
+  border: var(--bw-md) solid var(--white);
+  position: relative;
+  z-index: 2;
+  padding: var(--spc-sm) var(--spc-md);
+
+  // Ensure scaling
+  &, &__wrapper, &__input {
+    width: 100%;
+  }
+
+  // Wrapper to have placeholder relative to input
+  &__wrapper {
+    position: relative;
+    isolation: isolate;
+    flex-grow: 1;
+    display: flex;
+  }
+
+  // Placeholder is behind input
+  &__placeholder {
+    position: absolute;
+    inset: 50% auto auto 0;
+    z-index: 1;
+    transform: translateY(-50%);
+    transition: transform var(--ad-md) ease;
+  }
+
+  // Clear cross
+  &__clear {
+    position: absolute;
+    inset: 50% calc(var(--spc-sm) * -1) auto auto;
+    transform: translate(0, -50%) rotate(45deg);
+    padding: var(--spc-sm);
+    box-sizing: content-box;
+    z-index: 3;
+  }
+
+  // Transparent input
+  &__input {
+    position: relative;
+    border: none;
+    background: transparent;
+    z-index: 2;
+    flex-grow: 1;
+    font-size: 1rem;
+    height: calc(1rem * var(--line-height));
+
+    &:focus {
+      // No outline on focus
+      outline: none;
+    }
+  }
+
+  // Validation passed
+  @at-root :host.--valid & {
+    border: var(--bw-md) solid var(--success);
+  }
+
+  // Validation failed
+  @at-root :host.--invalid & {
+    border: var(--bw-md) solid var(--warning);
+    background: var(--warning--d--o);
+  }
+}
+
+.suggestions {
+  width: 100%;
+  position: absolute;
+  top: calc(
+    1rem * var(--line-height) +   /* textbox input height */
+    2 * var(--spc-sm) +           /* textbox padding */
+    2 * var(--bw-md) +            /* textbox border */
+    var(--spc-sm)                 /* "margin top" of suggestions */
+  );
+  background: var(--primary-light);
+  border: var(--bw-md) solid var(--primary);
+  border-radius: var(--br-md);
+
+  max-height: calc(
+    (
+    var(--line-height) * var(--fs-p1) +
+    var(--spc-sm) * 2
+    ) * 3.5                       /* Show about 3.5 items at a time */
+  );
+
+  overflow-y: scroll;
+
+  p {
+    user-select: none;
+    padding: var(--spc-sm) 0 var(--spc-sm) var(--spc-md);
+
+    &:nth-child(even) {
+      background: var(--primary-light--d);
+    }
+  }
+}
+
+.errors {
+  text-align: center;
+  padding: var(--spc-xs) var(--spc-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spc-sm);
+  color: var(--warning);
+}

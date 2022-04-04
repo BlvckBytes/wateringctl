@@ -1,0 +1,1 @@
+export type ButtonColor = 'beige' | 'warning' | 'success';

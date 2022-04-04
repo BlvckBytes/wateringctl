@@ -1,0 +1,19 @@
+:host {
+  position: relative;
+  min-height: calc(var(--vh, 1vh) * 100);
+  width: 100%;
+  max-width: 500px;
+  display: block;
+  margin: 0px auto;
+  isolation: isolate;
+
+  background: var(--dark-gray);
+  color: var(--white);
+}
+
+.wrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}

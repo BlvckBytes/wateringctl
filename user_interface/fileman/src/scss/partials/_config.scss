@@ -1,0 +1,121 @@
+/// Main palette of the design
+$main-palette: (
+  primary: #526DDD,
+  primary-light: #B8C5FA,
+  orange: #DD6031,
+  warning: #DD5272,
+  success: #40A27C
+);
+
+/// Generic palette containing only black, white and shades of them
+$generic-palette: (
+  // Escaping CSS color names with through string notation
+  "gray": #1D1D1D,
+  "beige": #C4C4C4,
+  "black": #121212,
+  "white": #F2F2F2,
+  "dark-gray": #191919
+);
+
+/// Initial REM value for compiletime calculations
+$rem-value: 16px;
+
+/// Known breakpoints
+/// Notation: <name>: (min, max)
+/// min/max can be disabled by -1
+$breakpoints: (
+  mobile: (-1, 480px),
+  tablet: (481px, 768px),
+  laptop: (769px, 1024px),
+  desktop: (1025px, 1200px),
+  television: (1201px, -1)
+);
+
+/// Define CSS variable states, depending on breakpoint widths
+/// The _fallback map defines values before all breakpoints
+/// Breakpoints are always max-width, and should only define
+/// the difference to _fallback, to keep the lines at a minimum
+$var-states: (
+  _fallback: (
+    // Font-sizes
+    fs-h1: 2.3rem,
+    fs-h2: 1.3rem,
+    fs-h3: 1rem,
+    fs-h4: .9rem,
+    fs-base: 1rem,
+    fs-p0: .8rem,
+    fs-p1: 1rem,
+    fs-p2: .8rem,
+    fs-p3: .6rem,
+
+    // Spacings
+    spc-xs: .25rem,
+    spc-sm: .5rem,
+    spc-md: 1rem,
+    spc-lg: 1.5rem,
+    spc-xl: 2.2rem,
+    spc-xxl: 2.9rem,
+
+    // Icons
+    icn-xxs: .7rem,
+    icn-xs: .9rem,
+    icn-sm: 1.2rem,
+    icn-md: 1.6rem,
+    icn-lg: 2.3rem,
+    icn-xl: 3.6rem,
+
+    // Border radii
+    br-sm: .3rem,
+    br-md: .6rem,
+    br-lg: 1rem,
+    br-xl: 1.2rem,
+
+    // Border width
+    bw-sm: 1px,
+    bw-md: 1.9px,
+    bw-lg: 3px,
+    bw-xl: 4px,
+
+    // Animation duration
+    ad-sm: 50ms,
+    ad-md: 85ms,
+    ad-lg: 105ms,
+    ad-xl: 200ms,
+
+    // Line height of text (font-size scale factor)
+    line-height: 1.4,
+  ),
+
+  television: (),
+  desktop: (),
+  laptop: (),
+  tablet: (
+    fs-h1: 2.1rem,
+    fs-h2: 1.1rem,
+    fs-h3: 1rem,
+    fs-h4: .8rem,
+    fs-p1: .9rem,
+
+    icn-xm: .8rem,
+    icn-sm: 1.1rem,
+    icn-md: 1.5rem,
+    icn-lg: 2.1rem,
+    icn-xl: 3.5rem
+  ),
+  mobile: (
+    fs-h1: 1.5rem,
+    fs-h2: 1.1rem,
+    fs-h3: .9rem,
+    fs-h4: .7rem,
+    fs-p1: .8rem,
+
+    icn-xs: .7rem,
+    icn-sm: 1rem,
+    icn-md: 1.4rem,
+    icn-lg: 2rem,
+    icn-xl: 3rem
+  )
+);
+
+$iconFilterDefault: invert(1);
+$iconFilterPrimary: invert(40%) sepia(87%) saturate(1766%) hue-rotate(213deg) brightness(89%) contrast(93%);

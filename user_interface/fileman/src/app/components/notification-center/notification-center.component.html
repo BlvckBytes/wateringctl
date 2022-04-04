@@ -1,0 +1,34 @@
+<!-- Individual notification item -->
+<div
+  *ngFor="let item of items"
+  [class]="'notification notification--' + item.color"
+>
+  <!-- Close cross button -->
+  <div
+    class="notification__close hv-c"
+    (click)="destroy(item)"
+  >
+    <img class="svg svg--xs" src="graphics/plus.svg" alt="close">
+  </div>
+
+  <!-- Representitive icon -->
+  <div class="notification__icon hv-c">
+    <img class="svg svg--lg" src="graphics/{{item.icon}}" alt="{{item.icon}}">
+  </div>
+
+  <!-- Actual content -->
+  <div>
+    <!-- Headline and text -->
+    <h3 class="notification__headline">{{item.headline}}</h3>
+    <p class="notification__text">{{item.text}}</p>
+
+    <!-- Action buttons -->
+    <div class="notification__buttons">
+      <span
+        *ngFor="let button of item.buttons"
+        class="notification__button"
+        (click)="button.callback()"
+      >{{button.text}}</span>
+    </div>
+  </div>
+</div>

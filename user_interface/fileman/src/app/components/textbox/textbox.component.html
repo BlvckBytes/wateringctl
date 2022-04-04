@@ -1,0 +1,64 @@
+<!-- Wrapper for easy multi-class binding -->
+<div 
+  class="textbox"
+>
+  <!-- Icon next to placeholder -->
+  <img
+    *ngIf="icon"
+    class="svg--sm"
+    [class.svg--light]="!dark"
+    src="graphics/{{icon}}.svg"
+    alt="{{icon}}"
+  >
+
+  <div class="textbox__wrapper">
+    <!-- Actual input -->
+    <input
+      [formControl]="control"
+      class="textbox__input"
+      type="{{type}}"
+      placeholder=" "
+      [email]="type === 'email'"
+      [readonly]="locked"
+      [autofocus]="focused"
+    >
+
+    <!-- Artificial placeholder -->
+    <p class="textbox__placeholder">{{placeholder || 'Placeholder'}}</p>
+
+    <!-- Clearing cross -->
+    <img
+      *ngIf="clearable"
+      src="graphics/plus.svg"
+      alt="clear"
+      class="textbox__clear svg svg--xs"
+      [class.svg--dark]="dark"
+      [class.svg--light]="!dark"
+      (click)="clear()"
+    >
+  </div>
+</div>
+
+<div 
+  class="suggestions"
+  *ngIf="suggestions.length > 0"
+>
+  <p
+    *ngFor="let suggestion of suggestions"
+    (click)="applySuggestion(suggestion)"
+  >{{suggestion}}</p>
+</div>
+
+<!-- Only render errors when control has been touched or changed -->
+<!-- This helps to not overwhelm the user -->
+<div
+  class="errors"
+  *ngIf="(control.touched || control.dirty) && control.errors"
+>
+  <p
+    *ngFor="let error of listErrors()"
+  >
+    <!-- Print error description -->
+    {{ 'textbox_errors.' + error | translate : { details: errorDetails(error) } }}
+  </p>
+</div>

@@ -1,0 +1,42 @@
+@use 'config' as *;
+
+.svg {
+  filter: $iconFilterDefault;
+  transform-origin: center center;
+  transition: transform var(--ad-md) ease;
+
+  &--primary {
+    filter: $iconFilterPrimary;
+  }
+
+  &--flip-x {
+    transform: rotate(180deg);
+  }
+
+  &--xxs {
+    width: var(--icn-xxs);
+    height: var(--icn-xxs);
+  }
+
+  &--xs {
+    width: var(--icn-xs);
+    height: var(--icn-xs);
+  }
+
+  // Small is the default
+  width: var(--icn-sm);
+  height: var(--icn-sm);
+
+  &--md {
+    width: var(--icn-md);
+    height: var(--icn-md);
+  }
+
+  &--no-filter {
+    filter: none;
+  }
+
+  &--preserve-ratio {
+    height: auto;
+  }
+}

@@ -1,0 +1,27 @@
+:host {
+  position: absolute;
+  display: block;
+  z-index: 8888;
+  isolation: isolate;
+  width: 100%;
+
+  &::ng-deep .overlay {
+    position: absolute;
+    inset: 0 0 auto auto;
+    height: calc(var(--vh, 1vh) * 100);
+    width: 100%;
+    background: var(--dark-gray--d--o);
+
+    &__close {
+      position: absolute;
+      top: var(--spc-lg);
+      right: var(--spc-lg);
+      transform: rotate(45deg);
+      transform-origin: center center;
+    }
+
+    & > * {
+      width: 100%;
+    }
+  }
+}

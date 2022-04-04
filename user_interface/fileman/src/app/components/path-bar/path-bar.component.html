@@ -1,0 +1,31 @@
+<div class="hv-c path-parts">
+  <div
+    class="path-part hv-c"
+    *ngFor="let part of pathParts; let last = last; let index = index;"
+    (click)="navigateTo(index)"
+  >
+    <img class="svg svg--primary" src="graphics/{{part.icon}}" alt="{{part.icon}}">
+    <p>{{part.name}}</p>
+
+    <img
+      *ngIf="!last"
+      class="svg path-part__arrow svg--xxs"
+      src="graphics/dropdown.svg"
+      alt="arrow"
+    >
+  </div>
+</div>
+
+<div class="hv-c buttons">
+  <app-button
+    (click)="openFolderOverlay()"
+    icon="folder.svg"
+    color="success"
+  ></app-button>
+
+  <app-button
+    (click)="openUploadOverlay()"
+    icon="upload.svg"
+    color="success"
+  ></app-button>
+</div>

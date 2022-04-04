@@ -1,0 +1,15 @@
+<div class="modal">
+  <app-textbox
+    placeholder="Folder name"
+    [focused]="true"
+    [control]="folderName"
+    [dark]="true"
+  ></app-textbox>
+
+  <app-button
+    icon="plus.svg"
+    [color]="folderName.valid ? 'success' : 'beige'"
+    text="Create"
+    (click)="createFolder()"
+  ></app-button>
+</div>

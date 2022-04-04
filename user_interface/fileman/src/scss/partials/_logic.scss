@@ -1,0 +1,71 @@
+/// Remove an item from a list
+/// @param $list - A SASS list
+/// @param $index - The list index to remove
+/// @returns A SASS list
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@function list-remove($list, $index) {
+  $newList: ();
+  @for $i from 1 through length($list) {
+    @if $i != $index {
+      $newList: append($newList, nth($list, $i));
+    }
+  }
+  @return $newList;
+}
+
+/// Sort a SASS list
+/// @param $list - A SASS list
+/// @param $asc - Whether or not to sort ascending
+/// @returns A sorted SASS list
+/// @requires function list-remove
+/// @author Jake Wilson <jake.e.wilson@gmail.com>
+@function list-sort($list, $asc: true) {
+  $sortedlist: ();
+  @while length($list) > 0 {
+    $value: nth($list, 1);
+    @each $item in $list {
+      @if $item < $value and $asc or $item > $value and not $asc {
+        $value: $item;
+      }
+    }
+    $sortedlist: append($sortedlist, $value);
+    $list: list-remove($list, index($list, $value));
+  }
+  @return $sortedlist;
+}
+
+/// Sort a SASS map by values
+/// If values are lists, it takes the max-value
+/// @param $map - A SASS map
+/// @param $asc - Whether or not to sort ascending
+/// @returns A SASS map sorted by values
+/// @requires function list-remove
+/// @author BlvckBytes <blvckbytes@gmail.com>
+@function map-sort-vals($map, $asc: true) {
+  $sortedMap: ();
+
+  // Until all items have got their place
+  $keys: map-keys($map);
+  @while length($keys) > 0 {
+    // Current k-v pair
+    $curr-key: nth($keys, 1);
+    $curr-val: max(map-get($map, $curr-key)...);
+
+    // Loop all remaining keys
+    @each $k in $keys {
+      $v: max(map-get($map, $k)...);
+
+      // Compare and re-set current k-v pair
+      @if $curr-val > $v and $asc or $curr-val < $v and not $asc {
+        $curr-key: $k;
+        $curr-val: $v;
+      }
+    }
+
+    // Add new entry to map, remove current key
+    $sortedMap: map-merge($sortedMap, ($curr-key: $curr-val));
+    $keys: list-remove($keys, index($keys, $curr-key));
+  }
+
+  @return $sortedMap;
+}
