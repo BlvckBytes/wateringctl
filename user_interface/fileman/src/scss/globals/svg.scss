@@ -32,6 +32,16 @@
     height: var(--icn-md);
   }
 
+  &--lg {
+    width: var(--icn-lg);
+    height: var(--icn-lg);
+  }
+
+  &--xl {
+    width: var(--icn-xl);
+    height: var(--icn-xl);
+  }
+
   &--no-filter {
     filter: none;
   }

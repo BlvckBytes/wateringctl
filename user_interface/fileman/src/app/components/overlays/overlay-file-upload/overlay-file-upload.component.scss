@@ -12,6 +12,7 @@
     background: var(--primary);
     color: var(--white);
     border-radius: var(--br-sm);
+    display: inline-block;
   }
 
   &__file {
@@ -34,6 +35,10 @@
 
       &--uploading {
         background: var(--orange);
+      }
+
+      &--error, &--canceled {
+        background: var(--warning);
       }
 
       &--uploaded {

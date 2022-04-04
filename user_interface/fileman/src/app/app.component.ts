@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { LanguageService } from './services/language.service';
+import { WebSocketFsService } from './services/web-socket-fs.service';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +11,9 @@ export class AppComponent {
 
   constructor(
     langService: LanguageService,
+    fsService: WebSocketFsService,
   ) {
     langService.initialize();
+    fsService.connect();
   }
 }

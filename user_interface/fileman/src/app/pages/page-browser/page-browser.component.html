@@ -1,1 +1,13 @@
-<p>page-browser works!</p>
+<div
+  *ngFor="let file of files"
+  class="browser-entry hv-c hv-c--col"
+  (click)="fileClicked(file)"
+>
+  <img
+    class="svg svg--lg svg--primary browser-entry__icon"
+    src="graphics/{{file.isDirectory ? 'folder' : 'file'}}.svg"
+    alt="icon"
+  >
+  <p class="browser-entry__size">{{formatFileSize(file.size)}}</p>
+  <h2 class="browser-entry__name">{{getFileName(file)}}</h2>
+</div>

@@ -18,6 +18,15 @@ export class OverlayFileUploadComponent {
       .length > 0;
   }
 
+  get cancelable(): boolean {
+    return this.files
+      .filter(it => (
+        it.state === 'queued' ||
+        it.state === 'uploading'
+      ))
+      .length > 0;
+  }
+
   locked = false;
 
   constructor() {}
@@ -25,16 +34,40 @@ export class OverlayFileUploadComponent {
   uploadFiles(): void {
     if (!this.valid)
       return;
+
+    // Set all files into queued state
+    for (const file of this.files)
+      file.state = 'queued';
   }
 
   cancelUpload(): void {
+    if (!this.cancelable)
+      return;
 
+    // Re-set file states as far as possible
+    for (const file of this.files) {
+      // Keep uploaded and error states
+      if (
+        file.state === 'uploaded' ||
+        file.state === 'error'
+      )
+        continue;
+
+      // Uploading file got canceled
+      if (file.state === 'uploading') {
+        file.state = 'canceled';
+        continue;
+      }
+
+      // Re-set into pending state
+      file.state = 'pending';
+    }
   }
 
   onSelect(event: NgxDropzoneChangeEvent) {
     this.files.push(...event.addedFiles.map<IUploadFile>(f => ({
       file: f,
-      state: 'pending'
+      state: 'pending',
     })));
   }
 

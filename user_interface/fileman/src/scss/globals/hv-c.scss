@@ -3,6 +3,10 @@
   align-items: center;
   justify-content: center;
 
+  &--col {
+    flex-direction: column;
+  }
+
   &--spc-sm {
     gap: var(--spc-sm);
   }

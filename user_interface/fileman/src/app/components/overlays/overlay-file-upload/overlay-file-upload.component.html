@@ -16,10 +16,11 @@
       <ngx-dropzone-label>
         <h3 class="text__file__name">{{ f.file.name }}</h3>
         <p class="text__file__type">({{ f.file.type }})</p>
+
         <p
           *ngIf="f.state !== 'pending'"
           [class]="'text__file__state text__file__state--' + f.state"
-        >{{f.state}}</p>
+        >{{f.state === 'error' ? f.errorText : f.state}}</p>
       </ngx-dropzone-label>
     </ngx-dropzone-preview>
 
@@ -35,7 +36,7 @@
 
     <app-button
       text="Cancel"
-      color="warning"
+      [color]="cancelable ? 'warning' : 'beige'"
       icon="block.svg"
       (click)="cancelUpload()"
     ></app-button>
