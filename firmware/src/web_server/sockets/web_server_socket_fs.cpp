@@ -361,6 +361,10 @@ static File web_server_socket_fs_proc_write(
 ============================================================================
 */
 
+// "Further writes"-file, used when a message is partitioned
+static File w_f = File(NULL);
+static uint32_t w_f_issuer = UINT32_MAX;
+
 static void web_server_socket_fs_handle_data(
   AsyncWebSocketClient *client,
   AwsFrameInfo *finf,
@@ -368,9 +372,6 @@ static void web_server_socket_fs_handle_data(
   size_t len
 )
 {
-  // "Further writes"-file, used when a message is partitioned
-  static File w_f = File(NULL);
-
   // Never accept non-binary data
   if (!(
     finf->opcode == WS_BINARY ||
@@ -450,6 +451,7 @@ static void web_server_socket_fs_handle_data(
   )
   {
     w_f.close();
+    w_f_issuer = UINT32_MAX;
     web_server_socket_fs_respond_code(client, WSFS_FILE_CREATED);
   }
 }
@@ -475,8 +477,18 @@ static void onEvent(
       break;
     }
 
-    case WS_EVT_CONNECT:
+    // Terminate still active file write, if applicable
     case WS_EVT_DISCONNECT:
+    {
+      if (w_f && w_f_issuer == client->id())
+      {
+        w_f.close();
+        w_f_issuer = UINT32_MAX;
+      }
+      break;
+    }
+
+    case WS_EVT_CONNECT:
     case WS_EVT_PONG:
     case WS_EVT_ERROR:
       break;
