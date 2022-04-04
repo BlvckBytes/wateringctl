@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, filter, Observable, take, takeUntil, takeWhile } from 'rxjs';
+import { BehaviorSubject, filter, Observable, take } from 'rxjs';
 import { IFSFile } from '../models/fs-file.interface';
 import { EWSFSResp } from '../models/ws-fs-response.enum';
 import { LoadingIndicatorService } from './loading-indicator.service';
@@ -113,6 +113,19 @@ export class WebSocketFsService {
   ============================================================================
   */
 
+  private joinPaths(a: string, b: string): string {
+    const aTrailing = a.charAt(a.length - 1) == '/';
+    const bLeading = b.charAt(0) == '/';
+
+    if (aTrailing && bLeading)
+      return a + b.substring(1);
+
+    else if (!aTrailing && !bLeading)
+      return a + '/' + b;
+      
+    return a + b;
+  }
+
   createDirectory(path: string, directory: string): Observable<void> {
     return new Observable(obs => {
       this._recipient = (async (data) => {
@@ -126,7 +139,7 @@ export class WebSocketFsService {
           obs.error(resp);
       });
 
-      this.send(this._encoder.encode(`WRITE;${path}/${directory};true`));
+      this.send(this._encoder.encode(`WRITE;${this.joinPaths(path, directory)};true`));
       this._taskStack.push(this.loadingService.startTask(5000));
     });
   }
