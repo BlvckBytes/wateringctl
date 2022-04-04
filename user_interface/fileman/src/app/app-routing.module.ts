@@ -5,7 +5,7 @@ import { PageEditComponent } from './pages/page-edit/page-edit.component';
 
 const routes: Routes = [
   { path: 'browser', component: PageBrowserComponent },
-  { path: 'edit', component: PageEditComponent },
+  { path: 'edit/:name', component: PageEditComponent },
   { path: '**', redirectTo: 'browser' }
 ];
 

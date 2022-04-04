@@ -1,14 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { IFSFile } from 'src/app/models/fs-file.interface';
 import { PathBarService } from 'src/app/services/path-bar.service';
 import { WebSocketFsService } from 'src/app/services/web-socket-fs.service';
+import { SubSink } from 'subsink';
 
 @Component({
   selector: 'app-page-browser',
   templateUrl: './page-browser.component.html',
   styleUrls: ['./page-browser.component.scss']
 })
-export class PageBrowserComponent {
+export class PageBrowserComponent implements OnDestroy {
+
+  private _subs = new SubSink();
 
   files: IFSFile[] = [
     { isDirectory: false, name: '/a.txt', size: 10 },
@@ -21,8 +25,9 @@ export class PageBrowserComponent {
   constructor(
     private pathBarService: PathBarService,
     private fsService: WebSocketFsService,
+    private router: Router,
   ) {
-    pathBarService.path$.subscribe(path => {
+    this._subs.sink = pathBarService.path$.subscribe(path => {
       fsService.connected$.subscribe(stat => {
         if (stat)
           fsService.listDirectory(path).subscribe(files => this.files = files);
@@ -42,7 +47,8 @@ export class PageBrowserComponent {
       return;
     }
 
-    // TODO: Open the file in the editor
+    // Edit file
+    this.router.navigate(['/edit', file.name]);
   }
 
   getFileName(file: IFSFile): string {
@@ -68,5 +74,9 @@ export class PageBrowserComponent {
       return `${Math.round(kib * 100) / 100} KiB`;
 
     return `${size} Bytes`;
+  }
+
+  ngOnDestroy() {
+    this._subs.unsubscribe();
   }
 }

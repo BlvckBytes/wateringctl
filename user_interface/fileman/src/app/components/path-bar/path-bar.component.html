@@ -18,6 +18,12 @@
 
 <div class="hv-c buttons">
   <app-button
+    [color]="canGoUp ? 'success' : 'beige'"
+    icon="back.svg"
+    (click)="up()"
+  ></app-button>
+
+  <app-button
     (click)="openFolderOverlay()"
     icon="folder.svg"
     color="success"

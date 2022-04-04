@@ -14,6 +14,10 @@ export class PathBarComponent {
 
   pathParts: IPathPart[] = [];
 
+  get canGoUp() {
+    return this.pathParts.length > 1;
+  }
+
   @Input()
   @HostBinding('class.--disabled')
   disabled: boolean = false;
@@ -67,5 +71,25 @@ export class PathBarComponent {
       inputs: [],
       userClosable: true,
     });
+  }
+
+  up(): void {
+    if (!this.canGoUp)
+      return;
+
+    // Navigate back to root
+    if (this.pathParts.length == 2)
+      this.pathBarService.navigateTo("/");
+
+    // Navigate to previous folder
+    else {
+      this.pathBarService.navigateTo(
+        '/' +
+        this.pathParts
+          .slice(1, this.pathParts.length - 1)
+          .map(it => it.name)
+          .join('/')
+      );
+    }
   }
 }

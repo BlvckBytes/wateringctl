@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, takeUntil, takeWhile } from 'rxjs';
+import { BehaviorSubject, filter, Observable, take, takeUntil, takeWhile } from 'rxjs';
 import { IFSFile } from '../models/fs-file.interface';
 import { EWSFSResp } from '../models/ws-fs-response.enum';
 import { LoadingIndicatorService } from './loading-indicator.service';
@@ -19,9 +19,8 @@ export class WebSocketFsService {
   // Current incoming message recipient callback
   private _recipient: MessageRecipient | null = null;
 
-  // En- and decoder instances for sending and receiving
+  // Encoder instance for sending data
   private _encoder = new TextEncoder();
-  private _decoder = new TextDecoder();
 
   // Whether or not an active connection currently exists
   private _connected = new BehaviorSubject<boolean>(false);
@@ -29,7 +28,8 @@ export class WebSocketFsService {
   get connected$() {
     return this._connected
       .pipe(
-        takeWhile(it => it === false, true)
+        filter(it => it === true),
+        take(1)
       );
   }
 
@@ -63,6 +63,50 @@ export class WebSocketFsService {
     });
   }
 
+  readFile(path: string): Observable<Uint8Array> {
+    return new Observable(obs => {
+      let firstRecv = true;
+      let recvSize: number | null = null;
+      let fileConts = new Uint8Array(0);
+
+      this._recipient = (async (data) => {
+
+        // Receive header
+        if (firstRecv) {
+          const header = await data.text();
+          const [code, size] = header.split(';');
+
+          // Unsuccessful
+          if (code !== EWSFSResp.WSFS_FILE_FOUND) {
+            obs.error(code);
+            this._recipient = null;
+            return;
+          }
+
+          // Cache size param
+          recvSize = parseInt(size);
+          firstRecv = false;
+          return;
+        }
+
+        // Collect data into buffer
+        const bin = new Uint8Array(await data.arrayBuffer());
+        fileConts = new Uint8Array([...fileConts, ...bin]);
+
+        // Done!
+        if (fileConts.byteLength === recvSize) {
+          this._recipient = null;
+          this.loadingService.finishTask(this._taskStack.pop());
+          obs.next(fileConts);
+          return;
+        }
+      });
+
+      this.send(this._encoder.encode(`FETCH;${path};false`));
+      this._taskStack.push(this.loadingService.startTask(5000));
+    });
+  }
+
   /*
   ============================================================================
                                     WRITE                                     
@@ -75,7 +119,7 @@ export class WebSocketFsService {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = this._decoder.decode(await data.arrayBuffer());
+        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DIR_CREATED)
           obs.next();
         else
@@ -99,7 +143,7 @@ export class WebSocketFsService {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = this._decoder.decode(await data.arrayBuffer());
+        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DELETED)
           obs.next();
         else
@@ -117,7 +161,7 @@ export class WebSocketFsService {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = this._decoder.decode(await data.arrayBuffer());
+        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DELETED)
           obs.next();
         else
@@ -149,6 +193,7 @@ export class WebSocketFsService {
       return;
 
     this._ws.send(data);
+    console.log('outbound:', new TextDecoder().decode(data));
   }
 
   private onReceive(e: MessageEvent) {
