@@ -26,7 +26,8 @@
   FUN(WSFS_DIR_CREATED,            12)            \
   FUN(WSFS_FILE_CREATED,           13)            \
   FUN(WSFS_COULD_NOT_CREATE_FILE,  14)            \
-  FUN(WSFS_COULD_NOT_CREATE_DIR,   15)            
+  FUN(WSFS_COULD_NOT_CREATE_DIR,   15)            \
+  FUN(WSFS_FILE_FOUND,             16)            
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 

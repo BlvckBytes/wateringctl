@@ -91,9 +91,13 @@ static void web_server_socket_fs_proc_fetch_task(void *arg)
   scptr file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
   File target = SD.open(req->path);
 
-  // transmit 4 byte file size first
-  size_t f_sz = target.size();
-  req->client->binary((uint8_t *) &f_sz, 4);
+  // Transmit header first
+  scptr char *header = strfmt_direct(
+    "%s;%lu",
+    web_server_socket_fs_response_name(WSFS_FILE_FOUND),
+    target.size()
+  );
+  req->client->binary(header);
 
   // Now transmit file in chunks
   uint8_t read_buf[4096];
