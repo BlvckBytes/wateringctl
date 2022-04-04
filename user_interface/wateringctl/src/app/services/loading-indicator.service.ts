@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, debounceTime, delay, map, Observable } from 'rxjs';
+import { ILoadingIndicatorTask } from '../models/loading-indicator-task.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoadingIndicatorService {
 
-  private _tasks = new BehaviorSubject<number>(0);
+  private _taskList: ILoadingIndicatorTask[] = [];
+  private _nextId = 0;
+
+  private _tasks = new BehaviorSubject<boolean>(false);
 
   get isActive(): Observable<boolean> {
     return this._tasks.asObservable()
@@ -14,16 +18,24 @@ export class LoadingIndicatorService {
         // Prevents the ExpressionChangedAfterItHasBeenCheckedError
         delay(0),
         // Prevents jittering
-        debounceTime(100),
-        map(it => it != 0),
+        debounceTime(50),
       );
   }
 
-  pushTask() {
-    this._tasks.next(this._tasks.value + 1);
+  startTask(timeout: number): number {
+    const id = this._nextId++;
+    this._taskList.push({
+      timeoutHandle: setTimeout(<TimerHandler>(() => this.finishTask(id)), timeout),
+      id,
+    });
+    this._tasks.next(true);
+    return id;
   }
 
-  popTask() {
-    this._tasks.next(this._tasks.value - 1);
+  finishTask(id: number) {
+    const index = this._taskList.findIndex(it => it.id === id);
+    if (index < 0) return;
+    this._taskList.splice(index, 1);
+    this._tasks.next(this._taskList.length > 0);
   }
 }

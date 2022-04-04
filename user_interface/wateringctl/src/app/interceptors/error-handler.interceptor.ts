@@ -15,12 +15,12 @@ export class ErrorHandlerHttpInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    this.loadingService.pushTask();
+    const taskId = this.loadingService.startTask(5000);
 
     return next.handle(req).pipe(
       catchError((err: any) => {
         if (err instanceof HttpErrorResponse) {
-          this.loadingService.popTask();
+          this.loadingService.finishTask(taskId);
           const { code } = err.error;
 
           const key = `server_errors.${code || 'default'}`;
@@ -44,7 +44,7 @@ export class ErrorHandlerHttpInterceptor implements HttpInterceptor {
       }),
       tap(it => {
         if (it instanceof HttpResponse)
-          this.loadingService.popTask();
+          this.loadingService.finishTask(taskId);
       }),
     );
   }
