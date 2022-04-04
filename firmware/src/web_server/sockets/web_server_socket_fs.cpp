@@ -10,6 +10,12 @@ static AsyncWebSocket ws(WEB_SERVER_SOCKET_FS_PATH);
 ============================================================================
 */
 
+static void web_server_socket_fs_file_req_task_arg_t_cleanup(mman_meta_t *meta)
+{
+  file_req_task_arg_t *req = (file_req_task_arg_t *) meta->ptr;
+  mman_dealloc(req->path);
+}
+
 static void web_server_socket_fs_respond_code(
   AsyncWebSocketClient *client,
   web_server_socket_fs_response_t response
@@ -80,17 +86,10 @@ INLINED static bool web_server_socket_fs_preproc_existing_file_request(
 ============================================================================
 */
 
-typedef struct file_fetch_req
-{
-  AsyncWebSocketClient *client;
-  char *path;
-} file_fetch_req_t;
-
 static void web_server_socket_fs_proc_fetch_task(void *arg)
 {
-  scptr file_fetch_req_t *req = (file_fetch_req_t *) arg;
+  scptr file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
   File target = SD.open(req->path);
-  mman_dealloc(req->path);
 
   // transmit 4 byte file size first
   size_t f_sz = target.size();
@@ -149,10 +148,13 @@ static void web_server_socket_fs_proc_fetch(
     return;
   }
 
+  // Not needed anymore
+  target.close();
+
   // Requested a file, send file contents in another task
 
   // Create task arg struct
-  scptr file_fetch_req_t *req = (file_fetch_req_t *) mman_alloc(sizeof(file_fetch_req_t), 1, NULL);
+  scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
   req->client = client;
   req->path = strclone(path);
 
@@ -173,12 +175,6 @@ static void web_server_socket_fs_proc_fetch(
                               Command DELETE                                
 ============================================================================
 */
-
-static void web_server_socket_fs_rec_fdel_req_cleanup(mman_meta_t *meta)
-{
-  rec_fdel_req *req = (rec_fdel_req *) meta->ptr;
-  mman_dealloc(req->path);
-}
 
 static void web_server_socket_fs_recursive_delete(const char *path, bool *success)
 {
@@ -228,7 +224,7 @@ static void web_server_socket_fs_recursive_delete(const char *path, bool *succes
 
 static void web_server_socket_fs_recursive_delete_task(void *arg)
 {
-  rec_fdel_req_t *req = (rec_fdel_req_t *) arg;
+  file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
 
   bool success = true;
   web_server_socket_fs_recursive_delete(req->path, &success);
@@ -256,7 +252,7 @@ static void web_server_socket_fs_proc_delete(
   if (is_directory)
   {
     // Create a new file deletion request wrapper struct instance, to be passed as an argument to the task
-    scptr rec_fdel_req_t *req = (rec_fdel_req_t *) mman_alloc(sizeof(rec_fdel_req_t), 1, web_server_socket_fs_rec_fdel_req_cleanup);
+    scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
     req->client = client;
     req->path = strclone(path);
 

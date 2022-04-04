@@ -31,13 +31,13 @@
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 
 /**
- * @brief Represents an async recursive file deletion request
+ * @brief Represents an async file request by a user which requires processing in another task.
  */
-typedef struct rec_fdel_req
+typedef struct file_req_task_arg
 {
   AsyncWebSocketClient *client;
   char *path;
-} rec_fdel_req_t;
+} file_req_task_arg_t;
 
 /**
  * @brief Initialize the websocket in conjunction with a webserver
