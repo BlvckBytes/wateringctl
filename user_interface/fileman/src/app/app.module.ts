@@ -16,6 +16,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { NgxDropzoneModule } from 'ngx-dropzone';
+import { AutofocusDirective } from './directives/autofocus.directive';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import { NgxDropzoneModule } from 'ngx-dropzone';
     OverlayFolderCreateComponent,
     OverlayFileUploadComponent,
     TextboxComponent,
+    AutofocusDirective,
   ],
   imports: [
     BrowserModule,
