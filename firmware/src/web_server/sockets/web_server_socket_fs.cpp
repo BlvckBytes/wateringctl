@@ -164,7 +164,7 @@ static void web_server_socket_fs_proc_fetch(
     "rec_fdel",                                   // Task name
     16384,                                        // Stack size (should be sufficient, I hope)
     mman_ref(req),                                // Parameter to the entry point
-    0,                                            // Priority, keep it low
+    configMAX_PRIORITIES / 2,                     // Priority, keep it mid-ish
     NULL,                                         // Task handle output, don't care
     1                                             // On core 1 (main loop)
   );

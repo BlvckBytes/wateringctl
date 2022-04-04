@@ -44,6 +44,9 @@ void setup()
   // Start serial for the later use of dbginf/dbgerr
   Serial.begin(115200);
 
+  // Wait for the monitor to be ready
+  delay(2000);
+
   // Start the eeprom with the total footprint size
   size_t eeprom_footprint = (
     SCHEDULER_EEPROM_FOOTPRINT
@@ -101,7 +104,6 @@ void setup()
 
 void loop()
 {
-  delay(2000);
   // Update status led blinking cycle
   status_led_update();
 
