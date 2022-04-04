@@ -37,6 +37,8 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * [x] Serve the UI from an SD-card
 * [x] Manage all files on the SD-card remotely
 * [ ] Store configurations on the SD-card
+* [ ] Upload compiled binaries and then flash from SD
+* [ ] Web SD-file browser
 
 ## Hardware
 
@@ -54,7 +56,9 @@ Converts USB signals to RX, TX, Reset and Programming-Bootmode signals and is us
 
 ![wifi_layout](readme_images/layout_wifi.png)
 
-![wifi_board](readme_images/board_wifi.jpg)
+![wifi_board_front](readme_images/board_wifi_front.jpg)
+
+![wifi_board_back](readme_images/board_wifi_back.jpg)
 
 This board plugs straight into the usb2serial module and represents the most barebones wifi circuit possible. Besides the 3.3V regulation as well as driving an external status-led and the relay-board breakouts, there's not much on there. The antenna is also broken out to an external antenna screw-connector to ensure proper wifi reception.
 
@@ -62,7 +66,9 @@ This board plugs straight into the usb2serial module and represents the most bar
 
 ![relays_layout](readme_images/layout_relays.png)
 
-![relays_board](readme_images/board_relays.jpg)
+![relays_board_front](readme_images/board_relays_front.jpg)
+
+![relays_board_back](readme_images/board_relays_back.jpg)
 
 This board requires 5VDC to power logic, 12VDC for the relays and 24VAC to control the valves using said relays. The 595 shift-register controls all eight relays through on-board transistors safely, since each relay has it's own reverse diode to catch collapsing field currents. Boards can be chained together to have as many valves as you'd like, since D_IN and D_OUT are exposed separately.
 
