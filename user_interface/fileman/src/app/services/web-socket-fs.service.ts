@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, takeUntil, takeWhile } from 'rxjs';
 import { IFSFile } from '../models/fs-file.interface';
 import { EWSFSResp } from '../models/ws-fs-response.enum';
+import { LoadingIndicatorService } from './loading-indicator.service';
 
 type MessageRecipient = (data: Blob) => void;
 
@@ -12,6 +13,8 @@ export class WebSocketFsService {
 
   private _path: string;
   private _ws?: WebSocket | null = null;
+
+  private _taskStack: number[] = [];
 
   // Current incoming message recipient callback
   private _recipient: MessageRecipient | null = null;
@@ -31,6 +34,7 @@ export class WebSocketFsService {
   }
 
   constructor(
+    private loadingService: LoadingIndicatorService,
   ) {
     this._path = 'ws://192.168.1.38:80/api/fs';
 
@@ -47,12 +51,15 @@ export class WebSocketFsService {
   listDirectory(path: string): Observable<IFSFile[]> {
     return new Observable(obs => {
       this._recipient = (async (data) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
         this._recipient = null;
         const jsn = JSON.parse(await data.text());
         obs.next(jsn.items as IFSFile[]);
       });
 
       this.send(this._encoder.encode(`FETCH;${path};true`));
+      this._taskStack.push(this.loadingService.startTask(5000));
     });
   }
 
@@ -65,6 +72,8 @@ export class WebSocketFsService {
   createDirectory(path: string, directory: string): Observable<void> {
     return new Observable(obs => {
       this._recipient = (async (data) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
         this._recipient = null;
         const resp = this._decoder.decode(await data.arrayBuffer());
         if (resp == EWSFSResp.WSFS_DIR_CREATED)
@@ -74,6 +83,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`WRITE;${path}/${directory};true`));
+      this._taskStack.push(this.loadingService.startTask(5000));
     });
   }
 
@@ -86,6 +96,8 @@ export class WebSocketFsService {
   deleteDirectory(path: string): Observable<void> {
     return new Observable(obs => {
       this._recipient = (async (data) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
         this._recipient = null;
         const resp = this._decoder.decode(await data.arrayBuffer());
         if (resp == EWSFSResp.WSFS_DELETED)
@@ -95,12 +107,15 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`DELETE;${path};true`));
+      this._taskStack.push(this.loadingService.startTask(5000));
     });
   }
 
   deleteFile(path: string): Observable<void> {
     return new Observable(obs => {
       this._recipient = (async (data) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
         this._recipient = null;
         const resp = this._decoder.decode(await data.arrayBuffer());
         if (resp == EWSFSResp.WSFS_DELETED)
@@ -110,6 +125,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`DELETE;${path};false`));
+      this._taskStack.push(this.loadingService.startTask(5000));
     });
   }
 

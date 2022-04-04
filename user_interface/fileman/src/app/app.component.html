@@ -1,5 +1,13 @@
 <div
+  *ngIf="loading"
+  class="loading"
+>
+  <img class="svg" src="graphics/gear.svg" alt="gear">
+</div>
+
+<div
   class="wrapper"
+  [class.wrapper--blurred]="loading"
 >
   <app-overlay-stack></app-overlay-stack>
   <app-notification-center></app-notification-center>
