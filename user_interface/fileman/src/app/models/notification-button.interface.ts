@@ -1,4 +1,4 @@
 export interface INotificationButton {
   text: string;
-  callback: () => void;
+  callback?: () => void;
 }

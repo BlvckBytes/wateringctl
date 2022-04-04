@@ -1,6 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { IFSFile } from 'src/app/models/fs-file.interface';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { PathBarService } from 'src/app/services/path-bar.service';
 import { WebSocketFsService } from 'src/app/services/web-socket-fs.service';
 import { SubSink } from 'subsink';
@@ -26,6 +27,7 @@ export class PageBrowserComponent implements OnDestroy {
     private pathBarService: PathBarService,
     private fsService: WebSocketFsService,
     private router: Router,
+    private notificationsService: NotificationsService,
   ) {
     this._subs.sink = pathBarService.path$.subscribe(path => {
       fsService.connected$.subscribe(stat => {
@@ -35,9 +37,28 @@ export class PageBrowserComponent implements OnDestroy {
     });
   }
 
-  deleteFile(file: IFSFile) {
+  private confirmedFileDeletion(file: IFSFile) {
     const obs = file.isDirectory ? this.fsService.deleteDirectory(file.name) : this.fsService.deleteFile(file.name);
     obs.subscribe(() => this.pathBarService.refresh());
+  }
+
+  deleteFile(file: IFSFile) {
+    this.notificationsService.publish({
+      headline: 'Confirm Action',
+      text: 'Are you sure that you want to delete this file?',
+      color: 'warning',
+      icon: 'warning.svg',
+      destroyOnButtons: true,
+      buttons: [
+        {
+          text: 'Yes',
+          callback: () => this.confirmedFileDeletion(file),
+        },
+        {
+          text: 'No'
+        }
+      ]
+    });
   }
 
   fileClicked(file: IFSFile) {

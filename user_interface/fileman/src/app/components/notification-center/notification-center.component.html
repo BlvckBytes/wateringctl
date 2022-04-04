@@ -13,7 +13,7 @@
 
   <!-- Representitive icon -->
   <div class="notification__icon hv-c">
-    <img class="svg svg--lg" src="graphics/{{item.icon}}" alt="{{item.icon}}">
+    <img class="svg svg--md" src="graphics/{{item.icon}}" alt="{{item.icon}}">
   </div>
 
   <!-- Actual content -->
@@ -27,7 +27,7 @@
       <span
         *ngFor="let button of item.buttons"
         class="notification__button"
-        (click)="button.callback()"
+        (click)="buttonClick(item, button)"
       >{{button.text}}</span>
     </div>
   </div>

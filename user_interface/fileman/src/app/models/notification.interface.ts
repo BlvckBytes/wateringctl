@@ -6,5 +6,6 @@ export interface INotification {
   icon: string;
   color: 'success' | 'warning';
   timeout?: number;
+  destroyOnButtons?: boolean;
   buttons: INotificationButton[];
 }
