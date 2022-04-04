@@ -25,9 +25,16 @@
     <td>
       <app-button
         color="warning"
-        (click)="deleteFile(file)"
+        (click)="deleteFile(file); $event.stopPropagation()"
         icon="trash.svg"
       ></app-button>
+    </td>
+  </tr>
+  <tr
+    class="row-table__row--mark-empty"
+  >
+    <td colspan="100%">
+      <p>This folder is empty</p>
     </td>
   </tr>
 </table>

@@ -38,8 +38,8 @@ export class WebSocketFsService {
   ) {
     this._path = 'ws://192.168.1.38:80/api/fs';
 
-    if (window.location.hostname !== 'localhost')
-      this._path = `ws://${window.location.hostname}:${window.location.port}/api/fs`;
+    // if (window.location.hostname !== 'localhost')
+    //   this._path = `ws://${window.location.hostname}:${window.location.port}/api/fs`;
   }
 
   /*
