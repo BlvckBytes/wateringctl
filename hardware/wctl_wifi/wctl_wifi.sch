@@ -8829,6 +8829,73 @@ Source: AVX .. aphvc.pdf</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="sd_slot">
+<packages>
+<package name="SD_SLOT">
+<wire x1="-7.5" y1="-7.5" x2="7.5" y2="-7.5" width="0.127" layer="21"/>
+<wire x1="7.5" y1="-7.5" x2="7.5" y2="7.5" width="0.127" layer="21"/>
+<wire x1="7.5" y1="7.5" x2="-7.5" y2="7.5" width="0.127" layer="21"/>
+<wire x1="-7.5" y1="7.5" x2="-7.5" y2="-7.5" width="0.127" layer="21"/>
+<smd name="SH2" x="-7.9" y="2.8" dx="2.57731875" dy="2.1262875" layer="1" rot="R90"/>
+<smd name="SH3" x="7.9" y="2.8" dx="2.57731875" dy="2.1262875" layer="1" rot="R90"/>
+<smd name="SH1" x="-7.113403125" y="-6.85566875" dx="1.8" dy="1.8" layer="1" rot="R90"/>
+<smd name="SH4" x="8.382" y="-6.731" dx="1.8" dy="1.8" layer="1" rot="R90"/>
+<smd name="9" x="6.472165625" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="8" x="5.3768" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="7" x="4.28144375" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="6" x="3.186" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="5" x="2.09071875" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="4" x="0.995" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="3" x="-0.085" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="2" x="-1.195359375" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+<smd name="1" x="-2.2907" y="-7.5" dx="0.673196875" dy="1.804125" layer="1"/>
+</package>
+</packages>
+<symbols>
+<symbol name="SD_SLOT">
+<pin name="NC_1" x="-15.24" y="20.32" length="middle"/>
+<pin name="CS" x="-15.24" y="17.78" length="middle"/>
+<pin name="MOSI" x="-15.24" y="15.24" length="middle"/>
+<pin name="VDD" x="-15.24" y="12.7" length="middle"/>
+<pin name="SCK" x="-15.24" y="10.16" length="middle"/>
+<pin name="GND" x="-15.24" y="7.62" length="middle"/>
+<pin name="MISO" x="-15.24" y="5.08" length="middle"/>
+<pin name="NC_2" x="-15.24" y="2.54" length="middle"/>
+<pin name="SWITCH" x="-15.24" y="0" length="middle"/>
+<pin name="SHIELD" x="-15.24" y="-2.54" length="middle"/>
+<wire x1="-12.7" y1="22.86" x2="-12.7" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="-12.7" y1="-5.08" x2="2.54" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="2.54" y1="-5.08" x2="2.54" y2="22.86" width="0.254" layer="94"/>
+<wire x1="2.54" y1="22.86" x2="-12.7" y2="22.86" width="0.254" layer="94"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="SD_SLOT">
+<gates>
+<gate name="G$1" symbol="SD_SLOT" x="5.08" y="-7.62"/>
+</gates>
+<devices>
+<device name="" package="SD_SLOT">
+<connects>
+<connect gate="G$1" pin="CS" pad="2"/>
+<connect gate="G$1" pin="GND" pad="6"/>
+<connect gate="G$1" pin="MISO" pad="7"/>
+<connect gate="G$1" pin="MOSI" pad="3"/>
+<connect gate="G$1" pin="NC_1" pad="1"/>
+<connect gate="G$1" pin="NC_2" pad="8"/>
+<connect gate="G$1" pin="SCK" pad="5"/>
+<connect gate="G$1" pin="SHIELD" pad="SH1 SH2 SH3 SH4"/>
+<connect gate="G$1" pin="SWITCH" pad="9"/>
+<connect gate="G$1" pin="VDD" pad="4"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -8869,6 +8936,11 @@ Source: AVX .. aphvc.pdf</description>
 <part name="GND6" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="C1" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="C-EU" device="C0603" package3d_urn="urn:adsk.eagle:package:23616/2"/>
 <part name="+3V2" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+3V3" device=""/>
+<part name="U$1" library="sd_slot" deviceset="SD_SLOT" device=""/>
+<part name="GND8" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
+<part name="+3V3" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+3V3" device=""/>
+<part name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="R0603" package3d_urn="urn:adsk.eagle:package:23555/3" value="10k"/>
+<part name="+3V5" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+3V3" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -8911,12 +8983,12 @@ Source: AVX .. aphvc.pdf</description>
 <instance part="GND1" gate="1" x="-12.7" y="-7.62" smashed="yes" grouprefs="USB_INTERFACE">
 <attribute name="VALUE" x="-12.7" y="-10.16" size="1.778" layer="96"/>
 </instance>
-<instance part="R_LED" gate="G$1" x="83.82" y="48.26" smashed="yes" rot="R180" grouprefs="MICROCONTROLLER">
-<attribute name="NAME" x="90.17" y="46.7614" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="87.63" y="51.562" size="1.778" layer="96" rot="R180"/>
+<instance part="R_LED" gate="G$1" x="104.14" y="48.26" smashed="yes" rot="R180" grouprefs="MICROCONTROLLER">
+<attribute name="NAME" x="110.49" y="46.7614" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="107.95" y="51.562" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="GND2" gate="1" x="71.12" y="48.26" smashed="yes" grouprefs="MICROCONTROLLER">
-<attribute name="VALUE" x="71.12" y="45.72" size="1.778" layer="96"/>
+<instance part="GND2" gate="1" x="91.44" y="48.26" smashed="yes" grouprefs="MICROCONTROLLER">
+<attribute name="VALUE" x="91.44" y="45.72" size="1.778" layer="96"/>
 </instance>
 <instance part="RELAYS" gate="A" x="10.16" y="-10.16" smashed="yes" rot="R180" grouprefs="RELAYS_INTERFACE">
 <attribute name="NAME" x="16.51" y="-18.415" size="1.778" layer="95" rot="R180"/>
@@ -8928,9 +9000,9 @@ Source: AVX .. aphvc.pdf</description>
 <instance part="P+4" gate="1" x="20.32" y="-2.54" smashed="yes" grouprefs="RELAYS_INTERFACE">
 <attribute name="VALUE" x="17.78" y="-7.62" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="STATUS_LED" gate="G$1" x="96.52" y="48.26" smashed="yes" grouprefs="MICROCONTROLLER">
-<attribute name="NAME" x="90.17" y="53.975" size="1.778" layer="95"/>
-<attribute name="VALUE" x="90.17" y="43.18" size="1.778" layer="96"/>
+<instance part="STATUS_LED" gate="G$1" x="116.84" y="48.26" smashed="yes" grouprefs="MICROCONTROLLER">
+<attribute name="NAME" x="110.49" y="53.975" size="1.778" layer="95"/>
+<attribute name="VALUE" x="110.49" y="43.18" size="1.778" layer="96"/>
 </instance>
 <instance part="U2" gate="G$1" x="40.64" y="50.8" smashed="yes" grouprefs="MICROCONTROLLER">
 <attribute name="NAME" x="25.6041" y="82.3945" size="1.778" layer="95"/>
@@ -8955,6 +9027,20 @@ Source: AVX .. aphvc.pdf</description>
 </instance>
 <instance part="+3V2" gate="G$1" x="17.78" y="88.9" smashed="yes">
 <attribute name="VALUE" x="15.24" y="83.82" size="1.778" layer="96" rot="R90"/>
+</instance>
+<instance part="U$1" gate="G$1" x="170.18" y="40.64" smashed="yes" grouprefs="MICROCONTROLLER"/>
+<instance part="GND8" gate="1" x="149.86" y="30.48" smashed="yes" grouprefs="MICROCONTROLLER">
+<attribute name="VALUE" x="149.86" y="27.94" size="1.778" layer="96"/>
+</instance>
+<instance part="+3V3" gate="G$1" x="149.86" y="68.58" smashed="yes" grouprefs="MICROCONTROLLER">
+<attribute name="VALUE" x="147.32" y="63.5" size="1.778" layer="96" rot="R90"/>
+</instance>
+<instance part="R2" gate="G$1" x="142.24" y="40.64" smashed="yes" grouprefs="MICROCONTROLLER">
+<attribute name="NAME" x="138.43" y="42.1386" size="1.778" layer="95"/>
+<attribute name="VALUE" x="138.43" y="37.338" size="1.778" layer="96"/>
+</instance>
+<instance part="+3V5" gate="G$1" x="134.62" y="45.72" smashed="yes" grouprefs="MICROCONTROLLER">
+<attribute name="VALUE" x="132.08" y="40.64" size="1.778" layer="96" rot="R90"/>
 </instance>
 </instances>
 <busses>
@@ -8985,7 +9071,7 @@ Source: AVX .. aphvc.pdf</description>
 <segment>
 <pinref part="STATUS_LED" gate="G$1" pin="1"/>
 <pinref part="GND2" gate="1" pin="GND"/>
-<wire x1="93.98" y1="50.8" x2="71.12" y2="50.8" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="114.3" y1="50.8" x2="91.44" y2="50.8" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 </segment>
 <segment>
 <pinref part="U2" gate="G$1" pin="GND"/>
@@ -8997,6 +9083,16 @@ Source: AVX .. aphvc.pdf</description>
 <wire x1="86.36" y1="71.12" x2="91.44" y2="71.12" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 <wire x1="91.44" y1="71.12" x2="91.44" y2="68.58" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 <pinref part="GND6" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="U$1" gate="G$1" pin="SHIELD"/>
+<wire x1="154.94" y1="38.1" x2="149.86" y2="38.1" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<pinref part="GND8" gate="1" pin="GND"/>
+<wire x1="149.86" y1="38.1" x2="149.86" y2="33.02" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<pinref part="U$1" gate="G$1" pin="GND"/>
+<wire x1="154.94" y1="48.26" x2="149.86" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="149.86" y1="48.26" x2="149.86" y2="38.1" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<junction x="149.86" y="38.1" grouprefs="MICROCONTROLLER"/>
 </segment>
 </net>
 <net name="+5V" class="0">
@@ -9044,6 +9140,18 @@ Source: AVX .. aphvc.pdf</description>
 <pinref part="+3V2" gate="G$1" pin="+3V3"/>
 <pinref part="C1" gate="G$1" pin="1"/>
 <wire x1="17.78" y1="86.36" x2="17.78" y2="83.82" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="+3V3" gate="G$1" pin="+3V3"/>
+<pinref part="U$1" gate="G$1" pin="VDD"/>
+<wire x1="149.86" y1="66.04" x2="149.86" y2="53.34" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="149.86" y1="53.34" x2="154.94" y2="53.34" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+</segment>
+<segment>
+<pinref part="+3V5" gate="G$1" pin="+3V3"/>
+<pinref part="R2" gate="G$1" pin="1"/>
+<wire x1="134.62" y1="43.18" x2="134.62" y2="40.64" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="134.62" y1="40.64" x2="137.16" y2="40.64" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 </segment>
 </net>
 <net name="TX" class="0">
@@ -9138,16 +9246,16 @@ Source: AVX .. aphvc.pdf</description>
 <segment>
 <pinref part="R_LED" gate="G$1" pin="1"/>
 <pinref part="STATUS_LED" gate="G$1" pin="2"/>
-<wire x1="88.9" y1="48.26" x2="93.98" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="109.22" y1="48.26" x2="114.3" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 </segment>
 </net>
 <net name="N$2" class="0">
 <segment>
 <pinref part="R_LED" gate="G$1" pin="2"/>
-<wire x1="76.2" y1="48.26" x2="78.74" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="96.52" y1="48.26" x2="99.06" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 <pinref part="U2" gate="G$1" pin="IO22"/>
-<wire x1="60.96" y1="40.64" x2="76.2" y2="40.64" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
-<wire x1="76.2" y1="40.64" x2="76.2" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="60.96" y1="40.64" x2="96.52" y2="40.64" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<wire x1="96.52" y1="40.64" x2="96.52" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
 </segment>
 </net>
 <net name="N$3" class="0">
@@ -9155,6 +9263,70 @@ Source: AVX .. aphvc.pdf</description>
 <pinref part="U2" gate="G$1" pin="IO2"/>
 <pinref part="R1" gate="G$1" pin="1"/>
 <wire x1="60.96" y1="71.12" x2="76.2" y2="71.12" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+</segment>
+</net>
+<net name="~SWITCH" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="SWITCH"/>
+<wire x1="154.94" y1="40.64" x2="147.32" y2="40.64" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<pinref part="R2" gate="G$1" pin="2"/>
+<wire x1="147.32" y1="40.64" x2="147.32" y2="35.56" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<junction x="147.32" y="40.64" grouprefs="MICROCONTROLLER"/>
+<wire x1="147.32" y1="35.56" x2="144.78" y2="35.56" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="144.78" y="35.56" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+<segment>
+<pinref part="U2" gate="G$1" pin="IO4"/>
+<wire x1="60.96" y1="68.58" x2="63.5" y2="68.58" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="63.5" y="68.58" size="1.778" layer="95" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+</net>
+<net name="MISO" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="MISO"/>
+<wire x1="154.94" y1="45.72" x2="147.32" y2="45.72" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="147.32" y="45.72" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+<segment>
+<pinref part="U2" gate="G$1" pin="IO19"/>
+<wire x1="60.96" y1="45.72" x2="63.5" y2="45.72" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="63.5" y="45.72" size="1.778" layer="95" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+</net>
+<net name="SCK" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="SCK"/>
+<wire x1="154.94" y1="50.8" x2="147.32" y2="50.8" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="147.32" y="50.8" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+<segment>
+<pinref part="U2" gate="G$1" pin="IO18"/>
+<wire x1="60.96" y1="48.26" x2="63.5" y2="48.26" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="63.5" y="48.26" size="1.778" layer="95" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+</net>
+<net name="MOSI" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="MOSI"/>
+<wire x1="154.94" y1="55.88" x2="147.32" y2="55.88" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="147.32" y="55.88" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+<segment>
+<pinref part="U2" gate="G$1" pin="IO23"/>
+<wire x1="60.96" y1="38.1" x2="63.5" y2="38.1" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="63.5" y="38.1" size="1.778" layer="95" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+</net>
+<net name="CS" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="CS"/>
+<wire x1="154.94" y1="58.42" x2="147.32" y2="58.42" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="147.32" y="58.42" size="1.778" layer="95" rot="R180" xref="yes" grouprefs="MICROCONTROLLER"/>
+</segment>
+<segment>
+<pinref part="U2" gate="G$1" pin="IO5"/>
+<wire x1="60.96" y1="66.04" x2="63.5" y2="66.04" width="0.1524" layer="91" grouprefs="MICROCONTROLLER"/>
+<label x="63.5" y="66.04" size="1.778" layer="95" xref="yes" grouprefs="MICROCONTROLLER"/>
 </segment>
 </net>
 </nets>
