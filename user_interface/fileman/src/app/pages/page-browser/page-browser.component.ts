@@ -22,12 +22,17 @@ export class PageBrowserComponent {
     private pathBarService: PathBarService,
     private fsService: WebSocketFsService,
   ) {
-    pathBarService.path$.subscribe(async (path) => {
-      fsService.connected$.subscribe(async (stat) => {
-        if (!stat) return;
-        this.files = await fsService.listDirectory(path);
+    pathBarService.path$.subscribe(path => {
+      fsService.connected$.subscribe(stat => {
+        if (stat)
+          fsService.listDirectory(path).subscribe(files => this.files = files);
       });
     });
+  }
+
+  deleteFile(file: IFSFile) {
+    const obs = file.isDirectory ? this.fsService.deleteDirectory(file.name) : this.fsService.deleteFile(file.name);
+    obs.subscribe(() => this.pathBarService.refresh());
   }
 
   fileClicked(file: IFSFile) {

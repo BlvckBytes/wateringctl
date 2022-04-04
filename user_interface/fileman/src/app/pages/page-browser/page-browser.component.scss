@@ -1,25 +1,22 @@
 :host {
-  display: grid;
-  grid-template-columns: repeat(3, 25%);
-  justify-content: space-evenly;
   padding-top: var(--spc-xxl);
-  row-gap: var(--spc-xl);
+  display: flex;
+  flex-direction: column;
 }
 
 .browser-entry {
-  text-align: center;
+  display: flex;
 
-  &__icon {
-    margin-bottom: var(--spc-sm);
+  &__delete {
+    display: inline-flex;
+    background: var(--warning);
+    border-radius: var(--br-sm);
+    width: 1.4rem;
+    height: 1.4rem;
   }
 
-  &__size {
-    font-size: var(--fs-p0);
-    margin-bottom: var(--spc-sm);
-  }
-
-  &__name {
+  &__name, &__size {
+    user-select: none;
     word-break: break-all;
-    font-weight: lighter;
   }
 }

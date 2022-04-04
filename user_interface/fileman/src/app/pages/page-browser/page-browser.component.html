@@ -1,13 +1,33 @@
-<div
-  *ngFor="let file of files"
-  class="browser-entry hv-c hv-c--col"
-  (click)="fileClicked(file)"
->
-  <img
-    class="svg svg--lg svg--primary browser-entry__icon"
-    src="graphics/{{file.isDirectory ? 'folder' : 'file'}}.svg"
-    alt="icon"
+<table class="row-table">
+  <tr>
+    <th>Type</th>
+    <th>Name</th>
+    <th>Size</th>
+    <th>Actions</th>
+  </tr>
+  <tr
+    *ngFor="let file of files"
+    (click)="fileClicked(file)"
   >
-  <p class="browser-entry__size">{{formatFileSize(file.size)}}</p>
-  <h2 class="browser-entry__name">{{getFileName(file)}}</h2>
-</div>
+    <td>
+      <img
+        class="svg svg--md svg--primary browser-entry__icon"
+        src="graphics/{{file.isDirectory ? 'folder' : 'file'}}.svg"
+        alt="icon"
+      >
+    </td>
+    <td>
+      <p class="browser-entry__name">{{getFileName(file)}}</p>
+    </td>
+    <td>
+      <p class="browser-entry__size">{{formatFileSize(file.size)}}</p>
+    </td>
+    <td>
+      <app-button
+        color="warning"
+        (click)="deleteFile(file); $event.stopPropagation()"
+        icon="trash.svg"
+      ></app-button>
+    </td>
+  </tr>
+</table>

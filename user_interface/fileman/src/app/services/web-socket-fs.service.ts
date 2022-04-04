@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, takeUntil, takeWhile } from 'rxjs';
 import { IFSFile } from '../models/fs-file.interface';
 import { EWSFSResp } from '../models/ws-fs-response.enum';
 
@@ -24,7 +24,10 @@ export class WebSocketFsService {
   private _connected = new BehaviorSubject<boolean>(false);
 
   get connected$() {
-    return this._connected.asObservable();
+    return this._connected
+      .pipe(
+        takeWhile(it => it === false, true)
+      );
   }
 
   constructor(
@@ -41,12 +44,12 @@ export class WebSocketFsService {
   ============================================================================
   */
 
-  listDirectory(path: string): Promise<IFSFile[]> {
-    return new Promise(res => {
+  listDirectory(path: string): Observable<IFSFile[]> {
+    return new Observable(obs => {
       this._recipient = (async (data) => {
         this._recipient = null;
         const jsn = JSON.parse(await data.text());
-        res(jsn.items as IFSFile[]);
+        obs.next(jsn.items as IFSFile[]);
       });
 
       this.send(this._encoder.encode(`FETCH;${path};true`));
@@ -71,6 +74,42 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`WRITE;${path}/${directory};true`));
+    });
+  }
+
+  /*
+  ============================================================================
+                                     DELETE                                     
+  ============================================================================
+  */
+
+  deleteDirectory(path: string): Observable<void> {
+    return new Observable(obs => {
+      this._recipient = (async (data) => {
+        this._recipient = null;
+        const resp = this._decoder.decode(await data.arrayBuffer());
+        if (resp == EWSFSResp.WSFS_DELETED)
+          obs.next();
+        else
+          obs.error(resp);
+      });
+
+      this.send(this._encoder.encode(`DELETE;${path};true`));
+    });
+  }
+
+  deleteFile(path: string): Observable<void> {
+    return new Observable(obs => {
+      this._recipient = (async (data) => {
+        this._recipient = null;
+        const resp = this._decoder.decode(await data.arrayBuffer());
+        if (resp == EWSFSResp.WSFS_DELETED)
+          obs.next();
+        else
+          obs.error(resp);
+      });
+
+      this.send(this._encoder.encode(`DELETE;${path};false`));
     });
   }
 
