@@ -12,7 +12,7 @@ import { INavigatorLink } from './navigatior-link.interface';
 })
 export class NavigatorComponent implements OnDestroy {
 
-  private subs = new SubSink();
+  private _subs = new SubSink();
 
   currLang: ITranslationLanguage;
   currUrl = '/';
@@ -25,7 +25,7 @@ export class NavigatorComponent implements OnDestroy {
     router: Router,
     private langService: LanguageService,
   ) {
-    this.subs.sink = router.events.subscribe(re => {
+    this._subs.sink = router.events.subscribe(re => {
       if (!(re instanceof NavigationEnd)) return;
       this.currUrl = re.urlAfterRedirects;
     });
@@ -39,6 +39,6 @@ export class NavigatorComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.subs.unsubscribe();
+    this._subs.unsubscribe();
   }
 }

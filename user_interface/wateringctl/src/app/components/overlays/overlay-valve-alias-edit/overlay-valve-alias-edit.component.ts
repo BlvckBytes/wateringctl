@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { IValve } from 'src/app/models/valve.interface';
 import { KeyEventsService } from 'src/app/services/key-events.service';
@@ -10,9 +10,9 @@ import { SubSink } from 'subsink';
   templateUrl: './overlay-valve-alias-edit.component.html',
   styleUrls: ['./overlay-valve-alias-edit.component.scss']
 })
-export class OverlayValveAliasEditComponent {
+export class OverlayValveAliasEditComponent implements OnDestroy {
 
-  private subs = new SubSink();
+  private _subs = new SubSink();
 
   newAlias: FormControl;
   @Input() valve?: IValve = undefined;
@@ -26,10 +26,14 @@ export class OverlayValveAliasEditComponent {
       Validators.required, Validators.minLength(3), Validators.maxLength(16)
     ]);
 
-    this.subs.sink = keysService.key$.subscribe(e => {
+    this._subs.sink = keysService.key$.subscribe(e => {
       if (e.key !== 'Enter') return;
       this.save();
     });
+  }
+
+  ngOnDestroy(): void {
+    this._subs.unsubscribe();
   }
 
   save() {

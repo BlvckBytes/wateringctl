@@ -10,14 +10,14 @@ import { SubSink } from 'subsink';
 })
 export class OverlayStackComponent implements OnDestroy {
 
-  private subs = new SubSink();
+  private _subs = new SubSink();
 
   constructor(
     overlaysS: OverlaysService,
     keyS: KeyEventsService,
     ref: ElementRef
   ) {
-    this.subs.sink = overlaysS.overlays$.subscribe(i => {
+    this._subs.sink = overlaysS.overlays$.subscribe(i => {
       const h = ref.nativeElement;
 
       // Clear holder
@@ -44,13 +44,13 @@ export class OverlayStackComponent implements OnDestroy {
     });
 
     // Listen for escape key hits
-    this.subs.sink = keyS.key$.subscribe(e => {
+    this._subs.sink = keyS.key$.subscribe(e => {
       if (e.key !== 'Escape') return;
       overlaysS.destroyLatest();
     });
   }
 
   ngOnDestroy(): void {
-    this.subs.unsubscribe();
+    this._subs.unsubscribe();
   }
 }

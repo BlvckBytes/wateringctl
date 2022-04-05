@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { IInterval } from 'src/app/models/interval.interface';
 import { IValve } from 'src/app/models/valve.interface';
@@ -12,9 +12,9 @@ import { SubSink } from 'subsink';
   templateUrl: './overlay-interval-target-edit.component.html',
   styleUrls: ['./overlay-interval-target-edit.component.scss']
 })
-export class OverlayIntervalTargetEditComponent {
+export class OverlayIntervalTargetEditComponent implements OnDestroy {
 
-  private subs = new SubSink();
+  private _subs = new SubSink();
 
   newTarget: FormControl;
   @Input() interval?: IInterval = undefined;
@@ -30,10 +30,14 @@ export class OverlayIntervalTargetEditComponent {
       Validators.required, Validators.minLength(3), Validators.maxLength(16)
     ]);
 
-    this.subs.sink = keysService.key$.subscribe(e => {
+    this._subs.sink = keysService.key$.subscribe(e => {
       if (e.key !== 'Enter') return;
       this.save();
     });
+  }
+
+  ngOnDestroy(): void {
+    this._subs.unsubscribe();
   }
   
   save() {
