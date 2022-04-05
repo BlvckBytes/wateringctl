@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, DoCheck, HostBinding, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, AsyncValidatorFn, ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ValidationErrors } from '@angular/forms';
+import { AbstractControl, AsyncValidatorFn, FormControl, ValidationErrors } from '@angular/forms';
 import { BehaviorSubject, merge, Observable, of } from 'rxjs';
 import { distinctUntilChanged, skip, startWith } from 'rxjs/operators';
 import { SubSink } from 'subsink';
@@ -7,14 +7,7 @@ import { SubSink } from 'subsink';
 @Component({
   selector: 'app-textbox',
   templateUrl: './textbox.component.html',
-  styleUrls: ['./textbox.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: TextboxComponent,
-      multi: true,
-    }
-  ]
+  styleUrls: ['./textbox.component.scss']
 })
 export class TextboxComponent implements AfterViewInit, DoCheck, OnDestroy, OnInit {
 

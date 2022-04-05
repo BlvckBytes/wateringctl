@@ -20,6 +20,8 @@
     "@angular/router": "~13.3.0",
     "@ngx-translate/core": "^14.0.0",
     "@ngx-translate/http-loader": "^7.0.0",
+    "@types/codemirror": "^5.60.5",
+    "codemirror": "^5.65.2",
     "ngx-dropzone": "^3.1.0",
     "rxjs": "~7.5.0",
     "subsink": "^1.0.2",

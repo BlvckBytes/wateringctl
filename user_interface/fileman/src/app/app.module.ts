@@ -12,11 +12,14 @@ import { OverlayStackComponent } from './components/overlay-stack/overlay-stack.
 import { OverlayFolderCreateComponent } from './components/overlays/overlay-folder-create/overlay-folder-create.component';
 import { OverlayFileUploadComponent } from './components/overlays/overlay-file-upload/overlay-file-upload.component';
 import { TextboxComponent } from './components/textbox/textbox.component';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { NgxDropzoneModule } from 'ngx-dropzone';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { CodemirrorComponent } from './components/codemirror/codemirror.component';
+
+import 'codemirror/mode/meta';
 
 @NgModule({
   declarations: [
@@ -31,11 +34,13 @@ import { AutofocusDirective } from './directives/autofocus.directive';
     OverlayFileUploadComponent,
     TextboxComponent,
     AutofocusDirective,
+    CodemirrorComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     ReactiveFormsModule,
+    FormsModule,
     HttpClientModule,
     NgxDropzoneModule,
     TranslateModule.forRoot({

@@ -4,4 +4,8 @@
   (click)="back()"
 ></app-button>
 
-<p>{{contents}}</p>
+<ngx-codemirror
+  #editor
+  [options]="editorOptions"
+  [ngModel]="contents"
+></ngx-codemirror>

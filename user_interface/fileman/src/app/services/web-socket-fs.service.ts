@@ -15,6 +15,7 @@ export class WebSocketFsService {
   private _ws?: WebSocket | null = null;
 
   private _taskStack: number[] = [];
+  private _taskTimeout = 10000;
 
   // Current incoming message recipient callback
   private _recipient: MessageRecipient | null = null;
@@ -59,7 +60,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`FETCH;${path};true`));
-      this._taskStack.push(this.loadingService.startTask(5000));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
     });
   }
 
@@ -103,7 +104,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`FETCH;${path};false`));
-      this._taskStack.push(this.loadingService.startTask(5000));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
     });
   }
 
@@ -140,7 +141,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`WRITE;${this.joinPaths(path, directory)};true`));
-      this._taskStack.push(this.loadingService.startTask(5000));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
     });
   }
 
@@ -164,7 +165,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`DELETE;${path};true`));
-      this._taskStack.push(this.loadingService.startTask(5000));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
     });
   }
 
@@ -182,7 +183,7 @@ export class WebSocketFsService {
       });
 
       this.send(this._encoder.encode(`DELETE;${path};false`));
-      this._taskStack.push(this.loadingService.startTask(5000));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
     });
   }
 
@@ -209,7 +210,7 @@ export class WebSocketFsService {
     console.log('outbound:', new TextDecoder().decode(data));
   }
 
-  private onReceive(e: MessageEvent) {
+  private async onReceive(e: MessageEvent) {
     // No one's listening
     if (!this._recipient)
       return;
