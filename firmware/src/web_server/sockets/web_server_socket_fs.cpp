@@ -88,7 +88,7 @@ INLINED static bool web_server_socket_fs_preproc_existing_file_request(
 
 static void web_server_socket_fs_proc_fetch_task(void *arg)
 {
-  scptr file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
+  file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
   File target = SD.open(req->path);
 
   // Transmit header first
@@ -104,6 +104,7 @@ static void web_server_socket_fs_proc_fetch_task(void *arg)
 
   // Delay between read/send iterations
   const TickType_t xDelay = 2 / portTICK_PERIOD_MS;
+  vTaskDelay(xDelay);
 
   size_t read;
   while ((read = target.read(read_buf, sizeof(read_buf))) > 0)
@@ -116,6 +117,8 @@ static void web_server_socket_fs_proc_fetch_task(void *arg)
 
   // Done transmitting
   target.close();
+  mman_dealloc(req);
+
   vTaskDelete(NULL);
 }
 
@@ -168,7 +171,7 @@ static void web_server_socket_fs_proc_fetch(
     "rec_fdel",                                   // Task name
     16384,                                        // Stack size (should be sufficient, I hope)
     mman_ref(req),                                // Parameter to the entry point
-    configMAX_PRIORITIES / 2,                     // Priority, keep it mid-ish
+    configMAX_PRIORITIES - 1,                     // Priority, keep it high
     NULL,                                         // Task handle output, don't care
     1                                             // On core 1 (main loop)
   );
@@ -298,6 +301,7 @@ static File web_server_socket_fs_proc_write(
   AsyncWebSocketClient *client,
   char *path,
   bool is_directory,
+  bool overwrite,
   uint8_t *file_data,
   size_t file_data_len,
   bool is_full_data
@@ -307,11 +311,18 @@ static File web_server_socket_fs_proc_write(
   File target = SD.open(path);
   if (target)
   {
-    web_server_socket_fs_respond_code(
-      client,
-      target.isDirectory() ? WSFS_DIR_EXISTS : WSFS_FILE_EXISTS
-    );
-    return File(NULL);
+    // Close file again
+    target.close();
+
+    // Not in overwrite mode
+    if (!overwrite)
+    {
+      web_server_socket_fs_respond_code(
+        client,
+        target.isDirectory() ? WSFS_DIR_EXISTS : WSFS_FILE_EXISTS
+      );
+      return File(NULL);
+    }
   }
 
   // Create directory if not exists
@@ -376,6 +387,10 @@ static void web_server_socket_fs_handle_data(
   size_t len
 )
 {
+  // Ignore empty requests
+  if (len == 0)
+    return;
+
   // Never accept non-binary data
   if (!(
     finf->opcode == WS_BINARY ||
@@ -383,13 +398,6 @@ static void web_server_socket_fs_handle_data(
   ))
   {
     web_server_socket_fs_respond_code(client, WSFS_NON_BINARY_DATA);
-    return;
-  }
-
-  // Never accept empty requests
-  if (finf->len == 0)
-  {
-    web_server_socket_fs_respond_code(client, WSFS_EMPTY_REQUEST);
     return;
   }
 
@@ -424,12 +432,14 @@ static void web_server_socket_fs_handle_data(
       return;
     }
 
-    if (strncasecmp("write", cmd, strlen("write")) == 0)
+    bool is_overwrite = strncasecmp("overwrite", cmd, strlen("overwrite")) == 0;
+    if (strncasecmp("write", cmd, strlen("write")) == 0 || is_overwrite)
     {
       w_f = web_server_socket_fs_proc_write(
         client,
         path,
         is_directory_bool,
+        is_overwrite,
         &(data[data_offs]),
         data_offs >= len ? 0 : len - data_offs,
         finf->index + len == finf->len
