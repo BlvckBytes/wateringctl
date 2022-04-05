@@ -20,6 +20,7 @@ import { AutofocusDirective } from './directives/autofocus.directive';
 import { CodemirrorComponent } from './components/codemirror/codemirror.component';
 
 import 'codemirror/mode/meta';
+import { OverlayFileCreateComponent } from './components/overlays/overlay-file-create/overlay-file-create.component';
 
 @NgModule({
   declarations: [
@@ -35,6 +36,7 @@ import 'codemirror/mode/meta';
     TextboxComponent,
     AutofocusDirective,
     CodemirrorComponent,
+    OverlayFileCreateComponent,
   ],
   imports: [
     BrowserModule,

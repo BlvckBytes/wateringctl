@@ -1,6 +1,7 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import { OverlaysService } from 'src/app/services/overlays.service';
 import { PathBarService } from 'src/app/services/path-bar.service';
+import { OverlayFileCreateComponent } from '../overlays/overlay-file-create/overlay-file-create.component';
 import { OverlayFileUploadComponent } from '../overlays/overlay-file-upload/overlay-file-upload.component';
 import { OverlayFolderCreateComponent } from '../overlays/overlay-folder-create/overlay-folder-create.component';
 import { IPathPart } from './path-part.interface';
@@ -68,6 +69,16 @@ export class PathBarComponent {
 
     this.overlaysService.publish({
       component: OverlayFolderCreateComponent,
+      inputs: [],
+      userClosable: true,
+    });
+  }
+
+  openFileOverlay(): void {
+    if (this.disabled) return;
+
+    this.overlaysService.publish({
+      component: OverlayFileCreateComponent,
       inputs: [],
       userClosable: true,
     });

@@ -115,7 +115,7 @@ export class WebSocketFsService {
   ============================================================================
   */
 
-  private joinPaths(a: string, b: string): string {
+  joinPaths(a: string, b: string): string {
     const aTrailing = a.charAt(a.length - 1) == '/';
     const bLeading = b.charAt(0) == '/';
 
@@ -146,7 +146,7 @@ export class WebSocketFsService {
     });
   }
 
-  overwriteFile(path: string, contents: string): Observable<void> {
+  writeFile(path: string, contents: string, overwrite = false): Observable<void> {
     return new Observable(obs => {
       this._recipient = async (data) => {
         this.loadingService.finishTask(this._taskStack.pop());
@@ -159,7 +159,7 @@ export class WebSocketFsService {
           obs.error(resp);
       };
 
-      this.send(this._encoder.encode(`OVERWRITE;${path};false;${contents}`));
+      this.send(this._encoder.encode(`${overwrite ? 'OVERWRITE' : 'WRITE'};${path};false;${contents}`));
       this._taskStack.push(this.loadingService.startTask(this._taskTimeoutWriting));
     });
   }
