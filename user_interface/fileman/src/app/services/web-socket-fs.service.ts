@@ -15,7 +15,8 @@ export class WebSocketFsService {
   private _ws?: WebSocket | null = null;
 
   private _taskStack: number[] = [];
-  private _taskTimeout = 10000;
+  private _taskTimeout = 5000;
+  private _taskTimeoutWriting = 10000;
 
   // Current incoming message recipient callback
   private _recipient: MessageRecipient | null = null;
@@ -110,7 +111,7 @@ export class WebSocketFsService {
 
   /*
   ============================================================================
-                                    WRITE                                     
+                              WRITE / OVERWRITE                               
   ============================================================================
   */
 
@@ -142,6 +143,24 @@ export class WebSocketFsService {
 
       this.send(this._encoder.encode(`WRITE;${this.joinPaths(path, directory)};true`));
       this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
+    });
+  }
+
+  overwriteFile(path: string, contents: string): Observable<void> {
+    return new Observable(obs => {
+      this._recipient = async (data) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
+        this._recipient = null;
+        const resp = await data.text();
+        if (resp == EWSFSResp.WSFS_FILE_CREATED)
+          obs.next();
+        else
+          obs.error(resp);
+      };
+
+      this.send(this._encoder.encode(`OVERWRITE;${path};false;${contents}`));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeoutWriting));
     });
   }
 
@@ -207,7 +226,10 @@ export class WebSocketFsService {
       return;
 
     this._ws.send(data);
-    console.log('outbound:', new TextDecoder().decode(data));
+
+    const data_str = new TextDecoder().decode(data);
+    const cap = 100;
+    console.log('outbound:', data_str.length > cap ? data_str.substring(0, cap) : data_str);
   }
 
   private async onReceive(e: MessageEvent) {
@@ -218,6 +240,10 @@ export class WebSocketFsService {
     // Shouldn't receive any non-binary data
     if (!(e.data instanceof Blob))
       return;
+
+    const data_str = await e.data.text();
+    const cap = 100;
+    console.log(data_str.length > cap ? data_str.substring(0, cap) : data_str);
 
     await this._recipient(e.data);
   }

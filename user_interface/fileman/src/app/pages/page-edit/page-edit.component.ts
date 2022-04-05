@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { WebSocketFsService } from 'src/app/services/web-socket-fs.service';
 import { Location } from '@angular/common'
 import * as CodeMirror from 'codemirror';
+import { getFileName } from 'src/app/models/fs-file.interface';
 
 @Component({
   selector: 'app-page-edit',
@@ -12,7 +13,12 @@ import * as CodeMirror from 'codemirror';
 export class PageEditComponent implements OnInit {
 
   contents: string = '';
-  fileName: string = '';
+  saveable = false;
+
+  private _fileName: string = '';
+  get fileName(): string {
+    return getFileName(this._fileName);
+  }
 
   editorOptions = {
     lineNumbers: true,
@@ -29,10 +35,10 @@ export class PageEditComponent implements OnInit {
 
   private loadContents(file: string) {
     // Keep name for displaying
-    this.fileName = file;
+    this._fileName = file;
 
     // Set the editor-mode based on the file's extension
-    const extension = this.fileName.substring(this.fileName.lastIndexOf('.') + 1);
+    const extension = this._fileName.substring(this._fileName.lastIndexOf('.') + 1);
     this.editorOptions.mode = CodeMirror.findModeByExtension(extension)?.mode || '';
 
     // Load file contents
@@ -47,7 +53,21 @@ export class PageEditComponent implements OnInit {
     });
   }
 
+  contentChanged(value: string) {
+    this.contents = value;
+    this.saveable = true;
+  }
+
   back() {
     this.loc.back();
+  }
+
+  save() {
+    if (!this.saveable)
+      return;
+    
+    this.fsService.overwriteFile(this._fileName, this.contents).subscribe(() => {
+      this.saveable = false;
+    });
   }
 }

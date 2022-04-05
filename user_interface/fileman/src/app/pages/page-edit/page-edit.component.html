@@ -1,11 +1,33 @@
-<app-button
-  color="success"
-  icon="back.svg"
-  (click)="back()"
-></app-button>
+<div class="target-display hv-c hv-c--col hv-c--spc-lg">
+
+  <div class="hv-c hv-c--col hv-c--spc-sm">
+    <img
+      class="svg svg--lg svg--primary"
+      src="graphics/file.svg"
+      alt="icon"
+    >
+    <p>{{fileName}}</p>
+  </div>
+
+  <div class="hv-c hv-c--spc-sm">
+    <app-button
+      color="success"
+      icon="back.svg"
+      (click)="back()"
+    ></app-button>
+
+    <app-button
+      [color]="saveable ? 'success' : 'beige'"
+      icon="save.svg"
+      (click)="save()"
+    ></app-button>
+  </div>
+</div>
+
 
 <ngx-codemirror
   #editor
   [options]="editorOptions"
   [ngModel]="contents"
+  (ngModelChange)="contentChanged($event)"
 ></ngx-codemirror>

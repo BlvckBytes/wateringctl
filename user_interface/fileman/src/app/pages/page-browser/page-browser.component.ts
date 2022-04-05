@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { IFSFile } from 'src/app/models/fs-file.interface';
+import { getFileName, IFSFile } from 'src/app/models/fs-file.interface';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PathBarService } from 'src/app/services/path-bar.service';
 import { WebSocketFsService } from 'src/app/services/web-socket-fs.service';
@@ -15,13 +15,7 @@ export class PageBrowserComponent implements OnDestroy {
 
   private _subs = new SubSink();
 
-  files: IFSFile[] = [
-    { isDirectory: false, name: '/a.txt', size: 10 },
-    { isDirectory: false, name: '/b.txt', size: 1500 },
-    { isDirectory: false, name: '/c.txt', size: 10238941 },
-    { isDirectory: true, name: '/dir_a', size: 88182 },
-    { isDirectory: true, name: '/dir_b', size: 9876781218 },
-  ];
+  files: IFSFile[] = [];
 
   constructor(
     private pathBarService: PathBarService,
@@ -30,9 +24,8 @@ export class PageBrowserComponent implements OnDestroy {
     private notificationsService: NotificationsService,
   ) {
     this._subs.sink = pathBarService.path$.subscribe(path => {
-      fsService.connected$.subscribe(stat => {
-        if (stat)
-          fsService.listDirectory(path).subscribe(files => this.files = files);
+      fsService.connected$.subscribe(() => {
+        fsService.listDirectory(path).subscribe(files => this.files = files);
       });
     });
   }
@@ -72,13 +65,8 @@ export class PageBrowserComponent implements OnDestroy {
     this.router.navigate(['/edit', file.name]);
   }
 
-  getFileName(file: IFSFile): string {
-    // No slash (should never occur)
-    if (!file.name.includes('/'))
-      return file.name;
-
-    // Get substring after last slash
-    return file.name.substring(file.name.lastIndexOf('/') + 1);
+  fileName(file: IFSFile) {
+    return getFileName(file.name);
   }
 
   formatFileSize(size: number): string {
