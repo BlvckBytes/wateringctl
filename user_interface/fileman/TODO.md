@@ -2,6 +2,6 @@
 
 - [ ] File upload
 - [x] File edit
-- [ ] File create
-- [ ] Error interceptor
-- [ ] Success notifications
+- [x] File create
+- [x] Error interceptor
+- [x] Success notifications

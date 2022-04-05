@@ -25,7 +25,7 @@
     <!-- Action buttons -->
     <div class="notification__buttons">
       <span
-        *ngFor="let button of item.buttons"
+        *ngFor="let button of item.buttons || []"
         class="notification__button"
         (click)="buttonClick(item, button)"
       >{{button.text}}</span>

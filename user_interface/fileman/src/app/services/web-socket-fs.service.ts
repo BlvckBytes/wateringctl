@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, filter, Observable, take } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, catchError, filter, Observable, ObservableInput, of, Subscriber, take, throwError } from 'rxjs';
 import { IFSFile } from '../models/fs-file.interface';
 import { EWSFSResp } from '../models/ws-fs-response.enum';
 import { LoadingIndicatorService } from './loading-indicator.service';
+import { NotificationsService } from './notifications.service';
 
 type MessageRecipient = (data: Blob) => Promise<void>;
 
@@ -37,11 +39,60 @@ export class WebSocketFsService {
 
   constructor(
     private loadingService: LoadingIndicatorService,
+    private notificationsService: NotificationsService,
+    private tranService: TranslateService,
   ) {
     this._path = 'ws://192.168.1.38:80/api/fs';
 
     // if (window.location.hostname !== 'localhost')
     //   this._path = `ws://${window.location.hostname}:${window.location.port}/api/fs`;
+  }
+
+
+  /*
+  ============================================================================
+                             Request Interceptor                              
+  ============================================================================
+  */
+
+  private interceptedResponse<T>(obs: (sub: Subscriber<T>) => void): Observable<T> {
+    return new Observable(obs)
+      .pipe(
+        catchError<any, any>(e => {
+          const headline = this.tranService.instant("fs_resp_err.headline");
+          const text_key = `fs_resp_err.${e}`;
+          let text = this.tranService.instant(text_key);
+
+          if (text === text_key)
+            text = this.tranService.instant("fs_resp_err.default");
+
+          this.notificationsService.publish({
+            headline,
+            text,
+            icon: 'warning.svg',
+            color: 'warning',
+            timeout: 2000,
+          });
+          return throwError(() => e);
+        })
+      );
+  }
+
+  private successNotification(code: EWSFSResp) {
+    const headline = this.tranService.instant("fs_resp_succ.headline");
+    const text_key = `fs_resp_succ.${code}`;
+    let text = this.tranService.instant(text_key);
+
+    if (text === text_key)
+      text = this.tranService.instant("fs_resp_succ.default");
+
+    this.notificationsService.publish({
+      headline,
+      text,
+      icon: 'tick.svg',
+      color: 'success',
+      timeout: 2000,
+    });
   }
 
   /*
@@ -51,13 +102,13 @@ export class WebSocketFsService {
   */
 
   listDirectory(path: string): Observable<IFSFile[]> {
-    return new Observable(obs => {
+    return this.interceptedResponse(sub => {
       this._recipient = async (data) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
         const jsn = JSON.parse(await data.text());
-        obs.next(jsn.items as IFSFile[]);
+        sub.next(jsn.items as IFSFile[]);
       };
 
       this.send(this._encoder.encode(`FETCH;${path};true`));
@@ -66,7 +117,7 @@ export class WebSocketFsService {
   }
 
   readFile(path: string): Observable<Uint8Array> {
-    return new Observable(obs => {
+    return this.interceptedResponse(sub => {
       let firstRecv = true;
       let recvSize: number | null = null;
       let fileConts = new Uint8Array(0);
@@ -80,7 +131,7 @@ export class WebSocketFsService {
 
           // Unsuccessful
           if (code !== EWSFSResp.WSFS_FILE_FOUND) {
-            obs.error(code);
+            sub.error(code);
             this._recipient = null;
             return;
           }
@@ -99,7 +150,7 @@ export class WebSocketFsService {
         if (fileConts.byteLength === recvSize) {
           this._recipient = null;
           this.loadingService.finishTask(this._taskStack.pop());
-          obs.next(fileConts);
+          sub.next(fileConts);
           return;
         }
       };
@@ -129,16 +180,17 @@ export class WebSocketFsService {
   }
 
   createDirectory(path: string, directory: string): Observable<void> {
-    return new Observable(obs => {
+    return this.interceptedResponse(sub => {
       this._recipient = async (data) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
         const resp = await data.text();
-        if (resp == EWSFSResp.WSFS_DIR_CREATED)
-          obs.next();
-        else
-          obs.error(resp);
+        if (resp == EWSFSResp.WSFS_DIR_CREATED) {
+          this.successNotification(resp);
+          sub.next();
+        } else
+          sub.error(resp);
       };
 
       this.send(this._encoder.encode(`WRITE;${this.joinPaths(path, directory)};true`));
@@ -147,16 +199,17 @@ export class WebSocketFsService {
   }
 
   writeFile(path: string, contents: string, overwrite = false): Observable<void> {
-    return new Observable(obs => {
+    return this.interceptedResponse(sub => {
       this._recipient = async (data) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
         const resp = await data.text();
-        if (resp == EWSFSResp.WSFS_FILE_CREATED)
-          obs.next();
-        else
-          obs.error(resp);
+        if (resp == EWSFSResp.WSFS_FILE_CREATED) {
+          this.successNotification(resp);
+          sub.next();
+        } else
+          sub.error(resp);
       };
 
       this.send(this._encoder.encode(`${overwrite ? 'OVERWRITE' : 'WRITE'};${path};false;${contents}`));
@@ -171,16 +224,17 @@ export class WebSocketFsService {
   */
 
   deleteDirectory(path: string): Observable<void> {
-    return new Observable(obs => {
+    return this.interceptedResponse(sub => {
       this._recipient = async (data) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
         const resp = await data.text();
-        if (resp == EWSFSResp.WSFS_DELETED)
-          obs.next();
-        else
-          obs.error(resp);
+        if (resp == EWSFSResp.WSFS_DELETED) {
+          this.successNotification(resp);
+          sub.next();
+        } else
+          sub.error(resp);
       };
 
       this.send(this._encoder.encode(`DELETE;${path};true`));
@@ -189,16 +243,16 @@ export class WebSocketFsService {
   }
 
   deleteFile(path: string): Observable<void> {
-    return new Observable(obs => {
+    return this.interceptedResponse(sub => {
       this._recipient = async (data) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
         const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DELETED)
-          obs.next();
+          sub.next();
         else
-          obs.error(resp);
+          sub.error(resp);
       };
 
       this.send(this._encoder.encode(`DELETE;${path};false`));

@@ -1,5 +1,18 @@
 {
   "textbox_errors": {
     "required": "Value required"
+  },
+  "fs_resp_err": {
+    "headline": "Request Error",
+    "default": "An internal error occurred",
+    "WSFS_FILE_EXISTS": "A file with this name already exists",
+    "WSFS_DIR_EXISTS": "A directory with this name already exists"
+  },
+  "fs_resp_succ": {
+    "headline": "Request Success",
+    "default": "The performed action was successful",
+    "WSFS_DIR_CREATED": "The directory has been created",
+    "WSFS_FILE_CREATED": "The file has been created",
+    "WSFS_DELETED": "The resource has been deleted"
   }
 }
