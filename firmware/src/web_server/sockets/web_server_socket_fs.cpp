@@ -311,9 +311,6 @@ static File web_server_socket_fs_proc_write(
   File target = SD.open(path);
   if (target)
   {
-    // Close file again
-    target.close();
-
     // Not in overwrite mode
     if (!overwrite)
     {
@@ -321,8 +318,12 @@ static File web_server_socket_fs_proc_write(
         client,
         target.isDirectory() ? WSFS_DIR_EXISTS : WSFS_FILE_EXISTS
       );
+
+      target.close();
       return File(NULL);
     }
+
+    target.close();
   }
 
   // Create directory if not exists
