@@ -5,6 +5,8 @@
   "fs_resp_err": {
     "headline": "Request Error",
     "default": "An internal error occurred",
+    "file_unreadable": "The file contents of {{name}} could not be read",
+    "file_invalid": "The file \"{{name}}\" is invalid and cannot be uploaded",
     "WSFS_FILE_EXISTS": "A file with this name already exists",
     "WSFS_DIR_EXISTS": "A directory with this name already exists"
   },

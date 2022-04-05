@@ -55,33 +55,37 @@ export class WebSocketFsService {
   ============================================================================
   */
 
+  spawnFsError(error: string, params?: any) {
+    const headline = this.tranService.instant("fs_resp_err.headline");
+    const text_key = `fs_resp_err.${error}`;
+    let text = this.tranService.instant(text_key, params);
+
+    if (text === text_key)
+      text = this.tranService.instant("fs_resp_err.default");
+
+    this.notificationsService.publish({
+      headline,
+      text,
+      icon: 'warning.svg',
+      color: 'warning',
+      timeout: 2500,
+    });
+  }
+
   private interceptedResponse<T>(obs: (sub: Subscriber<T>) => void): Observable<T> {
     return new Observable(obs)
       .pipe(
         catchError<any, any>(e => {
-          const headline = this.tranService.instant("fs_resp_err.headline");
-          const text_key = `fs_resp_err.${e}`;
-          let text = this.tranService.instant(text_key);
-
-          if (text === text_key)
-            text = this.tranService.instant("fs_resp_err.default");
-
-          this.notificationsService.publish({
-            headline,
-            text,
-            icon: 'warning.svg',
-            color: 'warning',
-            timeout: 2000,
-          });
+          this.spawnFsError(e);
           return throwError(() => e);
         })
       );
   }
 
-  private successNotification(code: EWSFSResp) {
+  spawnFsSuccess(success: string, params?: any) {
     const headline = this.tranService.instant("fs_resp_succ.headline");
-    const text_key = `fs_resp_succ.${code}`;
-    let text = this.tranService.instant(text_key);
+    const text_key = `fs_resp_succ.${success}`;
+    let text = this.tranService.instant(text_key, params);
 
     if (text === text_key)
       text = this.tranService.instant("fs_resp_succ.default");
@@ -91,7 +95,7 @@ export class WebSocketFsService {
       text,
       icon: 'tick.svg',
       color: 'success',
-      timeout: 2000,
+      timeout: 2500,
     });
   }
 
@@ -187,7 +191,7 @@ export class WebSocketFsService {
         this._recipient = null;
         const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DIR_CREATED) {
-          this.successNotification(resp);
+          this.spawnFsSuccess(resp);
           sub.next();
         } else
           sub.error(resp);
@@ -206,7 +210,7 @@ export class WebSocketFsService {
         this._recipient = null;
         const resp = await data.text();
         if (resp == EWSFSResp.WSFS_FILE_CREATED) {
-          this.successNotification(resp);
+          this.spawnFsSuccess(resp);
           sub.next();
         } else
           sub.error(resp);
@@ -231,7 +235,7 @@ export class WebSocketFsService {
         this._recipient = null;
         const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DELETED) {
-          this.successNotification(resp);
+          this.spawnFsSuccess(resp);
           sub.next();
         } else
           sub.error(resp);

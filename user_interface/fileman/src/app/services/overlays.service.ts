@@ -1,4 +1,5 @@
 import { ApplicationRef, ComponentFactoryResolver, ComponentRef, Injectable, Injector } from '@angular/core';
+import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { IOverlay } from '../models/overlay.interface';
 
@@ -16,7 +17,14 @@ export class OverlaysService {
     private compFacRes: ComponentFactoryResolver,
     private inj: Injector,
     private appRef: ApplicationRef,
-  ) {}
+    router: Router,
+  ) {
+    // Remove overlays on navigation
+    router.events.subscribe(e => {
+      if(e instanceof NavigationStart)
+        this.destroyAll();
+    });
+  }
 
   get overlays$() {
     return this._overlays$.asObservable();
@@ -90,5 +98,10 @@ export class OverlaysService {
     if (byUser && !latest[0].userClosable) return false;
 
     return this.destroy(latest);
+  }
+
+  destroyAll(): void {
+    for (const item of this.items)
+      this.destroy(item);
   }
 }
