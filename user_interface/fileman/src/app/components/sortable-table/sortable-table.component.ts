@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, ComponentFactoryResolver, DoCheck, EmbeddedViewRef, Injector, Input, IterableDiffer, IterableDiffers, KeyValueDiffers, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ApplicationRef, Component, ComponentFactoryResolver, DoCheck, EmbeddedViewRef, EventEmitter, Injector, Input, IterableDiffer, IterableDiffers, KeyValueDiffers, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IStatePersistable } from 'src/app/models/state-persistable.interface';
 import { ComponentStateService } from 'src/app/services/component-state.service';
@@ -66,6 +66,8 @@ export class SortableTableComponent implements OnDestroy, DoCheck, OnInit, IStat
   */
 
   @Input() markEmpty?: string;           // Text of the row that marks an empty table
+  @Input() externalSoring = false;       // Whether or not to disable internal sorting
+  @Input() columnPrecedence: 'left-to-right' | 'right-to-left' = 'left-to-right';
 
   // Token to use for persisting the sort state
   @Input() set stateTokenDesc(v: string) {
@@ -95,6 +97,14 @@ export class SortableTableComponent implements OnDestroy, DoCheck, OnInit, IStat
     // Sort
     this.generateRowSortedIndices();
   }
+
+  /*
+  ============================================================================
+                                     Outputs                                  
+  ============================================================================
+  */
+
+  @Output() sorted = new EventEmitter<void>();
 
   /*
   ============================================================================
@@ -238,16 +248,20 @@ export class SortableTableComponent implements OnDestroy, DoCheck, OnInit, IStat
 
   private compareRows(a: ISortableRow, b: ISortableRow): number {
 
-    let colIndex = 0;
+    const l2r = this.columnPrecedence === 'left-to-right';
+    let colIndex = l2r ? 0 : this._columns.length - 1;
     let result = 0;
 
     // Loop all columns
     while(
       result === 0 &&                     // While the current result means "equal"
-      (colIndex < this._columns.length)   // And there are still columns left
+      (                                   // And there are still columns left
+        colIndex < this._columns.length &&
+        colIndex >= 0
+      )
     ) {
       // Get currently pointed at column
-      const currIndex = colIndex++;
+      const currIndex = l2r ? colIndex++ : colIndex--;
       const col = this._columns[currIndex];
 
       // This column has no effect on sorting
@@ -288,12 +302,17 @@ export class SortableTableComponent implements OnDestroy, DoCheck, OnInit, IStat
   }
 
   private generateRowSortedIndices() {
-    this._rowSortedIndices = [...Array(this._rows.length).keys()]
-      .sort((a, b) => {
-        const aRow = this._rows[a];
-        const bRow = this._rows[b];
-        return this.compareRows(aRow, bRow);
-      });
+    // Generate 1:1 indices without sorting yet
+    this._rowSortedIndices = [...Array(this._rows.length).keys()];
+
+    // Only apply index sorting if external sorting is not active
+    if (!this.externalSoring) {
+      this._rowSortedIndices.sort((a, b) => {
+          const aRow = this._rows[a];
+          const bRow = this._rows[b];
+          return this.compareRows(aRow, bRow);
+        });
+    }
   }
 
   resolveColumnName(column: ISortableColumn<any>): string {
@@ -318,6 +337,10 @@ export class SortableTableComponent implements OnDestroy, DoCheck, OnInit, IStat
       column.currentDirection = 'desc';
     else if (column.currentDirection == 'desc')
       column.currentDirection = 'none';
+
+    // Emit after altering the directions if external sorting is active
+    if (this.externalSoring)
+      this.sorted.next();
 
      // Persist sorting state
     this.stateService.save(this);
