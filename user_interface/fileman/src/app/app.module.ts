@@ -21,6 +21,10 @@ import { CodemirrorComponent } from './components/codemirror/codemirror.componen
 
 import 'codemirror/mode/meta';
 import { OverlayFileCreateComponent } from './components/overlays/overlay-file-create/overlay-file-create.component';
+import { SortableTableComponent } from './components/sortable-table/sortable-table.component';
+import { BrowserFileActionsComponent } from './pages/page-browser/browser-file-actions/browser-file-actions.component';
+import { NgViewInitDirective } from './directives/ng-view-init.directive';
+import { BrowserFileIconComponent } from './pages/page-browser/browser-file-icon/browser-file-icon.component';
 
 @NgModule({
   declarations: [
@@ -37,6 +41,10 @@ import { OverlayFileCreateComponent } from './components/overlays/overlay-file-c
     AutofocusDirective,
     CodemirrorComponent,
     OverlayFileCreateComponent,
+    SortableTableComponent,
+    BrowserFileActionsComponent,
+    NgViewInitDirective,
+    BrowserFileIconComponent,
   ],
   imports: [
     BrowserModule,

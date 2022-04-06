@@ -1,0 +1,65 @@
+<table class="table">
+  <!-- Table header -->
+  <tr class="table__row">
+
+    <!-- Individual table columns -->
+    <th
+      *ngFor="let column of columns"
+      class="table__header"
+      (click)="cycleColumnSort(column)"
+    >
+      <div class="hv-c hv-c--spc-sm">
+
+        <!-- Column title -->
+        <p class="table__header__text">{{resolveColumnName(column)}}</p>
+
+        <!-- Sorting direction icon -->
+        <img
+          *ngIf="column.sortable"
+          class="svg svg--xs table__header__icon"
+          [class.table__header__icon--flipped]="column.currentDirection === 'asc'"
+          src="graphics/{{column.currentDirection == 'none' ? 'minus' : 'dropdown'}}.svg"
+          alt="sorting direction"
+        >
+      </div>
+    </th>
+  </tr>
+
+  <!-- Table rows -->
+  <tr
+    *ngFor="let row of rows"
+    class="table__row"
+    (click)="$event.stopPropagation(); row.clicked?.();"
+  >
+    <!-- Individual row cells -->
+    <td
+      *ngFor="let cell of row.cells; let i = index"
+      (click)="cellClicked(cell, $event)"
+      class="table__data"
+    >
+      <!-- Immediate value present -->
+      <p
+        *ngIf="!cell.isValueComponent"
+        class="table__data__text"
+        [class.table__data__text--break-all]="isCellBreakAll(i)"
+        [class.table__data__text--unselectable]="!isCellSelectable(i)"
+      >{{resolveCellValue(i, cell)}}</p>
+
+      <div
+        #cellContainer
+        class="table__data__component-wrapper"
+        (ngViewInit)="renderComponent(cell, cellContainer)"
+      >
+      </div>
+    </td>
+  </tr>
+
+  <tr
+    *ngIf="markEmpty"
+    class="table__row--mark-empty"
+  >
+    <td class="table__data" colspan="100%">
+      <p>{{markEmpty}}</p>
+    </td>
+  </tr>
+</table>

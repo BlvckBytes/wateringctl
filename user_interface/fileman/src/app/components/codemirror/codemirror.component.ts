@@ -105,9 +105,9 @@ export class CodemirrorComponent
   set options(value: { [key: string]: any }) {
     this._options = value;
 
-    // Create kv differ initially
-    if (!this._optionsDiffer && value)
-      this._optionsDiffer = this._differs.find(value).create();
+    // Create kv differ
+    if (value)
+      this._optionsDiffer = this._kvDiffer.find(value).create();
   }
 
   /*
@@ -128,7 +128,7 @@ export class CodemirrorComponent
   */
 
   constructor(
-    private _differs: KeyValueDiffers,
+    private _kvDiffer: KeyValueDiffers,
     private _ngZone: NgZone
   ) {}
 

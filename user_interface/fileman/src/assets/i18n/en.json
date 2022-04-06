@@ -16,5 +16,13 @@
     "WSFS_DIR_CREATED": "The directory has been created",
     "WSFS_FILE_CREATED": "The file has been created",
     "WSFS_DELETED": "The resource has been deleted"
+  },
+  "browser_table": {
+    "columns": {
+      "type": "Type",
+      "name": "Name",
+      "size": "Size",
+      "actions": "Actions"
+    }
   }
 }

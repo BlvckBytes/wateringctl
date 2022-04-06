@@ -1,40 +1,6 @@
-<table class="row-table">
-  <tr>
-    <th>Type</th>
-    <th>Name</th>
-    <th>Size</th>
-    <th>Actions</th>
-  </tr>
-  <tr
-    *ngFor="let file of files"
-    (click)="fileClicked(file)"
-  >
-    <td>
-      <img
-        class="svg svg--md svg--primary browser-entry__icon"
-        src="graphics/{{file.isDirectory ? 'folder' : 'file'}}.svg"
-        alt="icon"
-      >
-    </td>
-    <td>
-      <p class="browser-entry__name">{{fileName(file)}}</p>
-    </td>
-    <td>
-      <p class="browser-entry__size">{{formatFileSize(file.size)}}</p>
-    </td>
-    <td>
-      <app-button
-        color="warning"
-        (click)="deleteFile(file); $event.stopPropagation()"
-        icon="trash.svg"
-      ></app-button>
-    </td>
-  </tr>
-  <tr
-    class="row-table__row--mark-empty"
-  >
-    <td colspan="100%">
-      <p>This folder is empty</p>
-    </td>
-  </tr>
-</table>
+<app-sortable-table
+  [columns]="columns"
+  [rows]="rows"
+  markEmpty="This folder is empty"
+  stateTokenDesc="file-browser"
+></app-sortable-table>

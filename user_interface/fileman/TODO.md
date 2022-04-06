@@ -5,4 +5,4 @@
 - [x] File create
 - [x] Error interceptor
 - [x] Success notifications
-- [ ] Sortable name and size columns
+- [x] Sortable name and size columns

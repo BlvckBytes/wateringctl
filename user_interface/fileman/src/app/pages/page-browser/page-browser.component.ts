@@ -1,10 +1,13 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { getFileName, IFSFile } from 'src/app/models/fs-file.interface';
-import { NotificationsService } from 'src/app/services/notifications.service';
+import { ISortableColumn } from 'src/app/components/sortable-table/sortable-column.interface';
+import { ISortableRow } from 'src/app/components/sortable-table/sortable-row.interface';
+import { formatFileSize, getFileName, IFSFile } from 'src/app/models/fs-file.interface';
 import { PathBarService } from 'src/app/services/path-bar.service';
 import { WebSocketFsService } from 'src/app/services/web-socket-fs.service';
 import { SubSink } from 'subsink';
+import { BrowserFileActionsComponent } from './browser-file-actions/browser-file-actions.component';
+import { BrowserFileIconComponent } from './browser-file-icon/browser-file-icon.component';
 
 @Component({
   selector: 'app-page-browser',
@@ -14,44 +17,54 @@ import { SubSink } from 'subsink';
 export class PageBrowserComponent implements OnDestroy {
 
   private _subs = new SubSink();
+  private _files: IFSFile[] = [];
 
-  files: IFSFile[] = [];
+  rows: ISortableRow[] = [];
+  columns: ISortableColumn<any>[] = [
+    <ISortableColumn<BrowserFileIconComponent>>{
+      name: 'browser_table.columns.type', translate: true, sortable: true,
+      sortFn: (a, b) => {
+        if (a.isDirectory === b.isDirectory) return 0;
+        return a.isDirectory ? 1 : -1;
+      }
+    },
+    { name: 'browser_table.columns.name', translate: true, sortable: true, break: true },
+    <ISortableColumn<number>>{
+      name: 'browser_table.columns.size', translate: true, sortable: true,
+      renderFn: (v) => formatFileSize(v),
+      sortFn: (a, b) => {
+        if (a == b) return 0;
+        return a > b ? 1 : -1;
+      }
+    },
+    { name: 'browser_table.columns.actions', translate: true },
+  ];
 
   constructor(
     private pathBarService: PathBarService,
-    private fsService: WebSocketFsService,
+    fsService: WebSocketFsService,
     private router: Router,
-    private notificationsService: NotificationsService,
   ) {
     this._subs.sink = pathBarService.path$.subscribe(path => {
       fsService.connected$.subscribe(() => {
-        fsService.listDirectory(path).subscribe(files => this.files = files);
+        fsService.listDirectory(path).subscribe(files => {
+          this._files = files;
+          this.adaptData();
+        });
       });
     });
   }
 
-  private confirmedFileDeletion(file: IFSFile) {
-    const obs = file.isDirectory ? this.fsService.deleteDirectory(file.name) : this.fsService.deleteFile(file.name);
-    obs.subscribe(() => this.pathBarService.refresh());
-  }
-
-  deleteFile(file: IFSFile) {
-    this.notificationsService.publish({
-      headline: 'Confirm Action',
-      text: 'Are you sure that you want to delete this file?',
-      color: 'warning',
-      icon: 'warning.svg',
-      destroyOnButtons: true,
-      buttons: [
-        {
-          text: 'Yes',
-          callback: () => this.confirmedFileDeletion(file),
-        },
-        {
-          text: 'No'
-        }
+  private adaptData() {
+    this.rows = this._files.map(file => (<ISortableRow>{
+      clicked: () => this.fileClicked(file),
+      cells: [
+        { value: BrowserFileIconComponent, isValueComponent: true, inputs: { isDirectory: file.isDirectory } },
+        { value: getFileName(file.name) },
+        { value: file.size },
+        { value: BrowserFileActionsComponent, isValueComponent: true, inputs: { file: file }},
       ]
-    });
+    }));
   }
 
   fileClicked(file: IFSFile) {
@@ -63,26 +76,6 @@ export class PageBrowserComponent implements OnDestroy {
 
     // Edit file
     this.router.navigate(['/edit', file.name]);
-  }
-
-  fileName(file: IFSFile) {
-    return getFileName(file.name);
-  }
-
-  formatFileSize(size: number): string {
-    const gib = size / (1024 ** 3);
-    if (gib >= 1)
-      return `${Math.round(gib * 100) / 100} GiB`;
-
-    const mib = size / (1024 ** 2);
-    if (mib >= 1)
-      return `${Math.round(mib * 100) / 100} MiB`;
-
-    const kib = size / (1024);
-    if (kib >= 1)
-      return `${Math.round(kib * 100) / 100} KiB`;
-
-    return `${size} Bytes`;
   }
 
   ngOnDestroy() {

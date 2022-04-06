@@ -100,6 +100,9 @@ export class OverlaysService {
     return this.destroy(latest);
   }
 
+  /**
+   * Destroy all available overlays on the stack
+   */
   destroyAll(): void {
     for (const item of this.items)
       this.destroy(item);
