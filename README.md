@@ -17,6 +17,8 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 
 ![enclosure_inside](readme_images/enclosure_inside.jpg)
 
+![terminal_box](readme_images/terminal_box.jpg)
+
 ![ui](readme_images/ui.png)
 
 ## Requirements
