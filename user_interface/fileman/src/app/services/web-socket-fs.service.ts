@@ -18,7 +18,7 @@ export class WebSocketFsService {
 
   private _taskStack: number[] = [];
   private _taskTimeout = 5000;
-  private _taskTimeoutWriting = 10000;
+  private _taskTimeoutWriting = 20000;
 
   // Current incoming message recipient callback
   private _recipient: MessageRecipient | null = null;
@@ -76,7 +76,8 @@ export class WebSocketFsService {
     return new Observable(obs)
       .pipe(
         catchError<any, any>(e => {
-          this.spawnFsError(e);
+          const ed = Array.isArray(e) ? e : [e];
+          this.spawnFsError(ed[0], { detail: ed.slice(1) });
           return throwError(() => e);
         })
       );
@@ -96,6 +97,32 @@ export class WebSocketFsService {
       icon: 'tick.svg',
       color: 'success',
       timeout: 2500,
+    });
+  }
+
+  /*
+  ============================================================================
+                                    UNTAR                                     
+  ============================================================================
+  */
+
+  untar(path: string): Observable<void> {
+    return this.interceptedResponse(sub => {
+      this._recipient = async (data) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
+        const res = (await data.text()).split(';');
+        if (res[0] === EWSFSResp.WSFS_UNTARED)
+          this.spawnFsSuccess(res[0]);
+        else
+          sub.error(res);
+
+        this._recipient = null;
+        sub.next();
+      };
+
+      this.send(this._encoder.encode(`UNTAR;${path}`));
+      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
     });
   }
 

@@ -5,17 +5,21 @@
   "fs_resp_err": {
     "headline": "Request Error",
     "default": "An internal error occurred",
-    "file_unreadable": "The file contents of {{name}} could not be read",
+    "file_unreadable": "The file contents of \"{{name}}\" could not be read",
     "file_invalid": "The file \"{{name}}\" is invalid and cannot be uploaded",
     "WSFS_FILE_EXISTS": "A file with this name already exists",
-    "WSFS_DIR_EXISTS": "A directory with this name already exists"
+    "WSFS_DIR_EXISTS": "A directory with this name already exists",
+    "WSFS_TAR_CORRUPTED": "The tar file is corrupted",
+    "WSFS_TAR_CHILD_NOT_CREATED": "The tar child-file \"{{ detail[0] }}\" could not be created, cancelled.",
+    "WSFS_TAR_INTERNAl": "An internal error occurred during unpacking"
   },
   "fs_resp_succ": {
     "headline": "Request Success",
     "default": "The performed action was successful",
     "WSFS_DIR_CREATED": "The directory has been created",
     "WSFS_FILE_CREATED": "The file has been created",
-    "WSFS_DELETED": "The resource has been deleted"
+    "WSFS_DELETED": "The resource has been deleted",
+    "WSFS_UNTARED": "The tar has been unpacked into the current directory"
   },
   "browser_table": {
     "columns": {

@@ -3,3 +3,10 @@
   (click)="deleteFile(); $event.stopPropagation()"
   icon="trash.svg"
 ></app-button>
+
+<app-button
+  *ngIf="isTar"
+  color="success"
+  (click)="untarFile(); $event.stopPropagation()"
+  icon="unpack.svg"
+></app-button>

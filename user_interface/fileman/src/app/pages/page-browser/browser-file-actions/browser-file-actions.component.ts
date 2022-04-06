@@ -13,6 +13,10 @@ export class BrowserFileActionsComponent {
 
   @Input() file?: IFSFile = undefined;
 
+  get isTar(): boolean {
+    return this.file?.name.endsWith('.tar') || false;
+  }
+
   constructor(
     private notificationsService: NotificationsService,
     private pathBarService: PathBarService,
@@ -41,6 +45,35 @@ export class BrowserFileActionsComponent {
         {
           text: 'Yes',
           callback: () => this.confirmedFileDeletion(),
+        },
+        {
+          text: 'No'
+        }
+      ]
+    });
+  }
+
+  private confirmedFileUntar() {
+    if (!this.file)
+      return;
+      
+    this.fsService.untar(this.file.name).subscribe(() => this.pathBarService.refresh());
+  }
+
+  untarFile() {
+    if (!this.file)
+      return;
+
+    this.notificationsService.publish({
+      headline: 'Confirm Action',
+      text: 'Are you sure that you want to untar this file?',
+      color: 'warning',
+      icon: 'warning.svg',
+      destroyOnButtons: true,
+      buttons: [
+        {
+          text: 'Yes',
+          callback: () => this.confirmedFileUntar(),
         },
         {
           text: 'No'
