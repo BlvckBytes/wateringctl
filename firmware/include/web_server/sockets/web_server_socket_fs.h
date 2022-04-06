@@ -8,6 +8,8 @@
 #include <blvckstd/jsonh.h>
 #include <blvckstd/partial_strdup.h>
 
+#include "untar.h"
+
 #define WEB_SERVER_SOCKET_FS_PATH "/api/fs"
 
 #define _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE(FUN) \
@@ -27,7 +29,11 @@
   FUN(WSFS_FILE_CREATED,           13)            \
   FUN(WSFS_COULD_NOT_CREATE_FILE,  14)            \
   FUN(WSFS_COULD_NOT_CREATE_DIR,   15)            \
-  FUN(WSFS_FILE_FOUND,             16)            
+  FUN(WSFS_FILE_FOUND,             16)            \
+  FUN(WSFS_UNTARED,                17)            \
+  FUN(WSFS_TAR_CORRUPTED,          18)            \
+  FUN(WSFS_TAR_INTERNAL,           19)            \
+  FUN(WSFS_TAR_CHILD_NOT_CREATED,  20)            
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 
@@ -39,6 +45,15 @@ typedef struct file_req_task_arg
   AsyncWebSocketClient *client;
   char *path;
 } file_req_task_arg_t;
+
+/**
+ * @brief Represents a context argument for the untar callbacks
+ */
+typedef struct untar_req_cb_arg {
+  File *curr_handle;
+  file_req_task_arg_t *req;
+  char *containing_dir;
+} untar_req_cb_arg_t;
 
 /**
  * @brief Initialize the websocket in conjunction with a webserver

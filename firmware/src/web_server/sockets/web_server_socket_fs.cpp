@@ -82,6 +82,236 @@ INLINED static bool web_server_socket_fs_preproc_existing_file_request(
 
 /*
 ============================================================================
+                              Command UNTAR                                 
+============================================================================
+*/
+
+INLINED static char *web_server_socket_fs_join_paths(const char *a, const char *b)
+{
+  bool a_trailing = a[strlen(a) - 1] == '/';
+  bool b_leading = b[0] == '/';
+
+  if (a_trailing && b_leading)
+    return strfmt_direct("%s%s", a, &b[1]);
+
+  else if (!a_trailing && !b_leading)
+    return strfmt_direct("%s/%s", a, b);
+    
+  return strfmt_direct("%s%s", a, b);
+}
+
+INLINED static void web_server_socket_fs_respond_tar_child(
+  AsyncWebSocketClient *client,
+  char *file,
+  bool is_directory
+)
+{
+  scptr char *header = strfmt_direct(
+    "%s;%s;%s",
+    web_server_socket_fs_response_name(WSFS_TAR_CHILD_NOT_CREATED),
+    file, is_directory ? "true" : "false"
+  );
+  client->binary(header);
+}
+
+static int web_server_socket_fs_proc_untar_header(
+  tar_header_translated_t *header,
+  int entry_index,
+  void *context_data
+)
+{
+  untar_req_cb_arg *arg = (untar_req_cb_arg *) context_data;
+  scptr char *path = web_server_socket_fs_join_paths(arg->containing_dir, header->filename);
+
+  // Remove trailing slash, if applicable
+  char *last = &path[strlen(path) - 1];
+  if (*last == '/')
+    *last = 0;
+
+  // Directory, create directory
+  if (header->type == T_DIRECTORY)
+  {
+    if (!SD.mkdir(path))
+    {
+      // Send out a collision for this directory
+      web_server_socket_fs_respond_tar_child(
+        arg->req->client,
+        path,
+        true
+      );
+
+      return 1;
+    }
+
+    return 0;
+  }
+
+  // Normal, create file
+  if (header->type == T_NORMAL)
+  {
+    // Create file in .tar's directory
+    File f = SD.open(path, "w");
+
+    // Could not create file
+    if (!f)
+    {
+      // Send out a collision for this directory
+      web_server_socket_fs_respond_tar_child(
+        arg->req->client,
+        path,
+        false
+      );
+
+      return 1;
+    }
+
+    // Created, store handle for data and end block calls
+    *(arg->curr_handle) = f;
+    return 0;
+  }
+
+  // Don't care about other types, just ignore them and pass
+  return 0;
+}
+
+static int web_server_socket_fs_proc_untar_data(
+  tar_header_translated_t *header,
+  int entry_index,
+  void *context_data,
+  unsigned char *block,
+  int length
+)
+{
+  untar_req_cb_arg *arg = (untar_req_cb_arg *) context_data;
+
+  // No handle created means ignore
+  if (!(*(arg->curr_handle)))
+    return 0;
+
+  // Write data
+  arg->curr_handle->write(block, length);
+  return 0;
+}
+
+static int web_server_socket_fs_proc_untar_end(
+  tar_header_translated_t *header,
+  int entry_index,
+  void *context_data
+)
+{
+  untar_req_cb_arg *arg = (untar_req_cb_arg *) context_data;
+
+  // Close previously opened file, if exists
+  if (*(arg->curr_handle))
+  {
+    arg->curr_handle->close();
+    *(arg->curr_handle) = File(NULL);
+  }
+
+  return 0;
+}
+
+static void web_server_socket_fs_proc_untar_task(void *arg)
+{
+  file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
+
+  // Create callback struct from routines above
+  static tar_entry_callbacks_t web_server_socket_fs_proc_untar_callbacks = (tar_entry_callbacks_t) {
+    .header_cb = web_server_socket_fs_proc_untar_header,
+    .data_cb = web_server_socket_fs_proc_untar_data,
+    .end_cb = web_server_socket_fs_proc_untar_end
+  };
+
+  // Used by the callbacks internally to pass the current file handle around
+  // Header: Create, Data: write, End: Close
+  File curr_handle = File(NULL);
+
+  scptr char *containing_dir = NULL;
+
+  // Find last slash index in path
+  int last_slash_ind = -1;
+  for (int i = 0; i < strlen(req->path); i++)
+  {
+    if (req->path[i] == '/')
+      last_slash_ind = i;
+  }
+
+  // Assume it's at root
+  if (last_slash_ind < 0)
+    containing_dir = strfmt_direct("/");
+
+  else
+  {
+    // Clone and terminate right after the last slash
+    containing_dir = strclone(req->path);
+    containing_dir[last_slash_ind + 1] = 0;
+  }
+
+  // Create callback context argument
+  scptr untar_req_cb_arg_t *untar_arg = (untar_req_cb_arg_t *) mman_alloc(sizeof(untar_req_cb_arg_t), 1, NULL);
+  untar_arg->curr_handle = &curr_handle;
+  untar_arg->req = req;
+  untar_arg->containing_dir = containing_dir;
+
+  // Start reading, the callbacks will take care of writing the contents
+  tar_result_t ret = tar_read(req->path, &web_server_socket_fs_proc_untar_callbacks, untar_arg);
+
+  // File does not exist
+  if (ret == TR_ERR_OPEN)
+  {
+    web_server_socket_fs_respond_code(req->client, WSFS_TARGET_NOT_EXISTING);
+  }
+
+  // File too short or corrupted in any other way
+  else if (ret == TR_ERR_READ)
+  {
+    web_server_socket_fs_respond_code(req->client, WSFS_TAR_CORRUPTED);
+  }
+
+  // Success
+  else if (ret == TR_SUCCESS)
+  {
+    web_server_socket_fs_respond_code(req->client, WSFS_UNTARED);
+  }
+
+  // Internal error (don't go into too much detail, as the client won't care)
+  // And not a callback error, as the callback itself will respond with the proper error code
+  else if (
+    ret != TR_ERR_HEADER_CB ||
+    ret != TR_ERR_DATA_CB ||
+    ret != TR_ERR_END_CB
+  ) {
+    web_server_socket_fs_respond_code(req->client, WSFS_TAR_INTERNAL);
+  }
+
+  mman_dealloc(req);
+  vTaskDelete(NULL);
+}
+
+static void web_server_socket_fs_proc_untar(
+  AsyncWebSocketClient *client,
+  char *path
+)
+{
+  // Create task arg struct
+  scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
+  req->client = client;
+  req->path = strclone(path);
+
+  // Invoke the task on core 1 (since 0 handles the kernel-protocol)
+  xTaskCreatePinnedToCore(
+    web_server_socket_fs_proc_untar_task,         // Task entry point
+    "rec_untar",                                  // Task name
+    16384,                                        // Stack size (should be sufficient, I hope)
+    mman_ref(req),                                // Parameter to the entry point
+    configMAX_PRIORITIES - 1,                     // Priority, keep it high
+    NULL,                                         // Task handle output, don't care
+    1                                             // On core 1 (main loop)
+  );
+}
+
+/*
+============================================================================
                               Command FETCH                                 
 ============================================================================
 */
@@ -411,8 +641,19 @@ static void web_server_socket_fs_handle_data(
     scptr char *path = partial_strdup((char *) data, &data_offs, ";", false);
     scptr char *is_directory = partial_strdup((char *) data, &data_offs, ";", false);
 
-    // All parameters need to be provided
-    if (!cmd || !path || !is_directory)
+    if (!cmd || !path)
+    {
+      web_server_socket_fs_respond_code(client, WSFS_PARAM_MISSING);
+      return;
+    }
+
+    if (strncasecmp("untar", cmd, strlen("untar")) == 0)
+    {
+      web_server_socket_fs_proc_untar(client, path);
+      return;
+    }
+
+    if (!is_directory)
     {
       web_server_socket_fs_respond_code(client, WSFS_PARAM_MISSING);
       return;

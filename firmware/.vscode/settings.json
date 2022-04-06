@@ -20,6 +20,7 @@
     "system_error": "cpp",
     "regex": "cpp",
     "tuple": "cpp",
-    "ctime": "cpp"
+    "ctime": "cpp",
+    "sd.h": "c"
   }
 }
