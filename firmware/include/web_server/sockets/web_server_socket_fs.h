@@ -44,6 +44,7 @@ typedef struct file_req_task_arg
 {
   AsyncWebSocketClient *client;
   char *path;
+  File file;
 } file_req_task_arg_t;
 
 /**
@@ -51,6 +52,7 @@ typedef struct file_req_task_arg
  */
 typedef struct untar_req_cb_arg {
   File *curr_handle;
+  File *tar_file_handle;
   file_req_task_arg_t *req;
   char *containing_dir;
 } untar_req_cb_arg_t;

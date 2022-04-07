@@ -13,6 +13,7 @@ static AsyncWebSocket ws(WEB_SERVER_SOCKET_FS_PATH);
 static void web_server_socket_fs_file_req_task_arg_t_cleanup(mman_meta_t *meta)
 {
   file_req_task_arg_t *req = (file_req_task_arg_t *) meta->ptr;
+  req->file.close();
   mman_dealloc(req->path);
 }
 
@@ -116,7 +117,6 @@ INLINED static void web_server_socket_fs_respond_tar_child(
 
 static int web_server_socket_fs_proc_untar_header(
   tar_header_translated_t *header,
-  int entry_index,
   void *context_data
 )
 {
@@ -174,9 +174,8 @@ static int web_server_socket_fs_proc_untar_header(
   return 0;
 }
 
-static int web_server_socket_fs_proc_untar_data(
+static int web_server_socket_fs_proc_untar_write(
   tar_header_translated_t *header,
-  int entry_index,
   void *context_data,
   unsigned char *block,
   int length
@@ -195,7 +194,6 @@ static int web_server_socket_fs_proc_untar_data(
 
 static int web_server_socket_fs_proc_untar_end(
   tar_header_translated_t *header,
-  int entry_index,
   void *context_data
 )
 {
@@ -211,14 +209,25 @@ static int web_server_socket_fs_proc_untar_end(
   return 0;
 }
 
+int web_server_socket_fs_proc_untar_read(
+  unsigned char *buf,
+  size_t bufsize,
+  void *context_data
+)
+{
+  untar_req_cb_arg *arg = (untar_req_cb_arg *) context_data;
+  return arg->tar_file_handle->read(buf, bufsize);
+}
+
 static void web_server_socket_fs_proc_untar_task(void *arg)
 {
   file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
 
   // Create callback struct from routines above
-  static tar_entry_callbacks_t web_server_socket_fs_proc_untar_callbacks = (tar_entry_callbacks_t) {
+  static tar_callbacks_t callbacks = (tar_callbacks_t) {
     .header_cb = web_server_socket_fs_proc_untar_header,
-    .data_cb = web_server_socket_fs_proc_untar_data,
+    .read_cb = web_server_socket_fs_proc_untar_read,
+    .write_cb = web_server_socket_fs_proc_untar_write,
     .end_cb = web_server_socket_fs_proc_untar_end
   };
 
@@ -248,38 +257,35 @@ static void web_server_socket_fs_proc_untar_task(void *arg)
   }
 
   // Create callback context argument
-  scptr untar_req_cb_arg_t *untar_arg = (untar_req_cb_arg_t *) mman_alloc(sizeof(untar_req_cb_arg_t), 1, NULL);
-  untar_arg->curr_handle = &curr_handle;
-  untar_arg->req = req;
-  untar_arg->containing_dir = containing_dir;
+  untar_req_cb_arg_t untar_arg = (untar_req_cb_arg_t ) {
+    .curr_handle = &curr_handle,
+    .tar_file_handle = &(req->file),
+    .req = req,
+    .containing_dir = containing_dir,
+  };
+
+  tar_handle_t tar_handle;
+  tar_setup(&callbacks, &untar_arg, &tar_handle);
 
   // Start reading, the callbacks will take care of writing the contents
-  tar_result_t ret = tar_read(req->path, &web_server_socket_fs_proc_untar_callbacks, untar_arg);
-
-  // File does not exist
-  if (ret == TR_ERR_OPEN)
-  {
-    web_server_socket_fs_respond_code(req->client, WSFS_TARGET_NOT_EXISTING);
-  }
+  tar_result_t ret = tar_read(&tar_handle);
 
   // File too short or corrupted in any other way
-  else if (ret == TR_ERR_READ)
+  if (ret == TR_ERR_READBLOCK)
   {
     web_server_socket_fs_respond_code(req->client, WSFS_TAR_CORRUPTED);
   }
 
   // Success
-  else if (ret == TR_SUCCESS)
-  {
+  else if (ret == TR_OK)
     web_server_socket_fs_respond_code(req->client, WSFS_UNTARED);
-  }
 
   // Internal error (don't go into too much detail, as the client won't care)
   // And not a callback error, as the callback itself will respond with the proper error code
   else if (
-    ret != TR_ERR_HEADER_CB ||
-    ret != TR_ERR_DATA_CB ||
-    ret != TR_ERR_END_CB
+    ret != TR_ERR_HEADERCB ||
+    ret != TR_ERR_WRITECB ||
+    ret != TR_ERR_ENDCB
   ) {
     web_server_socket_fs_respond_code(req->client, WSFS_TAR_INTERNAL);
   }
@@ -293,10 +299,19 @@ static void web_server_socket_fs_proc_untar(
   char *path
 )
 {
+  // Open target tar file
+  File file = SD.open(path, "r");
+  if (!file)
+  {
+    web_server_socket_fs_respond_code(client, WSFS_TARGET_NOT_EXISTING);
+    return;
+  }
+
   // Create task arg struct
   scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
   req->client = client;
   req->path = strclone(path);
+  req->file = file;
 
   // Invoke the task on core 1 (since 0 handles the kernel-protocol)
   xTaskCreatePinnedToCore(
