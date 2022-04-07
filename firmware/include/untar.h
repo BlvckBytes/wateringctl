@@ -117,6 +117,7 @@ typedef int (*entry_write_callback_t)
 typedef int (*entry_end_callback_t)
 (
   tar_header_translated_t *header,
+  size_t total_bytes_read,
   void *context_data
 );
 
@@ -133,6 +134,7 @@ typedef struct tar_handle_s
   tar_callbacks_t *callbacks;
   void *context_data;
   unsigned char read_buffer[TAR_BLOCK_SIZE + 1];
+  size_t total_bytes_read;
 } tar_handle_t;
 
 /**

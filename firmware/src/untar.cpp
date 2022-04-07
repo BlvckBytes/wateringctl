@@ -55,6 +55,7 @@ tar_result_t read_block(tar_handle_t *handle)
     return TR_ERR_READBLOCK;
   }
 
+  handle->total_bytes_read += num_read;
   return TR_OK;
 }
 
@@ -322,7 +323,7 @@ tar_result_t tar_read(tar_handle_t *handle)
         i++;
       }
 
-      if (handle->callbacks->end_cb(&header_translated, handle->context_data) != 0)
+      if (handle->callbacks->end_cb(&header_translated, handle->total_bytes_read, handle->context_data) != 0)
       {
         dbgerr("[TAR] End callback failed");
         return TR_ERR_ENDCB;

@@ -11,6 +11,7 @@
 #include "untar.h"
 
 #define WEB_SERVER_SOCKET_FS_PATH "/api/fs"
+#define WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO 2
 
 #define _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE(FUN) \
   FUN(WSFS_NON_BINARY_DATA,         0)            \
@@ -33,7 +34,8 @@
   FUN(WSFS_UNTARED,                17)            \
   FUN(WSFS_TAR_CORRUPTED,          18)            \
   FUN(WSFS_TAR_INTERNAL,           19)            \
-  FUN(WSFS_TAR_CHILD_NOT_CREATED,  20)            
+  FUN(WSFS_TAR_CHILD_NOT_CREATED,  20)            \
+  FUN(WSFS_PROGRESS,               21)            
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 

@@ -17,6 +17,15 @@ static void web_server_socket_fs_file_req_task_arg_t_cleanup(mman_meta_t *meta)
   mman_dealloc(req->path);
 }
 
+static void web_server_socket_fs_respond_progress(
+  AsyncWebSocketClient *client,
+  int progress
+)
+{
+  scptr char *resp = strfmt_direct("%s;%d", web_server_socket_fs_response_name(WSFS_PROGRESS), progress);
+  client->binary(resp);
+}
+
 static void web_server_socket_fs_respond_code(
   AsyncWebSocketClient *client,
   web_server_socket_fs_response_t response
@@ -194,6 +203,7 @@ static int web_server_socket_fs_proc_untar_write(
 
 static int web_server_socket_fs_proc_untar_end(
   tar_header_translated_t *header,
+  size_t total_bytes_read,
   void *context_data
 )
 {
@@ -204,6 +214,12 @@ static int web_server_socket_fs_proc_untar_end(
   {
     arg->curr_handle->close();
     *(arg->curr_handle) = File(NULL);
+
+    // Respond with the current progress
+    web_server_socket_fs_respond_progress(
+      arg->req->client,
+      (total_bytes_read * 100) / arg->tar_file_handle->size()
+    );
   }
 
   return 0;
@@ -319,7 +335,7 @@ static void web_server_socket_fs_proc_untar(
     "rec_untar",                                  // Task name
     16384,                                        // Stack size (should be sufficient, I hope)
     mman_ref(req),                                // Parameter to the entry point
-    configMAX_PRIORITIES - 1,                     // Priority, keep it high
+    WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
     NULL,                                         // Task handle output, don't care
     1                                             // On core 1 (main loop)
   );
@@ -416,7 +432,7 @@ static void web_server_socket_fs_proc_fetch(
     "rec_fdel",                                   // Task name
     16384,                                        // Stack size (should be sufficient, I hope)
     mman_ref(req),                                // Parameter to the entry point
-    configMAX_PRIORITIES - 1,                     // Priority, keep it high
+    WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
     NULL,                                         // Task handle output, don't care
     1                                             // On core 1 (main loop)
   );
@@ -514,7 +530,7 @@ static void web_server_socket_fs_proc_delete(
       "rec_fdel",                                   // Task name
       16384,                                        // Stack size (should be sufficient, I hope)
       mman_ref(req),                                // Parameter to the entry point
-      configMAX_PRIORITIES - 1,                     // Priority, as high as possible
+      WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
       NULL,                                         // Task handle output, don't care
       1                                             // On core 1 (main loop)
     );
