@@ -1,4 +1,4 @@
 export interface ILoadingIndicatorTask {
-  timeoutHandle: number;
+  timeoutHandle?: number;
   id: number;
 }

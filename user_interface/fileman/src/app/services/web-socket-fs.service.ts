@@ -6,7 +6,7 @@ import { EWSFSResp } from '../models/ws-fs-response.enum';
 import { LoadingIndicatorService } from './loading-indicator.service';
 import { NotificationsService } from './notifications.service';
 
-type MessageRecipient = (data: Blob) => Promise<void>;
+type MessageRecipient = (data: Blob, text: string) => Promise<void>;
 
 @Injectable({
   providedIn: 'root'
@@ -108,10 +108,10 @@ export class WebSocketFsService {
 
   untar(path: string): Observable<void> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (data) => {
+      this._recipient = async (_, resp) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
-        const res = (await data.text()).split(';');
+        const res = resp.split(';');
         if (res[0] === EWSFSResp.WSFS_UNTARED)
           this.spawnFsSuccess(res[0]);
         else
@@ -122,7 +122,8 @@ export class WebSocketFsService {
       };
 
       this.send(this._encoder.encode(`UNTAR;${path}`));
-      this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
+      this._taskStack.push(this.loadingService.startTask());
+      this.loadingService.setProgress(1);
     });
   }
 
@@ -134,11 +135,11 @@ export class WebSocketFsService {
 
   listDirectory(path: string): Observable<IFSFile[]> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (data) => {
+      this._recipient = async (_, resp) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const jsn = JSON.parse(await data.text());
+        const jsn = JSON.parse(resp);
         sub.next(jsn.items as IFSFile[]);
       };
 
@@ -153,12 +154,11 @@ export class WebSocketFsService {
       let recvSize: number | null = null;
       let fileConts = new Uint8Array(0);
 
-      this._recipient = async (data) => {
+      this._recipient = async (data, resp) => {
 
         // Receive header
         if (firstRecv) {
-          const header = await data.text();
-          const [code, size] = header.split(';');
+          const [code, size] = resp.split(';');
 
           // Unsuccessful
           if (code !== EWSFSResp.WSFS_FILE_FOUND) {
@@ -212,11 +212,10 @@ export class WebSocketFsService {
 
   createDirectory(path: string, directory: string): Observable<void> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (data) => {
+      this._recipient = async (_, resp) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DIR_CREATED) {
           this.spawnFsSuccess(resp);
           sub.next();
@@ -231,11 +230,10 @@ export class WebSocketFsService {
 
   writeFile(path: string, contents: string, overwrite = false): Observable<void> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (data) => {
+      this._recipient = async (_, resp) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_FILE_CREATED) {
           this.spawnFsSuccess(resp);
           sub.next();
@@ -256,11 +254,10 @@ export class WebSocketFsService {
 
   deleteDirectory(path: string): Observable<void> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (data) => {
+      this._recipient = async (_, resp) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DELETED) {
           this.spawnFsSuccess(resp);
           sub.next();
@@ -275,11 +272,10 @@ export class WebSocketFsService {
 
   deleteFile(path: string): Observable<void> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (data) => {
+      this._recipient = async (_, resp) => {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        const resp = await data.text();
         if (resp == EWSFSResp.WSFS_DELETED)
           sub.next();
         else
@@ -327,10 +323,18 @@ export class WebSocketFsService {
       return;
 
     const data_str = await e.data.text();
+
     const cap = 100;
     console.log(data_str.length > cap ? data_str.substring(0, cap) : data_str);
 
-    await this._recipient(e.data);
+    // Is a progress response, catch here and forward to the overlay
+    if (data_str.startsWith(EWSFSResp.WSFS_PROGRESS)) {
+      const [_, progress] = data_str.split(';');
+      this.loadingService.setProgress(Number.parseInt(progress));
+      return;
+    }
+
+    await this._recipient(e.data, data_str);
   }
 
   connect(): Promise<void> {
