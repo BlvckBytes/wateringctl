@@ -39,8 +39,8 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * [x] Serve the UI from an SD-card
 * [x] Manage all files on the SD-card remotely
 * [ ] Store configurations on the SD-card
-* [ ] Upload compiled binaries and then flash from SD
-* [ ] Web SD-file browser
+* [x] Upload compiled binaries and then flash from SD
+* [x] Web SD-file browser
 
 ## Hardware
 
