@@ -12,6 +12,7 @@
 
 #define WEB_SERVER_SOCKET_FS_PATH "/api/fs"
 #define WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO 2
+#define WEB_SERFER_SOCKET_FS_TASK_QUEUE_LEN 10
 
 #define _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE(FUN) \
   FUN(WSFS_NON_BINARY_DATA,         0)            \
@@ -39,6 +40,13 @@
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 
+#define _EVALS_FILE_REQ_TYPE(FUN) \
+  FUN(FRT_FETCH_LIST,     0)      \
+  FUN(FRT_DELETE_DIR,     1)      \
+  FUN(FRT_UNTAR,          2)       
+
+ENUM_TYPEDEF_FULL_IMPL(file_req_type, _EVALS_FILE_REQ_TYPE);
+
 /**
  * @brief Represents an async file request by a user which requires processing in another task.
  */
@@ -46,7 +54,9 @@ typedef struct file_req_task_arg
 {
   AsyncWebSocketClient *client;
   char *path;
+  file_req_type_t type;
   File file;
+  bool processed;
 } file_req_task_arg_t;
 
 /**

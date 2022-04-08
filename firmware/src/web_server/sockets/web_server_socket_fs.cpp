@@ -6,16 +6,25 @@ static AsyncWebSocket ws(WEB_SERVER_SOCKET_FS_PATH);
 
 /*
 ============================================================================
-                             Shared Utilities                               
+                           Shared Request Queue                             
 ============================================================================
 */
 
-static void web_server_socket_fs_file_req_task_arg_t_cleanup(mman_meta_t *meta)
+// Task queue ring-buffer
+static file_req_task_arg_t task_queue[WEB_SERFER_SOCKET_FS_TASK_QUEUE_LEN];
+static size_t task_queue_next_index = 0;
+
+static void task_queue_next(file_req_task_arg_t **req)
 {
-  file_req_task_arg_t *req = (file_req_task_arg_t *) meta->ptr;
-  req->file.close();
-  mman_dealloc(req->path);
+  *req = &(task_queue[task_queue_next_index++ % WEB_SERFER_SOCKET_FS_TASK_QUEUE_LEN]);
+  (*req)->processed = false;
 }
+
+/*
+============================================================================
+                             Shared Utilities                               
+============================================================================
+*/
 
 static void web_server_socket_fs_respond_progress(
   AsyncWebSocketClient *client,
@@ -251,7 +260,7 @@ static void web_server_socket_fs_proc_untar_task(void *arg)
   // Header: Create, Data: write, End: Close
   File curr_handle = File(NULL);
 
-  scptr char *containing_dir = NULL;
+  char *containing_dir = NULL;
 
   // Find last slash index in path
   int last_slash_ind = -1;
@@ -306,8 +315,7 @@ static void web_server_socket_fs_proc_untar_task(void *arg)
     web_server_socket_fs_respond_code(req->client, WSFS_TAR_INTERNAL);
   }
 
-  mman_dealloc(req);
-  vTaskDelete(NULL);
+  mman_dealloc(containing_dir);
 }
 
 static void web_server_socket_fs_proc_untar(
@@ -323,22 +331,13 @@ static void web_server_socket_fs_proc_untar(
     return;
   }
 
-  // Create task arg struct
-  scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
+  // Enqueue untar task
+  file_req_task_arg_t *req;
+  task_queue_next(&req);
   req->client = client;
   req->path = strclone(path);
   req->file = file;
-
-  // Invoke the task on core 1 (since 0 handles the kernel-protocol)
-  xTaskCreatePinnedToCore(
-    web_server_socket_fs_proc_untar_task,         // Task entry point
-    "rec_untar",                                  // Task name
-    16384,                                        // Stack size (should be sufficient, I hope)
-    mman_ref(req),                                // Parameter to the entry point
-    WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
-    NULL,                                         // Task handle output, don't care
-    1                                             // On core 1 (main loop)
-  );
+  req->type = FRT_UNTAR;
 }
 
 /*
@@ -353,12 +352,13 @@ static void web_server_socket_fs_proc_fetch_task(void *arg)
   File target = SD.open(req->path);
 
   // Transmit header first
-  scptr char *header = strfmt_direct(
+  char *header = strfmt_direct(
     "%s;%lu",
     web_server_socket_fs_response_name(WSFS_FILE_FOUND),
     target.size()
   );
   req->client->binary(header);
+  mman_dealloc(header);
 
   // Now transmit file in chunks
   uint8_t read_buf[4096];
@@ -378,9 +378,6 @@ static void web_server_socket_fs_proc_fetch_task(void *arg)
 
   // Done transmitting
   target.close();
-  mman_dealloc(req);
-
-  vTaskDelete(NULL);
 }
 
 static void web_server_socket_fs_proc_fetch(
@@ -419,23 +416,12 @@ static void web_server_socket_fs_proc_fetch(
   // Not needed anymore
   target.close();
 
-  // Requested a file, send file contents in another task
-
-  // Create task arg struct
-  scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
+  // Enqueue list task
+  file_req_task_arg_t *req;
+  task_queue_next(&req);
   req->client = client;
   req->path = strclone(path);
-
-  // Invoke the task on core 1 (since 0 handles the kernel-protocol)
-  xTaskCreatePinnedToCore(
-    web_server_socket_fs_proc_fetch_task,         // Task entry point
-    "rec_fdel",                                   // Task name
-    16384,                                        // Stack size (should be sufficient, I hope)
-    mman_ref(req),                                // Parameter to the entry point
-    WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
-    NULL,                                         // Task handle output, don't care
-    1                                             // On core 1 (main loop)
-  );
+  req->type = FRT_FETCH_LIST;
 }
 
 /*
@@ -501,9 +487,6 @@ static void web_server_socket_fs_recursive_delete_task(void *arg)
     web_server_socket_fs_respond_code(req->client, WSFS_COULD_NOT_DELETE_DIR);
   else
     web_server_socket_fs_respond_code(req->client, WSFS_DELETED);
-
-  mman_dealloc(req);
-  vTaskDelete(NULL);
 }
 
 static void web_server_socket_fs_proc_delete(
@@ -519,21 +502,12 @@ static void web_server_socket_fs_proc_delete(
   // Requested a directory, delete recursively
   if (is_directory)
   {
-    // Create a new file deletion request wrapper struct instance, to be passed as an argument to the task
-    scptr file_req_task_arg_t *req = (file_req_task_arg_t *) mman_alloc(sizeof(file_req_task_arg_t), 1, web_server_socket_fs_file_req_task_arg_t_cleanup);
+    // Enqueue delete task
+    file_req_task_arg_t *req;
+    task_queue_next(&req);
     req->client = client;
     req->path = strclone(path);
-
-    // Invoke the task on core 1 (since 0 handles the kernel-protocol)
-    xTaskCreatePinnedToCore(
-      web_server_socket_fs_recursive_delete_task,   // Task entry point
-      "rec_fdel",                                   // Task name
-      16384,                                        // Stack size (should be sufficient, I hope)
-      mman_ref(req),                                // Parameter to the entry point
-      WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
-      NULL,                                         // Task handle output, don't care
-      1                                             // On core 1 (main loop)
-    );
+    req->type = FRT_DELETE_DIR;
     return;
   }
 
@@ -784,6 +758,85 @@ static void onEvent(
 
 /*
 ============================================================================
+                           Shared Request Queue                             
+============================================================================
+*/
+
+static void task_queue_reset_task(file_req_task_arg_t *task)
+{
+  // Task has now been processed
+  task->processed = true;
+
+  // Close file if a type that uses it occurred
+  if (task->type == FRT_UNTAR)
+    task->file.close();
+
+  // Dealloc path string
+  mman_dealloc(task->path);
+}
+
+static void task_queue_worker_task(void *arg)
+{
+  while (true)
+  {
+    // Check all tasks in the ringbuffer
+    for (size_t i = 0; i < WEB_SERFER_SOCKET_FS_TASK_QUEUE_LEN; i++)
+    {
+      file_req_task_arg_t *curr_task = &(task_queue[i]);
+
+      // Already processed, skip
+      if (curr_task->processed)
+        continue;
+
+      // Invoke handler function
+      switch (curr_task->type)
+      {
+      case FRT_UNTAR:
+        web_server_socket_fs_proc_untar_task(curr_task);
+        break;
+
+      case FRT_DELETE_DIR:
+        web_server_socket_fs_recursive_delete_task(curr_task);
+        break;
+      
+      case FRT_FETCH_LIST:
+        web_server_socket_fs_proc_fetch_task(curr_task);
+        break;
+
+      // Task unknown
+      default:
+        break;
+      }
+
+      // Task has now been processed, reset it
+      task_queue_reset_task(curr_task);
+    }
+
+    // Delay for 5ms between scans
+    vTaskDelay(5 / portTICK_PERIOD_MS);
+  }
+}
+
+static void task_queue_init()
+{
+  // All tasks start out as cleared
+  for (size_t i = 0; i < WEB_SERFER_SOCKET_FS_TASK_QUEUE_LEN; i++)
+    task_queue_reset_task(&(task_queue[i]));
+
+  // Invoke the task on core 1 (since 0 handles the kernel-protocol)
+  xTaskCreatePinnedToCore(
+    task_queue_worker_task,                       // Task entry point
+    "fs_worker",                                  // Task name
+    16384,                                        // Stack size (should be sufficient, I hope)
+    NULL,                                         // Parameter to the entry point
+    WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO,           // Priority
+    NULL,                                         // Task handle output, don't care
+    1                                             // On core 1 (main loop)
+  );
+}
+
+/*
+============================================================================
                               Initialization                                
 ============================================================================
 */
@@ -792,6 +845,8 @@ void web_server_socket_fs_init(AsyncWebServer *wsrv)
 {
   ws.onEvent(onEvent);
   wsrv->addHandler(&ws);
+  task_queue_init();
+
   dbginf("Started the websocket server for " WEB_SERVER_SOCKET_FS_PATH "!");
 }
 
