@@ -41,6 +41,8 @@ A web-based solenoid-valve controller used for watering the garden, plants and t
 * [ ] Store configurations on the SD-card
 * [x] Upload compiled binaries and then flash from SD
 * [x] Web SD-file browser
+* [ ] Log all debug-relevant information to SD (yyyy-mm-dd_log.txt)
+* [ ] Multiple logging levels that can be streamed using a socket endpoint
 
 ## Hardware
 
