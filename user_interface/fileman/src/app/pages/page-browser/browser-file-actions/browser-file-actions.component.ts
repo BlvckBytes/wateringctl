@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { IFSFile } from 'src/app/models/fs-file.interface';
+import { createAndDownloadBlobFile, getFileName, IFSFile } from 'src/app/models/fs-file.interface';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PathBarService } from 'src/app/services/path-bar.service';
 import { WebSocketFsService } from 'src/app/services/web-socket-fs.service';
@@ -80,5 +80,15 @@ export class BrowserFileActionsComponent {
         }
       ]
     });
+  }
+
+  downloadFile() {
+    if (!this.file)
+      return;
+
+    const fullPath = this.file.name;
+    const [name, ext] = getFileName(fullPath).split('.');
+    this.fsService.readFile(fullPath)
+      .subscribe(d => createAndDownloadBlobFile(d, name, ext));
   }
 }

@@ -5,6 +5,13 @@
 ></app-button>
 
 <app-button
+  *ngIf="!file?.isDirectory"
+  color="success"
+  (click)="downloadFile(); $event.stopPropagation()"
+  icon="download.svg"
+></app-button>
+
+<app-button
   *ngIf="isTar"
   color="success"
   (click)="untarFile(); $event.stopPropagation()"

@@ -28,3 +28,22 @@ export const formatFileSize = (size: number): string => {
 
   return `${size} Bytes`;
 }
+
+export const createAndDownloadBlobFile = (
+  contents: Uint8Array,
+  filename: string,
+  extension: string
+) => {
+  const blob = new Blob([contents]);
+  const fileName = `${filename}.${extension}`;
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', fileName);
+  link.style.visibility = 'hidden';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
