@@ -253,6 +253,7 @@ void tar_setup(tar_callbacks_t *callbacks, void *context_data, tar_handle_t *han
   handle->callbacks = callbacks;
   handle->context_data = context_data;
   handle->read_buffer[TAR_BLOCK_SIZE] = 0;
+  handle->total_bytes_read = 0;
 }
 
 tar_result_t tar_read(tar_handle_t *handle)

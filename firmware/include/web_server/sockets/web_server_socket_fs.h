@@ -6,6 +6,7 @@
 #include <blvckstd/dbglog.h>
 #include <blvckstd/enumlut.h>
 #include <blvckstd/jsonh.h>
+#include <blvckstd/longp.h>
 #include <blvckstd/partial_strdup.h>
 
 #include "untar.h"
@@ -13,6 +14,7 @@
 #define WEB_SERVER_SOCKET_FS_PATH "/api/fs"
 #define WEB_SERFER_SOCKET_FS_CMD_TASK_PRIO 2
 #define WEB_SERFER_SOCKET_FS_TASK_QUEUE_LEN 10
+#define WEB_SERFER_SOCKET_FS_WRITE_TIMEOUT 1000
 
 #define _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE(FUN) \
   FUN(WSFS_NON_BINARY_DATA,         0)            \
@@ -36,7 +38,8 @@
   FUN(WSFS_TAR_CORRUPTED,          18)            \
   FUN(WSFS_TAR_INTERNAL,           19)            \
   FUN(WSFS_TAR_CHILD_NOT_CREATED,  20)            \
-  FUN(WSFS_PROGRESS,               21)            
+  FUN(WSFS_PROGRESS,               21)            \
+  FUN(WSFS_FILE_APPENDED,          22)             
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 

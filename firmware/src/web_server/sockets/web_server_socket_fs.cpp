@@ -536,10 +536,7 @@ static File web_server_socket_fs_proc_write(
   AsyncWebSocketClient *client,
   char *path,
   bool is_directory,
-  bool overwrite,
-  uint8_t *file_data,
-  size_t file_data_len,
-  bool is_full_data
+  bool overwrite
 )
 {
   // Already exists
@@ -576,13 +573,6 @@ static File web_server_socket_fs_proc_write(
     return File(NULL);
   }
 
-  // No file parameter
-  if (file_data_len == 0)
-  {
-    web_server_socket_fs_respond_code(client, WSFS_PARAM_MISSING);
-    return File(NULL);
-  }
-
   // Create new file
   target = SD.open(path, "w");
   if (!target)
@@ -591,18 +581,8 @@ static File web_server_socket_fs_proc_write(
     return File(NULL);
   }
 
-  // Write as much into the file as is available now
-  target.write(file_data, file_data_len);
-
-  // That's it
-  if (is_full_data)
-  {
-    target.close();
-    web_server_socket_fs_respond_code(client, WSFS_FILE_CREATED);
-    return File(NULL);
-  }
-
   // Return file for further write calls
+  web_server_socket_fs_respond_code(client, WSFS_FILE_CREATED);
   return target;
 }
 
@@ -612,9 +592,17 @@ static File web_server_socket_fs_proc_write(
 ============================================================================
 */
 
-// "Further writes"-file, used when a message is partitioned
+// "Further writes"-file information (file writes are chunked)
 static File w_f = File(NULL);
-static uint32_t w_f_issuer = UINT32_MAX;
+static long w_f_sz = 0;
+static unsigned long w_f_last = 0;
+
+INLINED static void w_f_reset()
+{
+  w_f.close();
+  w_f_sz = 0;
+  w_f_last = 0;
+}
 
 static void web_server_socket_fs_handle_data(
   AsyncWebSocketClient *client,
@@ -635,6 +623,31 @@ static void web_server_socket_fs_handle_data(
   {
     web_server_socket_fs_respond_code(client, WSFS_NON_BINARY_DATA);
     return;
+  }
+
+  // Active write
+  if (w_f)
+  {
+    // Write timed out, reset and stop now
+    if (w_f_last != 0 && millis() - w_f_last > WEB_SERFER_SOCKET_FS_WRITE_TIMEOUT)
+    {
+      w_f_reset();
+    }
+
+    // Still within timing requirements
+    else {
+      // Write full data
+      w_f.write(data, len);
+      w_f_last = millis();
+
+      // Check for completion
+      w_f_sz -= len;
+      if (w_f_sz == 0)
+        w_f_reset();
+
+      web_server_socket_fs_respond_code(client, WSFS_FILE_APPENDED);
+      return;
+    }
   }
 
   // First pice of data, this contains all parameters that decide further processing
@@ -682,38 +695,23 @@ static void web_server_socket_fs_handle_data(
     bool is_overwrite = strncasecmp("overwrite", cmd, strlen("overwrite")) == 0;
     if (strncasecmp("write", cmd, strlen("write")) == 0 || is_overwrite)
     {
+      // Parse upload size from params
+      scptr char *upload_size = partial_strdup((char *) data, &data_offs, ";", false);
+      if (upload_size != NULL)
+        longp(&w_f_sz, upload_size, 10);
+
       w_f = web_server_socket_fs_proc_write(
         client,
         path,
         is_directory_bool,
-        is_overwrite,
-        &(data[data_offs]),
-        data_offs >= len ? 0 : len - data_offs,
-        finf->index + len == finf->len
+        is_overwrite
       );
+
       return;
     }
   
     web_server_socket_fs_respond_code(client, WSFS_COMMAND_UNKNOWN);
     return;
-  }
-
-  // No active write, cannot do anything else
-  if (!w_f)
-    return;
-
-  // Write full data
-  w_f.write(data, len);
-
-  // Check if done
-  if (
-    finf->index + len == finf->len    // End of frame
-    && finf->final                    // Last segment
-  )
-  {
-    w_f.close();
-    w_f_issuer = UINT32_MAX;
-    web_server_socket_fs_respond_code(client, WSFS_FILE_CREATED);
   }
 }
 
@@ -738,17 +736,7 @@ static void onEvent(
       break;
     }
 
-    // Terminate still active file write, if applicable
     case WS_EVT_DISCONNECT:
-    {
-      if (w_f && w_f_issuer == client->id())
-      {
-        w_f.close();
-        w_f_issuer = UINT32_MAX;
-      }
-      break;
-    }
-
     case WS_EVT_CONNECT:
     case WS_EVT_PONG:
     case WS_EVT_ERROR:
