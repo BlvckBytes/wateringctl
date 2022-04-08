@@ -588,6 +588,85 @@ static File web_server_socket_fs_proc_write(
 
 /*
 ============================================================================
+                              Command UPDATE                                
+============================================================================
+*/
+
+static void web_server_socket_fs_proc_update(
+  AsyncWebSocketClient *client,
+  char *path
+)
+{
+  // Needs to end in .bin
+  char *dot = strrchr(path, '.');
+  if (!dot || !strcmp(dot, ".bin"))
+  {
+    web_server_socket_fs_respond_code(client, WSFS_NOT_A_BIN);
+    return;
+  }
+
+  // Open target binary file
+  File file = SD.open(path, "r");
+  if (!file)
+  {
+    web_server_socket_fs_respond_code(client, WSFS_TARGET_NOT_EXISTING);
+    return;
+  }
+
+  // Cannot flash from dir
+  if (file.isDirectory())
+  {
+    file.close();
+    web_server_socket_fs_respond_code(client, WSFS_NOT_A_BIN);
+    return;
+  }
+
+  // Enqueue update task
+  file_req_task_arg_t *req;
+  task_queue_next(&req);
+  req->client = client;
+  req->path = strclone(path);
+  req->file = file;
+  req->type = FRT_UPDATE;
+}
+
+static void web_server_socket_fs_proc_update_task(void *arg)
+{
+  file_req_task_arg_t *req = (file_req_task_arg_t *) arg;
+
+  // Initialize update
+  if (!Update.begin(req->file.size()))
+  {
+    web_server_socket_fs_respond_code(req->client, WSFS_UPDATE_FAILED);
+    return;
+  }
+
+  Update.onProgress([req](size_t read, size_t total) {
+    web_server_socket_fs_respond_progress(req->client, read * 100 / total);
+  });
+
+  // Write whole file
+  Update.writeStream(req->file);
+
+  // Update successful
+  if (Update.end())
+  {
+    web_server_socket_fs_respond_code(req->client, WSFS_UPDATED);
+
+    // Wait for the socket send buffer to be able to empty out
+    vTaskDelay(5 / portTICK_PERIOD_MS);
+
+    // Restart the system
+    ESP.restart();
+    return;
+  }
+
+  // Update failed
+  web_server_socket_fs_respond_code(req->client, WSFS_UPDATE_FAILED);
+}
+
+/*
+============================================================================
                               Request Router                                
 ============================================================================
 */
@@ -668,6 +747,12 @@ static void web_server_socket_fs_handle_data(
     if (strncasecmp("untar", cmd, strlen("untar")) == 0)
     {
       web_server_socket_fs_proc_untar(client, path);
+      return;
+    }
+
+    if (strncasecmp("update", cmd, strlen("update")) == 0)
+    {
+      web_server_socket_fs_proc_update(client, path);
       return;
     }
 
@@ -789,6 +874,10 @@ static void task_queue_worker_task(void *arg)
       
       case FRT_FETCH_LIST:
         web_server_socket_fs_proc_fetch_task(curr_task);
+        break;
+
+      case FRT_UPDATE:
+        web_server_socket_fs_proc_update_task(curr_task);
         break;
 
       // Task unknown

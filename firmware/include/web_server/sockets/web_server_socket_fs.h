@@ -2,6 +2,7 @@
 #define web_server_socket_fs_h
 
 #include <SD.h>
+#include <Update.h>
 #include <AsyncWebSocket.h>
 #include <blvckstd/dbglog.h>
 #include <blvckstd/enumlut.h>
@@ -39,14 +40,18 @@
   FUN(WSFS_TAR_INTERNAL,           19)            \
   FUN(WSFS_TAR_CHILD_NOT_CREATED,  20)            \
   FUN(WSFS_PROGRESS,               21)            \
-  FUN(WSFS_FILE_APPENDED,          22)             
+  FUN(WSFS_FILE_APPENDED,          22)            \
+  FUN(WSFS_UPDATE_FAILED,          23)            \
+  FUN(WSFS_UPDATED,                24)            \
+  FUN(WSFS_NOT_A_BIN,              25)             
 
 ENUM_TYPEDEF_FULL_IMPL(web_server_socket_fs_response, _EVALS_WEB_SERVER_SOCKET_FS_RESPONSE);
 
 #define _EVALS_FILE_REQ_TYPE(FUN) \
   FUN(FRT_FETCH_LIST,     0)      \
   FUN(FRT_DELETE_DIR,     1)      \
-  FUN(FRT_UNTAR,          2)       
+  FUN(FRT_UNTAR,          2)      \
+  FUN(FRT_UPDATE,         3)       
 
 ENUM_TYPEDEF_FULL_IMPL(file_req_type, _EVALS_FILE_REQ_TYPE);
 
