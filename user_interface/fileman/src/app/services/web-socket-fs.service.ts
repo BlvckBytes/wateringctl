@@ -264,6 +264,7 @@ export class WebSocketFsService {
 
           // Done
           else {
+            this.spawnFsSuccess(EWSFSResp.WSFS_FILE_APPENDED);
             this.loadingService.finishTask(this._taskStack.pop());
             sub.next();
           }
@@ -311,14 +312,39 @@ export class WebSocketFsService {
         this.loadingService.finishTask(this._taskStack.pop());
 
         this._recipient = null;
-        if (resp == EWSFSResp.WSFS_DELETED)
+        if (resp == EWSFSResp.WSFS_DELETED) {
+          this.spawnFsSuccess(resp);
           sub.next();
-        else
+        } else
           sub.error(resp);
       };
 
       this.send(this._encoder.encode(`DELETE;${path};false`));
       this._taskStack.push(this.loadingService.startTask(this._taskTimeout));
+    });
+  }
+
+  /*
+  ============================================================================
+                                    UPDATE                                    
+  ============================================================================
+  */
+
+  updateFirmware(path: string): Observable<void> {
+    return this.interceptedResponse(sub => {
+      this._recipient = async (_, resp) => {
+        this.loadingService.finishTask(this._taskStack.pop());
+
+        this._recipient = null;
+        if (resp == EWSFSResp.WSFS_UPDATED) {
+          this.spawnFsSuccess(resp);
+          sub.next();
+        } else
+          sub.error(resp);
+      };
+
+      this.send(this._encoder.encode(`UPDATE;${path}`));
+      this._taskStack.push(this.loadingService.startTask());
     });
   }
 
@@ -360,7 +386,7 @@ export class WebSocketFsService {
     const data_str = await e.data.text();
 
     const cap = 100;
-    console.log(data_str.length > cap ? data_str.substring(0, cap) : data_str);
+    console.log('inbound:', data_str.length > cap ? data_str.substring(0, cap) : data_str);
 
     // Is a progress response, catch here and forward to the overlay
     if (data_str.startsWith(EWSFSResp.WSFS_PROGRESS)) {

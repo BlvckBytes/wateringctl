@@ -17,6 +17,10 @@ export class BrowserFileActionsComponent {
     return this.file?.name.endsWith('.tar') || false;
   }
 
+  get isBin(): boolean {
+    return this.file?.name.endsWith('.bin') || false;
+  }
+
   constructor(
     private notificationsService: NotificationsService,
     private pathBarService: PathBarService,
@@ -90,5 +94,34 @@ export class BrowserFileActionsComponent {
     const [name, ext] = getFileName(fullPath).split('.');
     this.fsService.readFile(fullPath)
       .subscribe(d => createAndDownloadBlobFile(d, name, ext));
+  }
+
+  confirmedFirmwareApplication() {
+    if (!this.file)
+      return;
+      
+    this.fsService.updateFirmware(this.file.name).subscribe();
+  }
+  
+  applyFirmware() {
+    if (!this.file)
+      return;
+
+    this.notificationsService.publish({
+      headline: 'Confirm Action',
+      text: 'Are you sure that you want apply this file as a firmware?',
+      color: 'warning',
+      icon: 'warning.svg',
+      destroyOnButtons: true,
+      buttons: [
+        {
+          text: 'Yes',
+          callback: () => this.confirmedFirmwareApplication(),
+        },
+        {
+          text: 'No'
+        }
+      ]
+    });
   }
 }

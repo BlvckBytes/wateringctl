@@ -35,7 +35,6 @@ export class OverlayFolderCreateComponent implements OnDestroy {
   }
 
   createFolder() {
-    console.log('create folder');
     if (!this.folderName.valid)
       return;
 

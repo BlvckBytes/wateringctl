@@ -17,3 +17,10 @@
   (click)="untarFile(); $event.stopPropagation()"
   icon="unpack.svg"
 ></app-button>
+
+<app-button
+  *ngIf="isBin"
+  color="success"
+  (click)="applyFirmware(); $event.stopPropagation()"
+  icon="wrench.svg"
+></app-button>

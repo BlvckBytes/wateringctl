@@ -11,15 +11,19 @@
     "WSFS_DIR_EXISTS": "A directory with this name already exists",
     "WSFS_TAR_CORRUPTED": "The tar file is corrupted",
     "WSFS_TAR_CHILD_NOT_CREATED": "The tar child-file \"{{ detail[0] }}\" could not be created, cancelled.",
-    "WSFS_TAR_INTERNAl": "An internal error occurred during unpacking"
+    "WSFS_TAR_INTERNAl": "An internal error occurred during unpacking",
+    "WSFS_UPDATE_FAILED": "Could not apply the update",
+    "WSFS_NOT_A_BIN": "Can only flash from .bin files"
   },
   "fs_resp_succ": {
     "headline": "Request Success",
     "default": "The performed action was successful",
     "WSFS_DIR_CREATED": "The directory has been created",
     "WSFS_FILE_CREATED": "The file has been created",
+    "WSFS_FILE_APPENDED": "The resource has been uploaded",
     "WSFS_DELETED": "The resource has been deleted",
-    "WSFS_UNTARED": "The tar has been unpacked into the current directory"
+    "WSFS_UNTARED": "The tar has been unpacked into the current directory",
+    "WSFS_UPDATED ": "Applied the new firmware, rebooting now"
   },
   "browser_table": {
     "columns": {
