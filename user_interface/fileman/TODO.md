@@ -8,3 +8,5 @@
 - [x] Error interceptor
 - [x] Success notifications
 - [x] Sortable name and size columns
+- [x] Untar progress indicator
+- [x] Upload progress indicator

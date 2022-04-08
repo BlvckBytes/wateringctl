@@ -39,7 +39,7 @@ export class OverlayFileCreateComponent implements OnDestroy {
       return;
 
     const path = this.fsService.joinPaths(this.pathBarService.path, this.fileName.value);
-    this.fsService.writeFile(path, ' ', false)
+    this.fsService.writeFile(path, false, new Blob([' ']))
       .subscribe(() => {
         this.pathBarService.refresh();
         this.overlaysService.destroyLatest();

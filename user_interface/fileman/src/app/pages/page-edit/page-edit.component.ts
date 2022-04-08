@@ -66,7 +66,7 @@ export class PageEditComponent implements OnInit {
     if (!this.saveable)
       return;
     
-    this.fsService.writeFile(this._fileName, this.contents, true).subscribe(() => {
+    this.fsService.writeFile(this._fileName, true, new Blob([this.contents])).subscribe(() => {
       this.saveable = false;
     });
   }

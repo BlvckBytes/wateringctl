@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, catchError, filter, Observable, ObservableInput, of, Subscriber, take, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, filter, Observable, Subscriber, take, throwError } from 'rxjs';
 import { IFSFile } from '../models/fs-file.interface';
 import { EWSFSResp } from '../models/ws-fs-response.enum';
 import { LoadingIndicatorService } from './loading-indicator.service';
@@ -228,21 +228,56 @@ export class WebSocketFsService {
     });
   }
 
-  writeFile(path: string, contents: string, overwrite = false): Observable<void> {
+  writeFile(path: string, overwrite = false, file: Blob): Observable<void> {
     return this.interceptedResponse(sub => {
-      this._recipient = async (_, resp) => {
-        this.loadingService.finishTask(this._taskStack.pop());
 
-        this._recipient = null;
-        if (resp == EWSFSResp.WSFS_FILE_CREATED) {
-          this.spawnFsSuccess(resp);
-          sub.next();
-        } else
-          sub.error(resp);
+      const size = file.size;
+      const sliceSize = 1024;
+      const slices = Math.ceil(size / sliceSize);
+
+      const sendNextSlice = async () => {
+        // Get the next slice
+        const currSize = currSlice === slices - 1 ? size % sliceSize : sliceSize;
+        const currOffs = currSlice * sliceSize;
+        const sliceData = await file.slice(currOffs, currOffs + currSize).arrayBuffer();
+
+        // Send the slice
+        this.send(new Uint8Array(sliceData));
+        this.loadingService.setProgress(Math.floor((currSlice + 1) / slices * 100));
+
+        // Return true if all slices have been sent
+        return ++currSlice == slices;
       };
 
-      this.send(this._encoder.encode(`${overwrite ? 'OVERWRITE' : 'WRITE'};${path};false;${contents}`));
-      this._taskStack.push(this.loadingService.startTask(this._taskTimeoutWriting));
+      let done = false;
+      let currSlice = 0;
+      this._recipient = async (_, resp) => {
+        
+        // Send the first slice after the file itself has been created
+        if (resp == EWSFSResp.WSFS_FILE_CREATED)
+          done = await sendNextSlice();
+        
+        // Iterate through all slices
+        else if (resp == EWSFSResp.WSFS_FILE_APPENDED) {
+          if (!done)
+            done = await sendNextSlice();
+
+          // Done
+          else {
+            this.loadingService.finishTask(this._taskStack.pop());
+            sub.next();
+          }
+        }
+
+        // Non-success response
+        else {
+          this.loadingService.finishTask(this._taskStack.pop());
+          sub.error(resp);
+        }
+      };
+
+      this.send(this._encoder.encode(`${overwrite ? 'OVERWRITE' : 'WRITE'};${path};false;${size}`));
+      this._taskStack.push(this.loadingService.startTask());
     });
   }
 

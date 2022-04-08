@@ -29,34 +29,21 @@ export class OverlayFileUploadComponent {
 
   private uploadFile(file: IUploadFile): Promise<void> {
     return new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
 
-        // Could not read the file's contents
-        if (!e.target?.result) {
-          file.errorText = 'UNREADABLE'
-          this.fsService.spawnFsError('file_unreadable');
+      // File is about to be in uploading state
+      file.state = 'uploading';
+
+      // Call write using the content string
+      this.fsService.writeFile(
+        this.fsService.joinPaths(this.pathBarService.path, file.file.name),
+        false, file.file
+      ).subscribe({
+        next: () => res(),
+        error: (e) => {
+          file.errorText = e;
           rej();
-          return;
         }
-
-        // File is about to be in uploading state
-        file.state = 'uploading';
-
-        // Call write using the content string
-        this.fsService.writeFile(
-          this.fsService.joinPaths(this.pathBarService.path, file.file.name),
-          e.target.result as string
-        ).subscribe({
-          next: () => res(),
-          error: (e) => {
-            file.errorText = e;
-            rej();
-          }
-        })
-      }
-
-      reader.readAsText(file.file);
+      })
     });
   }
 
