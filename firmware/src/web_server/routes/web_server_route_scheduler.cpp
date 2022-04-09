@@ -51,27 +51,6 @@ INLINED static bool web_server_route_scheduler_day_index_parse(
 
 /*
 ============================================================================
-                               GET /scheduler                               
-============================================================================
-*/
-
-static void web_server_route_scheduler(AsyncWebServerRequest *request)
-{
-  scptr htable_t *jsn = htable_make(7, mman_dealloc_nr);
-  
-  for (int i = 0; i < 7; i++)
-  {
-    scheduler_weekday_t day = (scheduler_weekday_t) i;
-    const char *weekday_name = scheduler_weekday_name(day);
-    scptr htable_t *weekday= scheduler_weekday_jsonify(sched, day);
-    jsonh_set_obj(jsn, weekday_name, (htable_t *) mman_ref(weekday));
-  }
-
-  web_server_json_resp(request, 200, jsn);
-}
-
-/*
-============================================================================
                             GET /scheduler/{day}                            
 ============================================================================
 */
@@ -264,11 +243,6 @@ static void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *r
 void web_server_route_scheduler_init(scheduler_t *scheduler_ref, AsyncWebServer *wsrv)
 {
   sched = scheduler_ref;
-
-  // /scheduler
-  const char *p_sched = "^\\/api\\/scheduler$";
-  wsrv->on(p_sched, HTTP_GET, web_server_route_scheduler);
-  wsrv->on(p_sched, HTTP_OPTIONS, web_server_route_any_options);
 
   // /scheduler/{day}
   const char *p_sched_day = "^\\/api\\/scheduler\\/([A-Za-z0-9_]+)$";
