@@ -29,7 +29,7 @@
 #define SCHEDULER_FILE "/data/schedules.bin"
 
 // Maximum number of intervals a day can have
-#define SCHEDULER_MAX_INTERVALS_PER_DAY 8
+#define SCHEDULER_MAX_INTERVALS_PER_DAY 32
 
 // Day in the week
 #define _EVALS_SCHEDULER_WEEKDAY(FUN)   \
