@@ -16,7 +16,7 @@
 #define VALVE_CONTROL_ALIAS_MAXLEN 16
 
 // Full path of the file that persistent data will be r/w from/to
-#define VALVE_CONTROL_FILE "/data/valves.json"
+#define VALVE_CONTROL_FILE "/data/valves.bin"
 
 typedef struct valve
 {
