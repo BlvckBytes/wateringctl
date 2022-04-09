@@ -49,72 +49,93 @@ void valve_control_toggle(valve_control_t *vc, size_t valve_id, bool state)
   valve_control_apply_state(vc);
 }
 
-void valve_control_eeprom_load(valve_control_t *vc)
+void valve_control_file_load(valve_control_t *vc)
 {
-  // Keep track of the current EEPROM address
-  // Valve control comes right after the scheduler in memory
-  int addr_ind = SCHEDULER_EEPROM_FOOTPRINT;
+  File f = SD.open(VALVE_CONTROL_FILE, "r");
 
-  // Loop all valves
-  for (int i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
+  // File does not exist yet
+  if (!f)
+    return;
+
+  // Try parsing the file as json
+  scptr char *err = NULL;
+  scptr htable_t *jsn = jsonh_parse(f.readString().c_str(), &err);
+
+  // Could not parse json
+  if (err)
   {
-    // Read the full alias
-    for (int j = 0; j < VALVE_CONTROL_ALIAS_MAXLEN; j++)
-    {
-      // Read a char of the alias and store it into memory
-      vc->valves[i].alias[j] = (char) EEPROM.read(addr_ind++);
-    }
+    dbgerr("Could not parse valve file: %s", err);
+    return;
   }
 
-  // Read disabled bytes
-  for (int i = 0; i < VALVE_CONTROL_NUM_DISABLED_BYTES; i++)
+  // Try to get the valves
+  scptr dynarr_t *valves_jsn = NULL;
+  if (jsonh_get_arr(jsn, "valves", &valves_jsn) != JOPRES_SUCCESS)
   {
-    // Read state bits
-    uint8_t dbyte = EEPROM.read(addr_ind++);
-    for (int j = 0; j < 8; j++)
-    {
-      // Account for unused "padding bits"
-      int valve_index = i * 8 + j;
-      if (valve_index + 1 >= VALVE_CONTROL_NUM_VALVES)
-        break;
-
-      // Apply bit to valve's disabled state
-      vc->valves[valve_index].disabled = (dbyte >> j) & 0x01;
-    }
+    f.close();
+    return;
   }
+
+  // Loop all stored valves
+  scptr size_t *active = NULL;
+  size_t num_active = 0;
+  dynarr_indices(valves_jsn, &active, &num_active);
+  for (size_t i = 0; i < num_active; i++)
+  {
+    int index = active[i];
+
+    // Try to get the current valve json
+    scptr htable_t *valve_jsn = NULL;
+    if (jsonh_get_arr_obj(valves_jsn, index, &valve_jsn) != JOPRES_SUCCESS)
+      continue;
+
+    // Make sure the index is valid
+    if (index < 0 || index >= VALVE_CONTROL_NUM_VALVES)
+      continue;
+
+    // Try to get the current valve's alias
+    char *alias = NULL;
+    if (jsonh_get_str(valve_jsn, "alias", &alias) != JOPRES_SUCCESS)
+      continue;
+
+    // Try to get the current valve's disabled state
+    bool disabled = false;
+    jsonh_get_bool(valve_jsn, "disabled", &disabled);
+
+    // Apply values
+    valve_t *valve = &(vc->valves[index]);
+    strncpy(valve->alias, alias, VALVE_CONTROL_ALIAS_MAXLEN);
+    valve->disabled = disabled;
+  }
+
+  f.close();
 }
 
-void valve_control_eeprom_save(valve_control_t *vc)
+void valve_control_file_save(valve_control_t *vc)
 {
-  // Keep track of the current EEPROM address
-  // Valve control comes right after the scheduler in memory
-  int addr_ind = SCHEDULER_EEPROM_FOOTPRINT;
+  scptr htable_t *jsn = jsonh_make();
+  scptr dynarr_t *valves_jsn = dynarr_make_mmf(VALVE_CONTROL_NUM_VALVES);
+  jsonh_set_arr_ref(jsn, "valves", valves_jsn);
 
-  // Bytepacked disable state buffer
-  static uint8_t disabled_states[VALVE_CONTROL_NUM_DISABLED_BYTES];
-
-  // Loop all valves
+  // Loop all valves and add them to the array
   for (int i = 0; i < VALVE_CONTROL_NUM_VALVES; i++)
   {
-    valve_t curr = vc->valves[i];
-
-    // Save disabled state to buffer
-    uint8_t *tarb = &disabled_states[i / 8];
-    if (curr.disabled)
-      *tarb |= (1 << (i % 8));
-    else
-      *tarb &= ~(1 << (i % 8));
-
-    // Write the full alias
-    for (int j = 0; j < VALVE_CONTROL_ALIAS_MAXLEN; j++)
-      EEPROM.write(addr_ind++, curr.alias[j]);
+    scptr htable_t *valve_jsn = valve_control_valve_jsonify(vc, i);
+    jsonh_insert_arr_obj_ref(valves_jsn, valve_jsn);
   }
 
-  // Write disabled bytes
-  for (int i = 0; i < VALVE_CONTROL_NUM_DISABLED_BYTES; i++)
-    EEPROM.write(addr_ind++, disabled_states[i]);
+  // Try to open valves file
+  File f = sdh_open_write_ensure_parent_dirs(VALVE_CONTROL_FILE);
+  if (!f)
+  {
+    dbgerr("Could not create the valves file");
+    return;
+  }
 
-  EEPROM.commit();
+  // Write json to the file
+  scptr char *jsn_str = jsonh_stringify(jsn, 2);
+  f.write((uint8_t *) jsn_str, strlen(jsn_str));
+  f.close();
 }
 
 htable_t *valve_control_valve_jsonify(valve_control_t *vc, size_t valve_id)

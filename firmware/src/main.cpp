@@ -50,7 +50,6 @@ void setup()
   // Start the eeprom with the total footprint size
   size_t eeprom_footprint = (
     SCHEDULER_EEPROM_FOOTPRINT
-    + VALVE_CONTROL_EEPROM_FOOTPRINT
   );
 
   EEPROM.begin(eeprom_footprint);
@@ -94,8 +93,8 @@ void setup()
   dbginf("Loaded scheduler's schedule from EEPROM!");
 
   // Load the persistent valve aliases from ROM
-  valve_control_eeprom_load(&valvectl);
-  dbginf("Loaded valve aliases from EEPROM!");
+  valve_control_file_load(&valvectl);
+  dbginf("Loaded valve aliases from file!");
 
   // Start listening for web requests
   web_server_init(&scheduler, &valvectl);

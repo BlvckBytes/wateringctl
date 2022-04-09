@@ -1,10 +1,12 @@
 #ifndef valve_control_h
 #define valve_control_h
 
+#include <SD.h>
 #include <blvckstd/jsonh.h>
 
 #include "shift_register.h"
 #include "scheduler_time.h"
+#include "sd_handler.h"
 #include "web_server/sockets/web_server_socket_events.h"
 #include "scheduler_macros.h"
 
@@ -14,14 +16,8 @@
 // Maximum number of characters a valve alias string can have
 #define VALVE_CONTROL_ALIAS_MAXLEN 16
 
-// Disabled states, bytepacked
-#define VALVE_CONTROL_NUM_DISABLED_BYTES ((VALVE_CONTROL_NUM_VALVES + 7) / 8)
-
-// Number of bytes valve control needs to persist it's aliases in the EEPROM
-#define VALVE_CONTROL_EEPROM_FOOTPRINT (                                   \
-  VALVE_CONTROL_NUM_VALVES * VALVE_CONTROL_ALIAS_MAXLEN /* Aliases */      \
-  + VALVE_CONTROL_NUM_DISABLED_BYTES /* Disabled bytes */                  \
-)
+// Full path of the file that persistent data will be r/w from/to
+#define VALVE_CONTROL_FILE "/data/valves.json"
 
 typedef struct valve
 {
@@ -48,18 +44,18 @@ typedef struct valve_control
 valve_control_t valve_control_make();
 
 /**
- * @brief Load all valve aliases from EEPROM
+ * @brief Load all valve aliases from a file
  * 
  * @param vc Valve controller handle
  */
-void valve_control_eeprom_load(valve_control_t *vc);
+void valve_control_file_load(valve_control_t *vc);
 
 /**
- * @brief Store all valve aliases to EEPROM
+ * @brief Store all valve aliases to a file
  * 
  * @param vc Valve controller handle
  */
-void valve_control_eeprom_save(valve_control_t *vc);
+void valve_control_file_save(valve_control_t *vc);
 
 /**
  * @brief Toggle a specific valve's state

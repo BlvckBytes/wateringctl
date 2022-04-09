@@ -2,6 +2,7 @@
 #define sd_handler_h
 
 #include <blvckstd/dbglog.h>
+#include <blvckstd/strclone.h>
 #include <sd_diskio.h>
 #include <inttypes.h>
 #include <SPI.h>
@@ -19,6 +20,12 @@
 
 // Conversion utility
 #define sdh_bytes_to_mb(bytes) (bytes / 1000 / 1000)
+
+/*
+============================================================================
+                              Basic SD control                              
+============================================================================
+*/
 
 /**
  * @brief Initialize the SD card slot
@@ -47,5 +54,13 @@ uint32_t sdh_get_total_size_mb();
  * @brief Watches for hotplug events and updates the system accordingly
  */
 void sdh_watch_hotplug();
+
+/*
+============================================================================
+                              R/W Utilities                                
+============================================================================
+*/
+
+File sdh_open_write_ensure_parent_dirs(const char *path);
 
 #endif

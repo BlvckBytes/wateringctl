@@ -118,7 +118,7 @@ static void web_server_route_valves_edit(AsyncWebServerRequest *request)
     web_server_socket_events_broadcast(valve.disabled ? WSE_VALVE_DISABLE_ON : WSE_VALVE_DISABLE_OFF, ev_arg);
   }
 
-  valve_control_eeprom_save(valvectl);
+  valve_control_file_save(valvectl);
 
   // Respond with the updated valve
   scptr htable_t *valve_jsn = valve_control_valve_jsonify(valvectl, valve_id);

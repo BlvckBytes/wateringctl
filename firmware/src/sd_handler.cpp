@@ -68,3 +68,44 @@ void sdh_watch_hotplug()
     return;
   }
 }
+
+/*
+============================================================================
+                              R/W Utilities                                
+============================================================================
+*/
+
+File sdh_open_write_ensure_parent_dirs(const char *path)
+{
+  scptr char *ppath = strclone(path);
+
+  // Start at index 1 to skip the root slash
+  int last_index = 1;
+
+  while (true)
+  {
+    // Get the next / from (including) the last index
+    char *curr_c = strchr(&ppath[last_index], '/');
+
+    // No more slashes in the string
+    if (!curr_c)
+      break;
+
+    // Buffer the char and temporarily terminate ppath here
+    char buf = *curr_c;
+    *curr_c = 0;
+
+    // Make the directory if it doesn't yet exist
+    if (!SD.exists(ppath))
+      SD.mkdir(ppath);
+
+    // Restore ppath's state
+    *curr_c = buf;
+
+    // Search after the current occurrence next iteration
+    last_index = curr_c - ppath + 1;
+  }
+
+  // Parent dirs should now exist, try to open the file for writing
+  return SD.open(path, "w");
+}
