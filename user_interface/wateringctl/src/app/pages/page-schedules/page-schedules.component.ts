@@ -258,7 +258,7 @@ export class PageSchedulesComponent implements IStatePersistable, OnDestroy {
         identifier: 0,
         disabled: false,
         start: `${now.getHours()}:${now.getMinutes()}:00`,
-        end: `${now.getHours()}:${now.getMinutes() + 5}:00`,
+        end: `${now.getHours()}:${now.getMinutes()}:30`,
       }
     ).subscribe(this.loadScheduleObs);
   }
