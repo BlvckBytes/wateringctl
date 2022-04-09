@@ -6,19 +6,6 @@ info:
   version: 0.0.1
 
 paths:
-  /scheduler:
-    get:
-      tags:
-      - "scheduler"
-      summary: "Get the current schedule"
-      responses:
-        "200":
-          description: "Fetch successful"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Schedule"
-
   /scheduler/{day}:
     put:
       tags:
