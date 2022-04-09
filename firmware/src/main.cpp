@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <EEPROM.h>
 
 #include "scheduler.h"
 #include "web_server/web_server.h"
@@ -47,14 +46,6 @@ void setup()
   // Wait for the monitor to be ready
   delay(2000);
 
-  // Start the eeprom with the total footprint size
-  size_t eeprom_footprint = (
-    SCHEDULER_EEPROM_FOOTPRINT
-  );
-
-  EEPROM.begin(eeprom_footprint);
-  dbginf("Initialized EEPROM for %u bytes!", eeprom_footprint);
-
   // Initialize shift register pins and clear initially
   shift_register_init();
   shift_register_clear();
@@ -88,11 +79,11 @@ void setup()
   valvectl = valve_control_make();
   dbginf("Created the valve controller!");
   
-  // Load the persistent schedule from ROM
-  scheduler_eeprom_load(&scheduler);
-  dbginf("Loaded scheduler's schedule from EEPROM!");
+  // Load the persistent schedule from file
+  scheduler_file_load(&scheduler);
+  dbginf("Loaded scheduler's schedule from file!");
 
-  // Load the persistent valve aliases from ROM
+  // Load the persistent valve aliases from file
   valve_control_file_load(&valvectl);
   dbginf("Loaded valve aliases from file!");
 

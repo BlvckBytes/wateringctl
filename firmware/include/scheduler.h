@@ -3,7 +3,6 @@
 
 #include <inttypes.h>
 #include <Arduino.h>
-#include <EEPROM.h>
 
 #include <blvckstd/enumlut.h>
 #include <blvckstd/jsonh.h>
@@ -15,7 +14,6 @@
 #include "web_server/sockets/web_server_socket_events.h"
 #include "valve_control.h"
 #include "scheduler_time.h"
-#include "scheduler_macros.h"
 
 /*
   The scheduler schedules on-times over the period of one
@@ -27,6 +25,11 @@
   The identifier has to be provided when an interval is being created.
 */
 
+// Full path of the file that persistent data will be r/w from/to
+#define SCHEDULER_FILE "/data/schedules.json"
+
+// Maximum number of intervals a day can have
+#define SCHEDULER_MAX_INTERVALS_PER_DAY 8
 
 // Day in the week
 #define _EVALS_SCHEDULER_WEEKDAY(FUN)   \
@@ -85,7 +88,7 @@ bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *
  * 
  * @return htable_t* JSONH data structure
  */
-htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval);
+htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t *interval);
 
 /**
  * @brief Check if a given interval is equal to the empty interval constant
@@ -217,13 +220,13 @@ bool scheduler_change_interval(scheduler_t *scheduler, scheduler_weekday_t day, 
 void scheduler_tick(scheduler_t *scheduler, valve_control_t *valve_ctl);
 
 /**
- * @brief Save a scheduler's schedule to the eeprom
+ * @brief Save a scheduler's schedule to a file
  */
-void scheduler_eeprom_save(scheduler_t *scheduler);
+void scheduler_file_save(scheduler_t *scheduler);
 
 /**
- * @brief Load a scheduler's schedule from the eeprom
+ * @brief Load a scheduler's schedule from a file
  */
-void scheduler_eeprom_load(scheduler_t *scheduler);
+void scheduler_file_load(scheduler_t *scheduler);
 
 #endif

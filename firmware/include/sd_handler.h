@@ -2,6 +2,7 @@
 #define sd_handler_h
 
 #include <blvckstd/dbglog.h>
+#include <blvckstd/jsonh.h>
 #include <blvckstd/strclone.h>
 #include <sd_diskio.h>
 #include <inttypes.h>
@@ -62,5 +63,9 @@ void sdh_watch_hotplug();
 */
 
 File sdh_open_write_ensure_parent_dirs(const char *path);
+
+htable_t *sdh_read_json_file(const char *path);
+
+bool sdh_write_json_file(htable_t *jsn, const char *path);
 
 #endif

@@ -1,8 +1,6 @@
 #ifndef scheduler_time_h
 #define scheduler_time_h
 
-#include <EEPROM.h>
-
 #include <blvckstd/strfmt.h>
 #include <blvckstd/longp.h>
 #include <blvckstd/partial_strdup.h>

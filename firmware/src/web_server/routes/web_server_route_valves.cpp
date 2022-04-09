@@ -38,7 +38,7 @@ INLINED static bool valves_parse_id(AsyncWebServerRequest *request, size_t *valv
 
 static void web_server_route_valves(AsyncWebServerRequest *request)
 {
-  scptr htable_t *resp = jsonh_make();
+  scptr htable_t *resp = htable_make(1, mman_dealloc_nr);
 
   // Create a list of all available valves
   scptr dynarr_t *valves = dynarr_make(VALVE_CONTROL_NUM_VALVES, VALVE_CONTROL_NUM_VALVES, mman_dealloc_nr);

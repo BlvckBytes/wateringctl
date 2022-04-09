@@ -24,7 +24,7 @@ void web_server_empty_ok(AsyncWebServerRequest *request)
 
 void web_server_json_resp(AsyncWebServerRequest *request, int status, htable_t *json)
 {
-  scptr char *stringified = jsonh_stringify(json, 2);
+  scptr char *stringified = jsonh_stringify(json, 2, 2048);
 
   AsyncWebServerResponse *resp = request->beginResponse(status, "application/json", stringified);
   web_server_append_cors_headers(resp);
@@ -47,7 +47,7 @@ void web_server_error_resp(AsyncWebServerRequest *request, int status, web_serve
 
   va_end(ap);
 
-  scptr htable_t *resp = jsonh_make();
+  scptr htable_t *resp = htable_make(3, mman_dealloc_nr);
   scptr char *error_code_name = strclone(web_server_error_name(code));
 
   jsonh_set_bool(resp, "error", true);

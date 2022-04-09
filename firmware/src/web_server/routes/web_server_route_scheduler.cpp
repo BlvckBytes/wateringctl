@@ -57,7 +57,7 @@ INLINED static bool web_server_route_scheduler_day_index_parse(
 
 static void web_server_route_scheduler(AsyncWebServerRequest *request)
 {
-  scptr htable_t *jsn = jsonh_make();
+  scptr htable_t *jsn = htable_make(7, mman_dealloc_nr);
   
   for (int i = 0; i < 7; i++)
   {
@@ -125,7 +125,7 @@ static void web_server_route_scheduler_day_edit(AsyncWebServerRequest *request)
     web_server_socket_events_broadcast(sched_day.disabled ? WSE_DAY_DISABLE_ON : WSE_DAY_DISABLE_OFF, ev_args);
   }
 
-  scheduler_eeprom_save(sched);
+  scheduler_file_save(sched);
 
   // Respond with the updated day
   scptr htable_t *day_jsn = scheduler_weekday_jsonify(sched, day);
@@ -146,7 +146,7 @@ static void web_server_route_scheduler_day_index(AsyncWebServerRequest *request)
   if (!web_server_route_scheduler_day_index_parse(request, &day, &index))
     return;
 
-  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, sched->daily_schedules[day].intervals[index]);
+  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, &(sched->daily_schedules[day].intervals[index]));
   web_server_json_resp(request, 200, int_jsn);
 }
 
@@ -215,10 +215,10 @@ static void web_server_route_scheduler_day_index_edit(AsyncWebServerRequest *req
     web_server_socket_events_broadcast(WSE_INTERVAL_IDENTIFIER_CHANGE, ev_args);
   }
 
-  scheduler_eeprom_save(sched);
+  scheduler_file_save(sched);
 
   // Respond with the updated entry
-  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, *targ_interval);
+  scptr htable_t *int_jsn = scheduler_interval_jsonify(index, targ_interval);
   web_server_json_resp(request, 200, int_jsn);
 }
 
@@ -247,7 +247,7 @@ static void web_server_route_scheduler_day_index_delete(AsyncWebServerRequest *r
 
   // Clear slot and save persistently
   *targ = SCHEDULER_INTERVAL_EMPTY;
-  scheduler_eeprom_save(sched);
+  scheduler_file_save(sched);
 
   scptr char *ev_args = strfmt_direct("%s;%ld", scheduler_weekday_name(day), index);
   web_server_socket_events_broadcast(WSE_INTERVAL_DELETED, ev_args);

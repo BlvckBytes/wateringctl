@@ -109,3 +109,40 @@ File sdh_open_write_ensure_parent_dirs(const char *path)
   // Parent dirs should now exist, try to open the file for writing
   return SD.open(path, "w");
 }
+
+htable_t *sdh_read_json_file(const char *path)
+{
+  File f = SD.open(path, "r");
+
+  // File does not exist yet
+  if (!f)
+    return NULL;
+
+  // Try parsing the file as json
+  scptr char *err = NULL;
+  scptr htable_t *jsn = jsonh_parse(f.readString().c_str(), &err);
+
+  // Could not parse json
+  if (err)
+  {
+    dbgerr("Could not parse json file %s: %s", path, err);
+    return NULL;
+  }
+
+  return (htable_t *) mman_ref(jsn);
+}
+
+bool sdh_write_json_file(htable_t *jsn, const char *path)
+{
+  // Try to open valves file
+  File f = sdh_open_write_ensure_parent_dirs(path);
+  if (!f)
+    return false;
+
+  // Write json to the file
+  scptr char *jsn_str = jsonh_stringify(jsn, 2, 8192);
+
+  f.write((uint8_t *) jsn_str, strlen(jsn_str));
+  f.close();
+  return true;
+}

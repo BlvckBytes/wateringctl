@@ -6,7 +6,7 @@ ENUM_LUT_FULL_IMPL(scheduler_edge, _EVALS_SCHEDULER_EDGE);
 scheduler_t scheduler_make(scheduler_callback_t callback, scheduler_day_and_time_provider_t dt_provider)
 {
   return (scheduler_t) {
-    .daily_schedules = { { SCHEDULER_INTERVAL_EMPTY } },
+    .daily_schedules = { { SCHEDULER_INTERVAL_EMPTY }, false },
     .callback = callback,                             // Set the user-provided callback
     .dt_provider = dt_provider,                       // Set the user-provided provider
     .last_tick_time = SCHEDULER_TIME_MIDNIGHT,        // Start out with an arbitrary last tick time
@@ -106,19 +106,19 @@ bool scheduler_interval_parse(htable_t *json, char **err, scheduler_interval_t *
   return true;
 }
 
-htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t interval)
+htable_t *scheduler_interval_jsonify(int index, scheduler_interval_t *interval)
 {
-  scptr char *start_str = scheduler_time_stringify(&(interval.start));
-  scptr char *end_str = scheduler_time_stringify(&(interval.end));
+  scptr char *start_str = scheduler_time_stringify(&(interval->start));
+  scptr char *end_str = scheduler_time_stringify(&(interval->end));
 
-  scptr htable_t *int_jsn = jsonh_make();
+  scptr htable_t *int_jsn = htable_make(6, mman_dealloc_nr);
 
   jsonh_set_str(int_jsn, "start", (char *) mman_ref(start_str));
   jsonh_set_str(int_jsn, "end", (char *) mman_ref(end_str));
-  jsonh_set_int(int_jsn, "identifier", interval.identifier);
+  jsonh_set_int(int_jsn, "identifier", interval->identifier);
   jsonh_set_int(int_jsn, "index", index);
-  jsonh_set_bool(int_jsn, "active", interval.active);
-  jsonh_set_bool(int_jsn, "disabled", interval.disabled);
+  jsonh_set_bool(int_jsn, "active", interval->active);
+  jsonh_set_bool(int_jsn, "disabled", interval->disabled);
 
   return (htable_t *) mman_ref(int_jsn);
 }
@@ -179,7 +179,7 @@ static int scheduler_find_interval_slot(scheduler_t *scheduler, scheduler_weekda
 htable_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t day)
 {
   scptr htable_t *weekday = htable_make(2, mman_dealloc_nr);
-  scptr dynarr_t *weekday_intervals = dynarr_make(SCHEDULER_MAX_INTERVALS_PER_DAY, SCHEDULER_MAX_INTERVALS_PER_DAY, mman_dealloc_nr);
+  scptr dynarr_t *weekday_intervals = dynarr_make_mmf(SCHEDULER_MAX_INTERVALS_PER_DAY);
 
   if (jsonh_set_arr(weekday, "intervals", (dynarr_t *) mman_ref(weekday_intervals)) != JOPRES_SUCCESS)
     mman_dealloc(weekday_intervals);
@@ -187,7 +187,7 @@ htable_t *scheduler_weekday_jsonify(scheduler_t *scheduler, scheduler_weekday_t 
   scheduler_day_t targ_day = scheduler->daily_schedules[day];
   for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
   {
-    scptr htable_t *int_jsn = scheduler_interval_jsonify(j, targ_day.intervals[j]);
+    scptr htable_t *int_jsn = scheduler_interval_jsonify(j, &(targ_day.intervals[j]));
     if (jsonh_insert_arr_obj(weekday_intervals, (htable_t *) mman_ref(int_jsn)) != JOPRES_SUCCESS)
       mman_dealloc(int_jsn);
   }
@@ -345,110 +345,123 @@ void scheduler_tick(scheduler_t *scheduler, valve_control_t *valve_ctl)
   scheduler->last_tick_time = time;
 }
 
-static void scheduler_eeprom_write_time(int *addr_ind, scheduler_time_t time)
+void scheduler_file_save(scheduler_t *scheduler)
 {
-  EEPROM.write((*addr_ind)++, time.hours);
-  EEPROM.write((*addr_ind)++, time.minutes);
-  EEPROM.write((*addr_ind)++, time.seconds);
+  scptr htable_t *jsn = htable_make(7, mman_dealloc_nr);
+
+  // Loop all weekdays and append them with their weekday name
+  for (int i = 0; i < 7; i++)
+  {
+    scheduler_weekday_t day = (scheduler_weekday_t) i;
+    scptr htable_t *day_jsn = scheduler_weekday_jsonify(scheduler, day);
+    jsonh_set_obj_ref(jsn, scheduler_weekday_name(day), day_jsn);
+  }
+
+  // Write json to the file
+  if (!sdh_write_json_file(jsn, SCHEDULER_FILE))
+  {
+    dbgerr("Could not write the scheduler file");
+    return;
+  }
 }
 
-static void scheduler_eeprom_read_time(int *addr_ind, scheduler_time_t *time)
+/**
+ * @brief Parse a scheduler time field from a JSON object, identified by it's key
+ * 
+ * @param jsn Json to parse
+ * @param key Key of target string field
+ * @return scheduler_time_t Parsed scheduler time
+ */
+static scheduler_time_t scheduler_json_parse_time(htable_t *jsn, const char *key)
 {
-  time->hours = EEPROM.read((*addr_ind)++);
-  time->minutes = EEPROM.read((*addr_ind)++);
-  time->seconds = EEPROM.read((*addr_ind)++);
+  scheduler_time_t res;
+
+  char *time_str = NULL;
+  if (jsonh_get_str(jsn, key, &time_str) == JOPRES_SUCCESS)
+  {
+    scptr char *err = NULL;
+    if (!scheduler_time_parse(time_str, &err, &res))
+      dbgerr("Could not parse scheduler time from file: %s", err);
+  }
+
+  return res;
 }
 
-void scheduler_eeprom_save(scheduler_t *scheduler)
+/**
+ * @brief Parse a scheduler interval from a JSON object
+ * 
+ * @param scheduler Scheduler instance to modify
+ * @param jsn Json to parse
+ * @param day Day to modify of the scheduler
+ */
+static void scheduler_json_parse_interval(scheduler_t *scheduler, htable_t *jsn, scheduler_day_t *day)
 {
-  // Keep track of the current EEPROM address
-  int addr_ind = 0;
+  // Try to get the interval's index
+  int index = 0;
+  if (jsonh_get_int(jsn, "index", &index) != JOPRES_SUCCESS)
+    return;
 
-  // Bytepacked disable state buffer
-  static uint8_t disabled_states[SCHEDULER_NUM_DISABLED_BYTES];
+  scheduler_interval_t *curr_int = &(day->intervals[index]);
 
-  // Loop all days
-  for (int i = 0; i < 7; i++)
-  {
-    // Loop all their slots
-    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
-    {
-      scheduler_interval_t *slot = &(scheduler->daily_schedules[i].intervals[j]);
+  // Load disabled state and target identifier
+  jsonh_get_bool(jsn, "disabled", &(curr_int->disabled));
+  jsonh_get_int(jsn, "identifier", (int *) &(curr_int->identifier));
 
-      // Save disabled state to buffer
-      int int_index = i * SCHEDULER_MAX_INTERVALS_PER_DAY + j;
-      uint8_t *tarb = &disabled_states[int_index / 8];
-      if (slot->disabled)
-        *tarb |= (1 << (int_index % 8));
-      else
-        *tarb &= ~(1 << (int_index % 8));
-
-      // Write start, end and the identifier of this slot
-      scheduler_eeprom_write_time(&addr_ind, slot->start);
-      scheduler_eeprom_write_time(&addr_ind, slot->end);
-      EEPROM.write(addr_ind++, slot->identifier);
-    }
-  }
-
-  // Write disabled bytes
-  for (int i = 0; i < SCHEDULER_NUM_DISABLED_BYTES; i++)
-    EEPROM.write(addr_ind++, disabled_states[i]);
-
-  // Write days disable byte
-  uint8_t days_disableb = 0x00;
-  for (int i = 0; i < 7; i++)
-  {
-    if (scheduler->daily_schedules[i].disabled)
-      days_disableb |= (1 << (i % 8));
-    else
-      days_disableb &= ~(1 << (i % 8));
-  }
-  EEPROM.write(addr_ind++, days_disableb);
-
-  EEPROM.commit();
+  // Load start and end times
+  curr_int->start = scheduler_json_parse_time(jsn, "start");
+  curr_int->end = scheduler_json_parse_time(jsn, "end");
 }
 
-void scheduler_eeprom_load(scheduler_t *scheduler)
+/**
+ * @brief Parse a scheduler day from a JSON object
+ * 
+ * @param scheduler Scheduler to modify
+ * @param jsn Json to parse
+ * @param day Day of the scheduler to modify
+ */
+static void scheduler_json_parse_day(scheduler_t *scheduler, htable_t *jsn, scheduler_weekday_t day)
 {
-  // Keep track of the current EEPROM address
-  int addr_ind = 0;
+  scheduler_day_t *sched_day = &(scheduler->daily_schedules[day]);
 
-  // Loop all days
+  // Try to get the current day's disabled state
+  jsonh_get_bool(jsn, "disabled", &(sched_day->disabled));
+
+  // Try to get the stored intervals from this day
+  dynarr_t *ints_jsn = NULL;
+  if (jsonh_get_arr(jsn, "intervals", &ints_jsn) != JOPRES_SUCCESS)
+    return;
+
+  // Loop all stored intervals
+  scptr size_t *active = NULL;
+  size_t num_active = 0;
+  dynarr_indices(ints_jsn, &active, &num_active);
+  for (size_t i = 0; i < num_active; i++)
+  {
+    // Try to get the current interval json
+    htable_t *int_jsn = NULL;
+    if (jsonh_get_arr_obj(ints_jsn, active[i], &int_jsn) != JOPRES_SUCCESS)
+      continue;
+
+    scheduler_json_parse_interval(scheduler, int_jsn, sched_day);
+  }
+}
+
+void scheduler_file_load(scheduler_t *scheduler)
+{
+  // Read the json file
+  scptr htable_t *jsn = sdh_read_json_file(SCHEDULER_FILE);
+  if (!jsn)
+    return;
+
+  // Loop all weekdays and get them by their name
   for (int i = 0; i < 7; i++)
   {
-    // Loop all their slots
-    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
-    {
-      scheduler_interval_t *slot = &(scheduler->daily_schedules[i].intervals[j]);
+    // Get the current day
+    scheduler_weekday_t day = (scheduler_weekday_t) i;
+    htable_t *day_jsn = NULL;
+    if (jsonh_get_obj(jsn, scheduler_weekday_name(day), &day_jsn) != JOPRES_SUCCESS)
+      continue;
 
-      // Read start, end and the identifier into this slot
-      scheduler_eeprom_read_time(&addr_ind, &(slot->start));
-      scheduler_eeprom_read_time(&addr_ind, &(slot->end));
-      slot->identifier = EEPROM.read(addr_ind++);
-    }
+    scheduler_json_parse_day(scheduler, day_jsn, day);
   }
-
-  // Read disabled bytes
-  for (int i = 0; i < SCHEDULER_NUM_DISABLED_BYTES; i++)
-  {
-    // Read state bits
-    uint8_t dbyte = EEPROM.read(addr_ind++);
-    for (int j = 0; j < 8; j++)
-    {
-      // Account for unused "padding bits"
-      int int_index = i * 8 + j;
-      if (int_index + 1 >= SCHEDULER_TOTAL_INTERVALS)
-        break;
-
-      // Apply bit to valve's disabled state
-      int targ_day = int_index / SCHEDULER_MAX_INTERVALS_PER_DAY;
-      int targ_int = int_index % SCHEDULER_MAX_INTERVALS_PER_DAY;
-      scheduler->daily_schedules[targ_day].intervals[targ_int].disabled = (dbyte >> j) & 0x01;
-    }
-  }
-
-  // Read days disable byte
-  uint8_t day_disableb = EEPROM.read(addr_ind++);
-  for (int i = 0; i < 7; i++)
-    scheduler->daily_schedules[i].disabled = (day_disableb >> i) & 0x01;
 }

@@ -48,13 +48,13 @@ static void web_server_socket_fs_respond_json(
   htable_t *jsonh
 )
 {
-  scptr char *jstr = jsonh_stringify(jsonh, 2);
+  scptr char *jstr = jsonh_stringify(jsonh, 2, 2048);
   client->binary(jstr);
 }
 
 INLINED static htable_t *web_server_socket_fs_jsonify_file(File *file)
 {
-  scptr htable_t *res = jsonh_make();
+  scptr htable_t *res = htable_make(3, mman_dealloc_nr);
 
   jsonh_set_bool(res, "isDirectory", file->isDirectory());
   jsonh_set_int(res, "size", (int) file->size());
@@ -394,7 +394,7 @@ static void web_server_socket_fs_proc_fetch(
   if (is_directory)
   {
     // Create basic response structure
-    scptr htable_t *res = jsonh_make();
+    scptr htable_t *res = htable_make(1, mman_dealloc_nr);
     scptr dynarr_t *items = dynarr_make(16, 1024, mman_dealloc_nr);
     jsonh_set_arr(res, "items", items);
 
