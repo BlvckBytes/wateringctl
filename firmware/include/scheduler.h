@@ -26,7 +26,7 @@
 */
 
 // Full path of the file that persistent data will be r/w from/to
-#define SCHEDULER_FILE "/data/schedules.json"
+#define SCHEDULER_FILE "/data/schedules.bin"
 
 // Maximum number of intervals a day can have
 #define SCHEDULER_MAX_INTERVALS_PER_DAY 8

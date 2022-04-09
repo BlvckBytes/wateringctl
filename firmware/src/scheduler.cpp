@@ -345,123 +345,88 @@ void scheduler_tick(scheduler_t *scheduler, valve_control_t *valve_ctl)
   scheduler->last_tick_time = time;
 }
 
+INLINED static void scheduler_file_write_time(File f, scheduler_time_t *time)
+{
+  f.write(time->hours);
+  f.write(time->minutes);
+  f.write(time->seconds);
+}
+
+INLINED static void scheduler_file_read_time(File f, scheduler_time_t *time)
+{
+  f.readBytes((char *) &(time->hours), 1);
+  f.readBytes((char *) &(time->minutes), 1);
+  f.readBytes((char *) &(time->seconds), 1);
+}
+
 void scheduler_file_save(scheduler_t *scheduler)
 {
-  scptr htable_t *jsn = htable_make(7, mman_dealloc_nr);
+  File f = sdh_open_write_ensure_parent_dirs(SCHEDULER_FILE);
+  if (!f)
+    return;
 
-  // Loop all weekdays and append them with their weekday name
+  // Write max intervals per day
+  f.write(SCHEDULER_MAX_INTERVALS_PER_DAY);
+
   for (int i = 0; i < 7; i++)
   {
-    scheduler_weekday_t day = (scheduler_weekday_t) i;
-    scptr htable_t *day_jsn = scheduler_weekday_jsonify(scheduler, day);
-    jsonh_set_obj_ref(jsn, scheduler_weekday_name(day), day_jsn);
+    scheduler_day_t day = scheduler->daily_schedules[i];
+
+    // Write day's disabled state
+    f.write(day.disabled);
+
+    for (int j = 0; j < SCHEDULER_MAX_INTERVALS_PER_DAY; j++)
+    {
+      scheduler_interval_t interval = day.intervals[j];
+
+      // Write interval's disabled state
+      f.write(interval.disabled);
+
+      // Write interval's identifier
+      f.write(interval.identifier);
+
+      // Write start- and end time
+      scheduler_file_write_time(f, &(interval.start));
+      scheduler_file_write_time(f, &(interval.end));
+    }
   }
 
-  // Write json to the file
-  if (!sdh_write_json_file(jsn, SCHEDULER_FILE))
-  {
-    dbgerr("Could not write the scheduler file");
-    return;
-  }
-}
-
-/**
- * @brief Parse a scheduler time field from a JSON object, identified by it's key
- * 
- * @param jsn Json to parse
- * @param key Key of target string field
- * @return scheduler_time_t Parsed scheduler time
- */
-static scheduler_time_t scheduler_json_parse_time(htable_t *jsn, const char *key)
-{
-  scheduler_time_t res;
-
-  char *time_str = NULL;
-  if (jsonh_get_str(jsn, key, &time_str) == JOPRES_SUCCESS)
-  {
-    scptr char *err = NULL;
-    if (!scheduler_time_parse(time_str, &err, &res))
-      dbgerr("Could not parse scheduler time from file: %s", err);
-  }
-
-  return res;
-}
-
-/**
- * @brief Parse a scheduler interval from a JSON object
- * 
- * @param scheduler Scheduler instance to modify
- * @param jsn Json to parse
- * @param day Day to modify of the scheduler
- */
-static void scheduler_json_parse_interval(scheduler_t *scheduler, htable_t *jsn, scheduler_day_t *day)
-{
-  // Try to get the interval's index
-  int index = 0;
-  if (jsonh_get_int(jsn, "index", &index) != JOPRES_SUCCESS)
-    return;
-
-  scheduler_interval_t *curr_int = &(day->intervals[index]);
-
-  // Load disabled state and target identifier
-  jsonh_get_bool(jsn, "disabled", &(curr_int->disabled));
-  jsonh_get_int(jsn, "identifier", (int *) &(curr_int->identifier));
-
-  // Load start and end times
-  curr_int->start = scheduler_json_parse_time(jsn, "start");
-  curr_int->end = scheduler_json_parse_time(jsn, "end");
-}
-
-/**
- * @brief Parse a scheduler day from a JSON object
- * 
- * @param scheduler Scheduler to modify
- * @param jsn Json to parse
- * @param day Day of the scheduler to modify
- */
-static void scheduler_json_parse_day(scheduler_t *scheduler, htable_t *jsn, scheduler_weekday_t day)
-{
-  scheduler_day_t *sched_day = &(scheduler->daily_schedules[day]);
-
-  // Try to get the current day's disabled state
-  jsonh_get_bool(jsn, "disabled", &(sched_day->disabled));
-
-  // Try to get the stored intervals from this day
-  dynarr_t *ints_jsn = NULL;
-  if (jsonh_get_arr(jsn, "intervals", &ints_jsn) != JOPRES_SUCCESS)
-    return;
-
-  // Loop all stored intervals
-  scptr size_t *active = NULL;
-  size_t num_active = 0;
-  dynarr_indices(ints_jsn, &active, &num_active);
-  for (size_t i = 0; i < num_active; i++)
-  {
-    // Try to get the current interval json
-    htable_t *int_jsn = NULL;
-    if (jsonh_get_arr_obj(ints_jsn, active[i], &int_jsn) != JOPRES_SUCCESS)
-      continue;
-
-    scheduler_json_parse_interval(scheduler, int_jsn, sched_day);
-  }
+  f.close();
 }
 
 void scheduler_file_load(scheduler_t *scheduler)
 {
-  // Read the json file
-  scptr htable_t *jsn = sdh_read_json_file(SCHEDULER_FILE);
-  if (!jsn)
+  File f = SD.open(SCHEDULER_FILE, "r");
+  if (!f)
     return;
+  
+  // Read how many intervals there were per day at the time of writing
+  size_t per_day = 0;
+  f.readBytes((char *) &per_day, 1);
+  per_day = u64_min(SCHEDULER_MAX_INTERVALS_PER_DAY, per_day);
 
-  // Loop all weekdays and get them by their name
   for (int i = 0; i < 7; i++)
   {
-    // Get the current day
-    scheduler_weekday_t day = (scheduler_weekday_t) i;
-    htable_t *day_jsn = NULL;
-    if (jsonh_get_obj(jsn, scheduler_weekday_name(day), &day_jsn) != JOPRES_SUCCESS)
-      continue;
+    scheduler_day_t *day = &(scheduler->daily_schedules[i]);
 
-    scheduler_json_parse_day(scheduler, day_jsn, day);
+    // Read day's disabled state
+    f.readBytes((char *) &(day->disabled), 1);
+
+    for (int j = 0; j < per_day; j++)
+    {
+      scheduler_interval_t *interval = &(day->intervals[j]);
+
+      // Read interval's disabled state
+      f.readBytes((char *) &(interval->disabled), 1);
+
+      // Read interval's identifier
+      f.readBytes((char *) &(interval->identifier), 1);
+
+      // Read start- and end time
+      scheduler_file_read_time(f, &(interval->start));
+      scheduler_file_read_time(f, &(interval->end));
+    }
   }
+
+  f.close();
 }
