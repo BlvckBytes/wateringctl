@@ -52,9 +52,11 @@ export const compareIntervalTimes = (a: string, b: string): number => {
 export const calcIntervalDurSecs = (interval: IInterval): number => {
   const start = parseIntervalTime(interval.start);
   const end = parseIntervalTime(interval.end);
-  return (
+
+  // Constrain the difference towards zero (no negative numbers)
+  return Math.max((
     (end[2] - start[2]) +
     (end[1] - start[1]) * 60 +
     (end[0] - start[0]) * 3600
-  );
+  ), 0);
 }
