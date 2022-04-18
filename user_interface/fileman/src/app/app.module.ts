@@ -56,7 +56,7 @@ import { BrowserFileIconComponent } from './pages/page-browser/browser-file-icon
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
-        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, '/i18n/'),
+        useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './i18n/'),
         deps: [HttpClient],
       },
     }),
