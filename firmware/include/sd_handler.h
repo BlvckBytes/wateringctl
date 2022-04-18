@@ -13,7 +13,7 @@
 #define SDH_PIN_CS 5
 #define SDH_PIN_INSERTED 4
 #define SDH_HOTPLUG_WATCH_DEL 500
-#define SDH_SPI_FREQ 1000000UL * 8
+#define SDH_SPI_FREQ 1000000UL * 32
 
 // Drive ID, 0 should be totally fine as there never
 // will be multiple SD cards in this system

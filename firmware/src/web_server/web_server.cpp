@@ -11,7 +11,7 @@ static AsyncWebServer wsrv(WEB_SERVER_PORT);
 void web_server_init(scheduler_t *scheduler, valve_control_t *valve_control)
 {
   // Serve static files from SD, using index.html as a default file for / requests
-  wsrv.serveStatic("/", SD, WEB_SERVER_SD_ROOT).setDefaultFile("index.html");
+  wsrv.serveStatic("/", SD, WEB_SERVER_STATIC_PATH).setDefaultFile("index.html");
 
   // Initialize routes
   web_server_route_scheduler_init(scheduler, &wsrv);

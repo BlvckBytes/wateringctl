@@ -2,8 +2,10 @@
 
 static void web_server_route_not_found(AsyncWebServerRequest *request)
 {
+  String url = request->url();
+  
   // API route requested, show 404 json errors
-  if (request->url().startsWith("/api"))
+  if (url.startsWith("/api"))
   {
     web_server_error_resp(
       request,
@@ -15,8 +17,27 @@ static void web_server_route_not_found(AsyncWebServerRequest *request)
     return;
   }
 
+  if (
+    // Is a file
+    url.lastIndexOf("/") < url.lastIndexOf(".") &&
+
+    // Is not index.html
+    url.lastIndexOf("index.html") < 0
+  )
+  {
+    request->send(404);
+    return;
+  }
+
+  // Start out with the default web-root index.html
+  const char *path = WEB_SERVER_STATIC_PATH "index.html";
+
+  // File manager request, respond with the file manager's index.html
+  if (url.startsWith("/fileman"))
+    path = WEB_SERVER_STATIC_PATH "fileman/index.html";
+
   // File requested, fall back to index.html (used for Angular)
-  File index = SD.open(WEB_SERVER_SD_ROOT "index.html");
+  File index = SD.open(path);
   request->send(200, "text/html", index.readString());
   index.close();
 }

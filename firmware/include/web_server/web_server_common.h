@@ -10,7 +10,7 @@
 #include <SD.h>
 
 // Root directory on the SD for web-files, has to have a trailing /
-#define WEB_SERVER_SD_ROOT "/"
+#define WEB_SERVER_STATIC_PATH "/web/"
 
 /*
 ============================================================================
